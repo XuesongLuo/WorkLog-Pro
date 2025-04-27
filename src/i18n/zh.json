@@ -1,0 +1,16 @@
+{
+    "calendar": {
+      "today": "今天",
+      "previous": "上一个",
+      "next": "下一个",
+      "month": "月",
+      "week": "周",
+      "day": "日",
+      "agenda": "议程",
+      "date": "日期",
+      "time": "时间",
+      "event": "事件",
+      "allDay": "全天",
+      "noEventsInRange": "此范围内没有事件"
+    }
+}

@@ -1,0 +1,16 @@
+{
+    "calendar": {
+      "today": "Today",
+      "previous": "Previous",
+      "next": "Next",
+      "month": "Month",
+      "week": "Week",
+      "day": "Day",
+      "agenda": "Agenda",
+      "date": "Date",
+      "time": "Time",
+      "event": "Event",
+      "allDay": "All Day",
+      "noEventsInRange": "No events in this range"
+    }
+  }
