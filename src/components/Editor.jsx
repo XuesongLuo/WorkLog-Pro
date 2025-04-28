@@ -8,12 +8,13 @@ import Color from '@tiptap/extension-color'
 import Highlight from '@tiptap/extension-highlight'
 import Image from '@tiptap/extension-image'
 import TaskList from '@tiptap/extension-task-list'
-import TaskItem from '@tiptap/extension-task-item'
 import Table from '@tiptap/extension-table'
 import TableRow from '@tiptap/extension-table-row'
 import TableCell from '@tiptap/extension-table-cell'
 import TableHeader from '@tiptap/extension-table-header'
 import { findParentNodeClosestToPos } from 'prosemirror-utils'
+
+import { CustomTaskItem } from './EditorComponents/CustomTaskItem'
 
 import { BulletList as TiptapBulletList } from '@tiptap/extension-bullet-list'
 import { OrderedList as TiptapOrderedList } from '@tiptap/extension-ordered-list'
@@ -112,7 +113,7 @@ export default function Editor() {
         Highlight.configure({ multicolor: true }),
         Image,
         TaskList,
-        TaskItem.configure({
+        CustomTaskItem.configure({
             nested: true,
         }),
         Table.configure({
@@ -363,48 +364,86 @@ export default function Editor() {
 
                 {/* 文字颜色选择 */}
                 <div className="dropdown">
-                <button onClick={() => { setShowTextColor(!showTextColor); setShowBgColor(false); }}>
-                    <span className="color-preview" style={{ backgroundColor: currentTextColor || '#000' }}></span>
-                </button>
-                {showTextColor && (
-                    <div className="color-palette floating">
-                    {colors.map((color) => (
+                    <div className="split-button">
                         <button
-                        key={color}
-                        style={{ backgroundColor: color }}
-                        className={`color-button ${editor.getAttributes('textStyle').color === color ? 'is-active' : ''}`}
                         onClick={() => {
-                            editor.chain().focus().setColor(color).run();
-                            setCurrentTextColor(color)
-                            setShowTextColor(false);
+                            editor.chain().focus().setColor(currentTextColor || '#000').run();
                         }}
-                        />
-                    ))}
+                        >
+                        <span className="color-preview" style={{ backgroundColor: currentTextColor || '#000' }}></span>
+                        </button>
+                        <button
+                        className="split-toggle"
+                        onClick={() => {
+                            setShowTextColor(!showTextColor);
+                            setShowBgColor(false);
+                            setShowBulletListStyles(false);
+                            setShowOrderedListStyles(false);
+                            setShowTableSelector(false);
+                        }}
+                        >
+                        ▼
+                        </button>
                     </div>
-                )}
+
+                    {showTextColor && (
+                        <div className="color-palette floating">
+                        {colors.map((color) => (
+                            <button
+                            key={color}
+                            style={{ backgroundColor: color }}
+                            className={`color-button ${editor.getAttributes('textStyle').color === color ? 'is-active' : ''}`}
+                            onClick={() => {
+                                editor.chain().focus().setColor(color).run();
+                                setCurrentTextColor(color);
+                                setShowTextColor(false);
+                            }}
+                            />
+                        ))}
+                        </div>
+                    )}
                 </div>
 
                 {/* 背景颜色选择 */}
                 <div className="dropdown">
-                <button onClick={() => { setShowBgColor(!showBgColor); setShowTextColor(false); }}>
-                    <span className="color-preview" style={{ backgroundColor: currentBgColor || '#fff' }}></span> 背景色
-                </button>
-                {showBgColor && (
-                    <div className="color-palette floating">
-                    {colors.map((color) => (
+                    <div className="split-button">
                         <button
-                        key={color}
-                        style={{ backgroundColor: color }}
-                        className={`color-button ${editor.isActive('highlight', { color }) ? 'is-active' : ''}`}
                         onClick={() => {
-                            editor.chain().focus().setHighlight({ color }).run();
-                            setCurrentBgColor(color)
-                            setShowBgColor(false);
+                            editor.chain().focus().setHighlight({ color: currentBgColor || '#fff' }).run();
                         }}
-                        />
-                    ))}
+                        >
+                        <span className="color-preview" style={{ backgroundColor: currentBgColor || '#fff' }}></span>
+                        </button>
+                        <button
+                        className="split-toggle"
+                        onClick={() => {
+                            setShowBgColor(!showBgColor);
+                            setShowTextColor(false);
+                            setShowBulletListStyles(false);
+                            setShowOrderedListStyles(false);
+                            setShowTableSelector(false);
+                        }}
+                        >
+                        ▼
+                        </button>
                     </div>
-                )}
+
+                    {showBgColor && (
+                        <div className="color-palette floating">
+                        {colors.map((color) => (
+                            <button
+                            key={color}
+                            style={{ backgroundColor: color }}
+                            className={`color-button ${editor.isActive('highlight', { color }) ? 'is-active' : ''}`}
+                            onClick={() => {
+                                editor.chain().focus().setHighlight({ color }).run();
+                                setCurrentBgColor(color);
+                                setShowBgColor(false);
+                            }}
+                            />
+                        ))}
+                        </div>
+                    )}
                 </div>
 
                 {/* 无序列表按钮 */}
@@ -479,10 +518,6 @@ export default function Editor() {
                         </div>
                     )}
                 </div>
-                {/* 
-                <button onClick={() => editor.chain().focus().toggleBulletList().run()} className={editor.isActive('bulletList') ? 'is-active' : ''}>• List</button>
-                <button onClick={() => editor.chain().focus().toggleOrderedList().run()} className={editor.isActive('orderedList') ? 'is-active' : ''}>1. List</button>
-                */}
 
                 <button onClick={() => editor.chain().focus().toggleTaskList().run()} className={editor.isActive('taskList') ? 'is-active' : ''}>☑️</button>
 
