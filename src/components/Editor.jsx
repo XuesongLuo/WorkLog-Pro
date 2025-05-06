@@ -3,23 +3,30 @@ import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Underline from '@tiptap/extension-underline'
 import Strike from '@tiptap/extension-strike'
-import TextStyle from '@tiptap/extension-text-style'
+import { CustomTextStyle } from './EditorComponents/CustomTextStyle'
 import Color from '@tiptap/extension-color'
-import Highlight from '@tiptap/extension-highlight'
+import { CustomHighlight } from './EditorComponents/CustomHighlight'
 import Image from '@tiptap/extension-image'
+
 import TaskList from '@tiptap/extension-task-list'
+//import { CustomTaskItem } from './EditorComponents/CustomTaskItem'
+import TaskItem from '@tiptap/extension-task-item'
+
 import Table from '@tiptap/extension-table'
 import TableRow from '@tiptap/extension-table-row'
 import TableCell from '@tiptap/extension-table-cell'
 import TableHeader from '@tiptap/extension-table-header'
 import { findParentNodeClosestToPos } from 'prosemirror-utils'
 
-import { CustomTaskItem } from './EditorComponents/CustomTaskItem'
 
-import { BulletList as TiptapBulletList } from '@tiptap/extension-bullet-list'
-import { OrderedList as TiptapOrderedList } from '@tiptap/extension-ordered-list'
+import BulletList from '@tiptap/extension-bullet-list';
+import OrderedList from '@tiptap/extension-ordered-list';
 
 import './editor.css'
+
+
+import { DOMSerializer } from 'prosemirror-model';
+
 
 // 表格选择器最大尺寸
 const MAX_ROWS = 8
@@ -41,38 +48,79 @@ const fontFamilies = [
 
 const fontSizes = ['12px', '14px', '16px', '18px', '20px', '24px', '28px', '32px']
 
-// 自定义BulletList扩展
-const BulletList = TiptapBulletList.extend({
-    addAttributes() {
-        return {
-            listStyleType: {
-                default: 'disc',
-                parseHTML: element => element.style.listStyleType || 'disc',
-                renderHTML: attributes => {
-                    return {
-                        style: `list-style-type: ${attributes.listStyleType}`,
+
+function generateClipboardHTML(container) {
+    // 统一给所有表格和单元格添加行内style（Word只认行内）
+    container.querySelectorAll('table').forEach(table => {
+        table.classList.add('MsoTableGrid')
+        table.setAttribute('border', '1')
+        table.setAttribute('cellspacing', '0')
+        table.setAttribute('cellpadding', '0')
+        table.style.borderCollapse = 'collapse'
+        table.style.border = '1px solid #000'
+        table.style.width = '100%'
+    })
+
+    container.querySelectorAll('td, th').forEach(cell => {
+        cell.style.border = '1px solid #000'
+        cell.style.padding = '4px'
+        cell.style.verticalAlign = 'middle'
+    })
+    return `
+            <!DOCTYPE html>
+            <html xmlns:o="urn:schemas-microsoft-com:office:office"
+                    xmlns:w="urn:schemas-microsoft-com:office:word"
+                    xmlns="http://www.w3.org/TR/REC-html40">
+                <head>
+                <meta charset="UTF-8">
+                <style>
+                    table.MsoTableGrid {
+                    border-collapse: collapse;
+                    border-spacing: 0;
+                    border: 1px solid #000;
+                    width: 100%;
                     }
-                },
-            },
-        }
-    },
-})
-// 自定义OrderedList扩展
-const OrderedList = TiptapOrderedList.extend({
-    addAttributes() {
-        return {
-            listStyleType: {
-                default: 'decimal',
-                parseHTML: element => element.style.listStyleType || 'decimal',
-                renderHTML: attributes => {
-                    return {
-                        style: `list-style-type: ${attributes.listStyleType}`,
+                    td, th {
+                    border: 1px solid #000;
+                    padding: 4px;
+                    vertical-align: middle;
                     }
-                },
-            },
-        }
+                </style>
+                </head>
+                <body>
+                    ${container.innerHTML}
+                </body>
+            </html>`
+}
+
+
+const CustomBulletList = BulletList.extend({
+    addAttributes() {
+      return {
+        listStyleType: {
+          default: 'disc',
+          parseHTML: el => el.style.listStyleType || 'disc',
+          renderHTML: attrs => {
+            return { style: `list-style-type: ${attrs.listStyleType}` };
+          },
+        },
+      };
     },
-})
+  });
+  
+  const CustomOrderedList = OrderedList.extend({
+    addAttributes() {
+      return {
+        listStyleType: {
+          default: 'decimal',
+          parseHTML: el => el.style.listStyleType || 'decimal',
+          renderHTML: attrs => {
+            return { style: `list-style-type: ${attrs.listStyleType}` };
+          },
+        },
+      };
+    },
+  });
 
 export default function Editor() {
     const [showTextColor, setShowTextColor] = useState(false)
@@ -99,29 +147,37 @@ export default function Editor() {
 
     const editor = useEditor({
         extensions: [
-        StarterKit.configure({
-            bulletList:  false, //{ keepMarks: true, keepAttributes: false },
-            orderedList: false, //{ keepMarks: true, keepAttributes: false },
-            table: false, 
-        }),
-        BulletList,
-        OrderedList,
-        Underline,
-        Strike,
-        TextStyle,
-        Color.configure({ types: ['textStyle'] }),
-        Highlight.configure({ multicolor: true }),
-        Image,
-        TaskList,
-        CustomTaskItem.configure({
-            nested: true,
-        }),
-        Table.configure({
-            resizable: true,
-        }),
-        TableRow,
-        TableCell,
-        TableHeader,
+            Underline,
+            Strike,
+            CustomTextStyle,
+            Color.configure({ 
+                types: ['textStyle'],
+            }),
+            CustomHighlight.configure({ 
+                multicolor: true, 
+            }),
+            StarterKit.configure({
+                bulletList: false,
+                orderedList: false,
+                table: false,
+            }),
+            CustomBulletList,
+            CustomOrderedList,
+            /*
+            TaskList,
+            CustomTaskItem.configure({
+                nested: true,
+            }),
+            */
+            TaskList.configure({ nested: true }),
+            TaskItem.configure({ nested: true }),
+            Image,
+            Table.configure({
+                resizable: true,
+            }),
+            TableRow,
+            TableCell,
+            TableHeader,
         ],
         content: '<p>Hello ✨ 完整升级版！</p>',
     })
@@ -203,30 +259,27 @@ export default function Editor() {
 
 
     const handleBulletListStyle = (style) => {
-        const chain = editor.chain().focus()
-        if (editor.isActive('orderedList')) {
-            chain.toggleOrderedList()
-        }
+        const chain = editor.chain().focus();
         if (!editor.isActive('bulletList')) {
-            chain.toggleBulletList()
+            chain.toggleBulletList();
         }
-        chain.updateAttributes('bulletList', { listStyleType: style }).run()
-        setCurrentBulletStyle(style)
-        setShowBulletListStyles(false)
-    }
+        // 无论在哪一级，只改当前所在的 <ul> 的样式
+        chain.updateAttributes('bulletList', { listStyleType: style }).run();
+
+        setCurrentBulletStyle(style);
+        setShowBulletListStyles(false);
+        };
       
     const handleOrderedListStyle = (style) => {
-        const chain = editor.chain().focus()
-        if (editor.isActive('bulletList')) {
-            chain.toggleBulletList()
-        }
+        const chain = editor.chain().focus();
         if (!editor.isActive('orderedList')) {
-            chain.toggleOrderedList()
+            chain.toggleOrderedList();
         }
-        chain.updateAttributes('orderedList', { listStyleType: style }).run()
-        setCurrentOrderedStyle(style)
-        setShowOrderedListStyles(false)
-    }
+        chain.updateAttributes('orderedList', { listStyleType: style }).run();
+
+        setCurrentOrderedStyle(style);
+        setShowOrderedListStyles(false);
+      };
 
 
     const handleUploadImage = (e) => {
@@ -334,7 +387,15 @@ export default function Editor() {
                 <select
                 onChange={(e) => {
                     const font = e.target.value
-                    editor.chain().focus().setMark('textStyle', { fontFamily: font }).run()
+                    const { state, view } = editor
+                    const { from, to, empty } = state.selection
+                    if (empty) {
+                        // 没有选中文字，只是光标停着
+                        editor.chain().focus().setMark('textStyle', { fontFamily: font }).run()
+                    } else {
+                        // 有选中文字，给选区设置textStyle
+                        editor.chain().focus().setMark('textStyle', { fontFamily: font }).run()
+                    }
                 }}
                 >
                 {fontFamilies.map(item => (
@@ -450,11 +511,18 @@ export default function Editor() {
                 <div className="dropdown">
                     <div className="split-button">
                         <button onClick={() => {
-                            const chain = editor.chain().focus()
-                            if (!editor.isActive('bulletList')) {
-                                editor.chain().focus().toggleBulletList().run(); // 先切换bulletList
+                            if (editor.isActive('bulletList')) {
+                                // 处于无序列表：彻底清理掉 ul 和它的属性
+                                editor.chain().focus()
+                                    .clearNodes({ types: ['bulletList'] })
+                                    .run()
+                            } else {
+                                // 不在列表：开一个新的 ul 并加上样式
+                                editor.chain().focus()
+                                    .toggleBulletList()
+                                    .updateAttributes('bulletList', { listStyleType: currentBulletStyle })
+                                    .run()
                             }
-                            editor.chain().focus().updateAttributes('bulletList', { listStyleType: currentBulletStyle }).run()
                         }}>
                             {currentBulletStyle === 'disc' ? '•' : currentBulletStyle === 'circle' ? '○' : '▪'}
                         </button>
@@ -480,18 +548,23 @@ export default function Editor() {
                     <div className="split-button">
                         {/* 主按钮 - 点击直接应用默认有序列表 */}
                         <button onClick={() => {
-                            const chain = editor.chain().focus();
-                            if (!editor.isActive('orderedList')) {
-                                editor.chain().focus().toggleOrderedList().run(); // 先切换orderedList
+                           if (editor.isActive('orderedList')) {
+                            editor.chain().focus()
+                                .clearNodes({ types: ['orderedList'] })
+                                .run()
+                            } else {
+                            editor.chain().focus()
+                                .toggleOrderedList()
+                                .updateAttributes('orderedList', { listStyleType: currentOrderedStyle })
+                                .run()
                             }
-                            editor.chain().focus().updateAttributes('orderedList', { listStyleType: currentOrderedStyle }).run(); // 再设置样式
                         }}>
                             {
-                                currentOrderedStyle === 'decimal' ? '1.' :
+                                currentOrderedStyle === 'decimal' ? '1. ' :
                                 currentOrderedStyle === 'lower-alpha' ? 'a.' :
                                 currentOrderedStyle === 'upper-alpha' ? 'A.' :
-                                currentOrderedStyle === 'lower-roman' ? 'i.' :
-                                currentOrderedStyle === 'upper-roman' ? 'I.' : '1.'
+                                currentOrderedStyle === 'lower-roman' ? 'i. ' :
+                                currentOrderedStyle === 'upper-roman' ? 'I. ' : '1. '
                             }
                         </button>
 
@@ -519,7 +592,35 @@ export default function Editor() {
                     )}
                 </div>
 
-                <button onClick={() => editor.chain().focus().toggleTaskList().run()} className={editor.isActive('taskList') ? 'is-active' : ''}>☑️</button>
+                <button onClick={() => editor.chain().focus().toggleTaskList().run()} className={editor.isActive('taskList') ? 'is-active' : ''}>✅</button>
+                {/* ✅  ☑️ */}
+
+                <button
+                    onClick={() => {
+                        if (editor.isActive('taskList')) {
+                            editor.chain().focus().sinkListItem('taskItem').run()
+                        } else {
+                            editor.chain().focus().sinkListItem('listItem').run()
+                        }
+                    }}
+                    title="Increase indent"
+                    >
+                    →{/* 或者用图标 */}
+                    </button>
+                    {/* 取消缩进 */}
+                    <button
+                    onClick={() => {
+                        if (editor.isActive('taskList')) {
+                            editor.chain().focus().liftListItem('taskItem').run()
+                        } else {
+                            editor.chain().focus().liftListItem('listItem').run()
+                        }
+                    }}
+                    title="Decrease indent"
+                    >
+                    ←{/* 或者用图标 */}
+                </button>
+
 
                 {/* 插入图片 */}
                 <button onClick={() => fileInputRef.current.click()}>🖼️</button>
@@ -563,7 +664,111 @@ export default function Editor() {
                 <button onClick={() => editor.chain().focus().undo().run()}>↺</button>
                 <button onClick={() => editor.chain().focus().redo().run()}>↻</button>
             </div>
-            <EditorContent editor={editor} onContextMenu={handleContextMenu} />
+            <EditorContent 
+                editor={editor} 
+                onContextMenu={handleContextMenu} 
+                onCopy={(e) => {
+                    if (!editor) return;
+            
+                    const { state } = editor;
+                    const { selection } = state;
+                    const { from } = selection;
+            
+                    // 查找最近的表格节点
+                    const $from = state.doc.resolve(from);
+                    const tableNode = findParentNodeClosestToPos($from, (node) => node.type.name === 'table');
+            
+                    if (tableNode) {
+                        e.preventDefault();
+            
+                        // 创建容器用于处理表格 HTML
+                        const processedContainer = document.createElement('div');
+                        const serializer = editor.options.editorProps.clipboardSerializer || DOMSerializer.fromSchema(state.schema);
+                        const domFragment = serializer.serializeNode(tableNode.node);
+            
+                        // 将序列化的表格添加到容器
+                        processedContainer.appendChild(domFragment);
+            
+                        // 应用表格样式
+                        processedContainer.querySelectorAll('table').forEach((table) => {
+                            table.classList.add('MsoTableGrid');
+                            table.setAttribute('border', '1');
+                            table.setAttribute('cellspacing', '0');
+                            table.setAttribute('cellpadding', '0');
+                            table.style.borderCollapse = 'collapse';
+                            table.style.border = '1px solid #000';
+                            table.style.width = '100%';
+                            table.removeAttribute('data-pm-slice');
+                        });
+            
+                        // 应用单元格样式
+                        processedContainer.querySelectorAll('td, th').forEach((cell) => {
+                            cell.style.border = '1px solid #000';
+                            cell.style.padding = '4px';
+                            cell.style.verticalAlign = 'middle';
+                        });
+            
+                        // 调试输出
+                        console.log('处理后的表格内容:', {
+                            tables: processedContainer.querySelectorAll('table').length,
+                            cells: processedContainer.querySelectorAll('td, th').length,
+                            html: processedContainer.innerHTML,
+                        });
+            
+                        // 生成剪贴板 HTML
+                        const html = generateClipboardHTML(processedContainer);
+                        const text = processedContainer.innerText;
+            
+                        // 设置剪贴板数据
+                        e.clipboardData.setData('text/html', html);
+                        e.clipboardData.setData('text/plain', text);
+                    } else {
+                        // 非表格选择的回退逻辑
+                        const selection = window.getSelection();
+                        if (!selection || selection.rangeCount === 0) return;
+            
+                        const range = selection.getRangeAt(0);
+                        const container = document.createElement('div');
+                        container.appendChild(range.cloneContents());
+            
+                        // 调试输出
+                        console.log('回退选择内容:', {
+                            tables: container.querySelectorAll('table').length,
+                            cells: container.querySelectorAll('td, th').length,
+                            html: container.innerHTML,
+                        });
+            
+                        // 如果没有表格或单元格，允许默认复制行为
+                        if (container.querySelectorAll('table, td, th').length === 0) return;
+            
+                        e.preventDefault();
+            
+                        // 应用表格和单元格样式
+                        container.querySelectorAll('table').forEach((table) => {
+                            table.classList.add('MsoTableGrid');
+                            table.setAttribute('border', '1');
+                            table.setAttribute('cellspacing', '0');
+                            table.setAttribute('cellpadding', '0');
+                            table.style.borderCollapse = 'collapse';
+                            table.style.border = '1px solid #000';
+                            table.style.width = '100%';
+                            table.removeAttribute('data-pm-slice');
+                        });
+            
+                        container.querySelectorAll('td, th').forEach((cell) => {
+                            cell.style.border = '1px solid #000';
+                            cell.style.padding = '4px';
+                            cell.style.verticalAlign = 'middle';
+                        });
+            
+                        const html = generateClipboardHTML(container);
+                        const text = container.innerText;
+            
+                        e.clipboardData.setData('text/html', html);
+                        e.clipboardData.setData('text/plain', text);
+                    }
+                }}
+            />
             {showContextMenu && (
                 <div
                     className="context-menu"

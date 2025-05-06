@@ -2,13 +2,13 @@ import TaskItem from '@tiptap/extension-task-item'
 import { NodeViewWrapper, NodeViewContent } from '@tiptap/react'
 import { ReactNodeViewRenderer } from '@tiptap/react'
 
-import { Node, mergeAttributes } from '@tiptap/core'
 
 // 自定义React组件
 function TaskItemComponent({ node, updateAttributes, editor }) {
   return (
-    <NodeViewWrapper as="li" data-checked={node.attrs.checked ? 'true' : 'false'} className="task-item">
-      <label contentEditable={false}>
+    <NodeViewWrapper as="li" className="task-item" data-checked={node.attrs.checked ? 'true' : 'false'} >
+      <div className="checkbox-wrapper" contentEditable={false}>
+      
         <input
           type="checkbox"
           checked={node.attrs.checked}
@@ -16,8 +16,11 @@ function TaskItemComponent({ node, updateAttributes, editor }) {
             updateAttributes({ checked: event.target.checked })
           }}
         />
-      </label>
+      
+      </div>
+      <div className="content-wrapper">
       <NodeViewContent as="div" className="content" />
+      </div>
     </NodeViewWrapper>
   )
 }
