@@ -4,12 +4,15 @@ import Home from './pages/Home';
 import TaskDetailPage from './pages/TaskDetailPage'; // 预留页面
 import CreateOrEditTaskPage from './pages/CreateOrEditTaskPage'; // 预留页面
 
+import ExcelEditor from './pages/ExcelEditor';
+
 
 const router = createBrowserRouter([
   { path: '/', element: <Home /> },
   { path: '/task/:id', element: <TaskDetailPage /> },
   { path: '/task/new', element: <CreateOrEditTaskPage /> },
   { path: '/task/edit/:id', element: <CreateOrEditTaskPage /> },
+  { path: '/excel', element: <ExcelEditor /> }
 ]);
 
 export default function AppRouter() {

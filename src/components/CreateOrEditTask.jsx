@@ -96,9 +96,9 @@ export default function CreateOrEditTask({ id: propId, embedded = false, onClose
         justifyContent: 'flex-start',
         overflow: 'hidden', // 防止溢出
         mx: embedded ? 0 : 'auto',
-        mt: embedded ? 0 : 4,
+        mt: 0,
         mb: embedded ? 0 : 4,
-        pt: embedded ? 0 : 2,
+        pt: 0,
        }}>
 
         {/* 顶部返回按钮，只在独立页面出现 */}

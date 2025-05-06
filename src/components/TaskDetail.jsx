@@ -66,9 +66,9 @@ export default function TaskDetail({ id, embedded = false, onClose }) {
         justifyContent: embedded ? 'flex-start' : 'flex-start',  // 靠上对齐
         overflow: 'hidden',
         mx: embedded ? 0 : 'auto', // mx: auto 居中
-        mt: embedded ? 0 : 4,       // 如果是独立页面，顶部留些空
-        mb: embedded ? 0 : 4,        // 底部留空
-        pt: embedded ? 0 : 2,
+        mt: 0,       // 如果是独立页面，顶部留些空
+        mb: embedded ? 0 : 2,        // 底部留空
+        pt: 0,
        }}>
 
         {!embedded && (
