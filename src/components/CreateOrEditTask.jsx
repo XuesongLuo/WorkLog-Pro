@@ -4,10 +4,14 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import {
   Container,
+  IconButton,
   Grid,
   Box,
   Typography,
   TextField,
+  FormControl,
+  InputLabel,
+  Select,
   MenuItem,
   Stack,
   Button,
@@ -18,11 +22,17 @@ import {
   DialogActions
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import SaveIcon from '@mui/icons-material/Save';
+import DeleteIcon from '@mui/icons-material/Delete';
+import CancelIcon from '@mui/icons-material/Cancel';
+import OpenInNewIcon from '@mui/icons-material/OpenInNew';
+
 import Editor from './Editor';
 
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { DateTimePicker }      from '@mui/x-date-pickers';
 import { AdapterDateFns }      from '@mui/x-date-pickers/AdapterDateFns';
+
 import { useTasks } from '../context/TaskContext';
 
 const types = ['室外工程', '室内工程', '后院施工', '除霉处理'];
@@ -89,12 +99,13 @@ export default function CreateOrEditTask({ id: propId, embedded = false, onClose
         display: 'flex', 
         flexDirection: 'column', 
         height: embedded ? '100%' : 'auto',
-        minHeight: embedded ? '100%' : '80vh',
+        //minHeight: embedded ? '100%' : '80vh',
         width: embedded ? '100%' : '80%',
         maxWidth: embedded ? 'none' : '1920px',
         minWidth: 0, // 防止内容撑开容器
         justifyContent: 'flex-start',
-        overflow: 'hidden', // 防止溢出
+        overflowX: 'hidden', // 防止溢出
+        overflowY: 'auto', 
         mx: embedded ? 0 : 'auto',
         mt: 0,
         mb: embedded ? 0 : 4,
@@ -115,16 +126,39 @@ export default function CreateOrEditTask({ id: propId, embedded = false, onClose
         )}
 
         {/* 任务创建类型 */}
-        <Typography variant="h5" gutterBottom>
-          {isEdit ? '编辑任务' : '创建新任务'}
-        </Typography>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+          <Typography variant="h5" gutterBottom sx={{ m: 0 }}>
+            {isEdit ? '编辑任务' : '创建新任务'}
+          </Typography>
+          <Stack direction="row" spacing={1}>
+            {embedded && (
+              <IconButton onClick={() => navigate(isEdit ? `/task/edit/${id}` : '/task/new')}>
+                <OpenInNewIcon />
+              </IconButton>
+            )}
+            {embedded && (  
+              <IconButton onClick={onClose}>
+                <CancelIcon />
+              </IconButton>
+            )}
+            {isEdit && embedded && (
+              <IconButton color="error" onClick={() => setConfirmDeleteOpen(true)}>
+                <DeleteIcon />
+              </IconButton>
+            )}
+            {embedded && ( <IconButton color="primary" onClick={handleSubmit}>
+              <SaveIcon />
+            </IconButton>
+            )}
+          </Stack>
+        </Box>
       
         <Divider sx={{ mb: 2 }} />
 
           
         <Grid container spacing={2}>
           {/* 第1行：任务标题、项目类型选择*/}
-          <Grid item xs={6}>
+          <Grid item s={12} sm={6}>
             <TextField 
               name="title" 
               label="任务标题" 
@@ -134,24 +168,52 @@ export default function CreateOrEditTask({ id: propId, embedded = false, onClose
               onChange={handleChange} 
             />
           </Grid>
-           <Grid item xs={6}>
-            <TextField
-              name="type"
-              label="项目类型"
-              size="small"
-              select
-              fullWidth
-              value={form.type}
-              onChange={handleChange}
-            >
-              {types.map((option) => (
-                <MenuItem key={option} value={option}>{option}</MenuItem>
-              ))}
-            </TextField>
-          </Grid>
+            <Grid item s={12} sm={6}>
+              <FormControl fullWidth size="small">
+                <InputLabel id="type-label">项目类型</InputLabel>
+                  <Select
+                    labelId="type-label"
+                    name="type"
+                    value={form.type}
+                    onChange={handleChange}
+                    displayEmpty
+                    renderValue={(selected) =>
+                      selected ? selected : <span style={{ color: '#aaa' }}>项目类型</span>
+                    }
+                  >
+                    {types.map((option) => (
+                      <MenuItem key={option} value={option}>
+                        {option}
+                      </MenuItem>
+                    ))}
+                  </Select>
+              </FormControl>
+              {/* 
+              <TextField
+                name="type"
+                label="项目类型"
+                size="small"
+                select
+                fullWidth
+                value={form.type}
+                onChange={handleChange}
+                displayEmpty
+                renderValue={(selected) =>
+                  selected ? selected : <span style={{ color: '#aaa' }}>请选择项目类型</span>
+                }
+              >
+
+                {types.map((option) => (
+                  <MenuItem key={option} value={option}>
+                    {option}
+                  </MenuItem>
+                ))}
+              </TextField>
+              */}
+            </Grid>
 
           {/* 第2行：地址、城市、邮政编码 */}
-          <Grid item xs={4}>
+          <Grid item s={12} sm={4}>
             <TextField 
               name="address" 
               label="地址" 
@@ -161,7 +223,7 @@ export default function CreateOrEditTask({ id: propId, embedded = false, onClose
               onChange={handleChange} 
             />
           </Grid>
-          <Grid item xs={4}>
+          <Grid item s={12} sm={4}>
             <TextField 
               name="city" 
               label="城市" 
@@ -171,7 +233,7 @@ export default function CreateOrEditTask({ id: propId, embedded = false, onClose
               onChange={handleChange} 
             />
           </Grid>
-          <Grid item xs={4}>
+          <Grid item s={12} sm={4}>
             <TextField 
               name="zipcode" 
               label="邮政编码" 
@@ -183,7 +245,7 @@ export default function CreateOrEditTask({ id: propId, embedded = false, onClose
           </Grid>
 
           {/* 第3行：公司、项目申请人、项目负责人 */}
-          <Grid item xs={4}>
+          <Grid item s={12} sm={4}>
             <TextField 
               name="company" 
               label="公司" 
@@ -193,7 +255,7 @@ export default function CreateOrEditTask({ id: propId, embedded = false, onClose
               onChange={handleChange} 
             />
           </Grid>
-          <Grid item xs={4}>
+          <Grid item s={12} sm={4}>
             <TextField 
               name="applicant" 
               label="项目申请人" 
@@ -203,7 +265,7 @@ export default function CreateOrEditTask({ id: propId, embedded = false, onClose
               onChange={handleChange} 
             />
           </Grid>
-          <Grid item xs={4}>
+          <Grid item s={12} sm={4}>
             <TextField 
               name="manager" 
               label="项目负责人" 
@@ -215,7 +277,7 @@ export default function CreateOrEditTask({ id: propId, embedded = false, onClose
           </Grid>
 
           {/* 第4行：开始日期、结束日期 */}
-          <Grid item xs={6}>
+          <Grid item s={12} sm={6}>
             <LocalizationProvider dateAdapter={AdapterDateFns}>
               <DateTimePicker
                 label="开始时间"
@@ -225,7 +287,7 @@ export default function CreateOrEditTask({ id: propId, embedded = false, onClose
               />
             </LocalizationProvider>
           </Grid>
-          <Grid item xs={6}>
+          <Grid item s={12} sm={6}>
             <LocalizationProvider dateAdapter={AdapterDateFns}>
               <DateTimePicker
                 label="结束时间"
@@ -237,39 +299,46 @@ export default function CreateOrEditTask({ id: propId, embedded = false, onClose
           </Grid>
         </Grid>
         <Divider sx={{ my: 2 }} />
-        <Grid item xs={12}>
+        <Grid 
+          item 
+          xs={12}
+        >
           <Typography gutterBottom>
             <strong>详细描述</strong>
           </Typography>
-          <Editor />
+          
+            <Editor />
+          
         </Grid>
 
  
       
       {/* ---------- 按钮区 ---------- */}
-      <Box sx={{ mt: 2, pt: 2, borderTop: '1px solid #eee' }}>
-      <Stack direction="row" spacing={2} justifyContent="space-between" sx={{ mt: 3 }}>
-        
-        {embedded && (
-        <Button
-          variant="outlined"
-          onClick={() => navigate(isEdit ? `/task/edit/${id}` : '/task/new')}
-        >
-          独立查看
-        </Button>
-        )}
+      {/*  
+        <Box sx={{ mt: 2, pt: 2, borderTop: '1px solid #eee' }}>
+          <Stack direction="row" spacing={2} justifyContent="space-between" sx={{ mt: 3 }}>
+            
+            {embedded && (
+            <Button
+              variant="outlined"
+              onClick={() => navigate(isEdit ? `/task/edit/${id}` : '/task/new')}
+            >
+              独立查看
+            </Button>
+            )}
 
-        {embedded && (
-        <Button variant="outlined" onClick={onClose}>取消</Button>
-        )}
-        
-        {isEdit && (
-          <Button variant={embedded ? 'outlined' : 'text'} color="error" onClick={() => setConfirmDeleteOpen(true)}>删除</Button>
-        )}
-        <Button variant={embedded ? 'outlined' : 'text'} onClick={handleSubmit}>{isEdit ? '保存修改' : '创建任务'}</Button>
+            {embedded && (
+            <Button variant="outlined" onClick={onClose}>取消</Button>
+            )}
+            
+            {isEdit && (
+              <Button variant={embedded ? 'outlined' : 'text'} color="error" onClick={() => setConfirmDeleteOpen(true)}>删除</Button>
+            )}
+            <Button variant={embedded ? 'outlined' : 'text'} onClick={handleSubmit}>{isEdit ? '保存修改' : '创建任务'}</Button>
 
-      </Stack>
-      </Box>
+          </Stack>
+        </Box>
+      */}
       </Box>
 
       <Dialog open={confirmDeleteOpen} onClose={() => setConfirmDeleteOpen(false)}>

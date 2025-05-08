@@ -4,7 +4,9 @@
     border-radius: 8px;
     background: #fafafa;
     padding: 2px;
-  }
+    max-height: 60vh;     /* 可视高度 */
+    overflow-y: auto;
+}
   
   /* 工具栏 */
   .toolbar {
@@ -38,25 +40,6 @@
     border-color: #0078d4;
   }
   
-  /* 编辑器内容 */
-  .ProseMirror {
-    outline: none;
-    min-height: 300px;
-    padding: 12px;
-    background: white; /* 文本区背景改为白色 */
-    border-radius: 4px;
-  }
-
-  .ProseMirror em {
-    font-style: italic;
-    font-family: "Times New Roman", Georgia, Arial, sans-serif;
-  }
-  
-  /* 基础段落样式 */
-  .ProseMirror p {
-    margin: 0 0 0 8px;
-  }
-
   /* 颜色选择 */
   .dropdown {
     position: relative;
@@ -158,6 +141,27 @@
   .list-style-palette button:hover {
     background-color: #e6f7ff;
   }
+
+/* 编辑器内容 */
+.ProseMirror {
+  outline: none;
+  min-height: 30vh;     /* 最小高度，根据屏幕高度变化 */
+  max-height: 35vh;     /* 最大不超过一半视口高度 */
+  overflow-y: auto;
+  padding: 12px;
+  background: white; /* 文本区背景改为白色 */
+  border-radius: 4px;
+}
+
+.ProseMirror em {
+  font-style: italic;
+  font-family: "Times New Roman", Georgia, Arial, sans-serif;
+}
+
+/* 基础段落样式 */
+.ProseMirror p {
+  margin: 0 0 0 8px;
+}
 
 
 /* 修复 taskList 换行问题 */

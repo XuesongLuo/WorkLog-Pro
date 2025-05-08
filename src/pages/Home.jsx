@@ -58,30 +58,6 @@ export default function Home() {
     <Box sx={{ width: '100vw', minHeight: '100vh' }}>
       {/* 顶部导航栏 */}
       <TopAppBar /> 
-       {/*  
-      <AppBar position="static">
-        <Toolbar>
-          <IconButton edge="start" color="inherit" sx={{ mr: 2 }}>
-            <MenuIcon />
-          </IconButton>
-          <Typography variant="h6" sx={{ flexGrow: 1 }}>
-            WorkLog Pro
-          </Typography>
-
-          <Select
-            value={lang}
-            onChange={handleLangChange}
-            size="small"
-            variant="standard"
-            sx={{ color: '#fff', borderBottom: '1px solid white' }}
-          >
-            <MenuItem value="zh">中文</MenuItem>
-            <MenuItem value="en">English</MenuItem>
-            <MenuItem value="es">Español</MenuItem>
-          </Select>
-        </Toolbar>
-      </AppBar>
-      */}
 
       {/* 主体 */}
       <Container
@@ -105,7 +81,7 @@ export default function Home() {
             sx={{
               display: 'flex',
               flexDirection: 'column',
-              transition: 'all 0.8s ease',
+              transition: 'all 0.5s ease',
               flexGrow: 1,
               width: showDetail ? '50%' : '100%', // 明确指定宽度
               maxWidth: showDetail ? '50%' : '100%', // 在未选择任务时允许更大的宽度
@@ -114,6 +90,7 @@ export default function Home() {
               pr: 2, // 右侧间距
               ml: showDetail ? 0 : 'auto',
               mr: showDetail ? 0 : 'auto',
+              height: '100%',
             }}
           >
             <Stack direction="row" justifyContent="space-between" mb={2}>
@@ -150,14 +127,14 @@ export default function Home() {
             {viewMode === 'calendar' ? (
               <CalendarView
                 events={tasks}
-                style={{ height: '80vh', width: '100%' }}
+                style={{ height: '100%', width: '100%' }}
                 onSelectEvent={(event) => handleSelectTask(event)}
               />
             ) : (
               <TaskList
                 tasks={tasks}
                 onSelectTask={(task) => handleSelectTask(task)}
-                sx={{ height: '80vh' }}
+                sx={{ height: '100%' }}
               />
             )}
           </Grid>
@@ -172,12 +149,13 @@ export default function Home() {
                 width: showDetail ? '50%' : 0,                  // ⚠️ 动画收缩
                 maxWidth: showDetail ? '50%' : 0,
                 flexBasis: showDetail ? '50%' : 0,
-                transition: 'all 0.8s ease',                      // ⚠️ 动画
+                transition: 'all 0.5s ease',                      // ⚠️ 动画
                 opacity: showDetail ? 1 : 0,   
                 pl: showDetail ? 2 : 0,
                 borderLeft: showDetail ? '1px solid #ddd' : 'none',
                 
-                height: '80vh',
+                height: '100%', 
+                //height: '80vh',
                 overflow: 'hidden',
               }}
             >
