@@ -129,18 +129,14 @@ export default function CreateOrEditTask({ id: propId, embedded = false, onClose
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
           <Typography variant="h5" gutterBottom sx={{ m: 0 }}>
             {isEdit ? '编辑任务' : '创建新任务'}
-          </Typography>
-          <Stack direction="row" spacing={1}>
             {embedded && (
               <IconButton onClick={() => navigate(isEdit ? `/task/edit/${id}` : '/task/new')}>
                 <OpenInNewIcon />
               </IconButton>
             )}
-            {embedded && (  
-              <IconButton onClick={onClose}>
-                <CancelIcon />
-              </IconButton>
-            )}
+          </Typography>
+          <Stack direction="row" spacing={1}>
+           
             {isEdit && embedded && (
               <IconButton color="error" onClick={() => setConfirmDeleteOpen(true)}>
                 <DeleteIcon />
@@ -149,6 +145,11 @@ export default function CreateOrEditTask({ id: propId, embedded = false, onClose
             {embedded && ( <IconButton color="primary" onClick={handleSubmit}>
               <SaveIcon />
             </IconButton>
+            )}
+            {embedded && (  
+              <IconButton onClick={onClose}>
+                <CancelIcon />
+              </IconButton>
             )}
           </Stack>
         </Box>
@@ -176,10 +177,8 @@ export default function CreateOrEditTask({ id: propId, embedded = false, onClose
                     name="type"
                     value={form.type}
                     onChange={handleChange}
-                    displayEmpty
-                    renderValue={(selected) =>
-                      selected ? selected : <span style={{ color: '#aaa' }}>项目类型</span>
-                    }
+                    label="项目类型"
+                    sx={{ minWidth: 120 }}
                   >
                     {types.map((option) => (
                       <MenuItem key={option} value={option}>
@@ -188,28 +187,6 @@ export default function CreateOrEditTask({ id: propId, embedded = false, onClose
                     ))}
                   </Select>
               </FormControl>
-              {/* 
-              <TextField
-                name="type"
-                label="项目类型"
-                size="small"
-                select
-                fullWidth
-                value={form.type}
-                onChange={handleChange}
-                displayEmpty
-                renderValue={(selected) =>
-                  selected ? selected : <span style={{ color: '#aaa' }}>请选择项目类型</span>
-                }
-              >
-
-                {types.map((option) => (
-                  <MenuItem key={option} value={option}>
-                    {option}
-                  </MenuItem>
-                ))}
-              </TextField>
-              */}
             </Grid>
 
           {/* 第2行：地址、城市、邮政编码 */}
@@ -314,31 +291,29 @@ export default function CreateOrEditTask({ id: propId, embedded = false, onClose
  
       
       {/* ---------- 按钮区 ---------- */}
-      {/*  
+      {!embedded && (
         <Box sx={{ mt: 2, pt: 2, borderTop: '1px solid #eee' }}>
-          <Stack direction="row" spacing={2} justifyContent="space-between" sx={{ mt: 3 }}>
-            
-            {embedded && (
-            <Button
-              variant="outlined"
-              onClick={() => navigate(isEdit ? `/task/edit/${id}` : '/task/new')}
-            >
-              独立查看
-            </Button>
-            )}
-
-            {embedded && (
-            <Button variant="outlined" onClick={onClose}>取消</Button>
-            )}
-            
-            {isEdit && (
-              <Button variant={embedded ? 'outlined' : 'text'} color="error" onClick={() => setConfirmDeleteOpen(true)}>删除</Button>
-            )}
-            <Button variant={embedded ? 'outlined' : 'text'} onClick={handleSubmit}>{isEdit ? '保存修改' : '创建任务'}</Button>
-
+              <Stack direction="row" spacing={2} justifyContent="space-between" sx={{ mt: 3 }}>
+              {/*  
+              {embedded && (
+              <Button
+                variant="outlined"
+                onClick={() => navigate(isEdit ? `/task/edit/${id}` : '/task/new')}
+              >
+                独立查看
+              </Button>
+              )}
+              {embedded && (
+              <Button variant="outlined" onClick={onClose}>取消</Button>
+              )}
+              */}
+              {isEdit &&(
+                <Button variant='text' color="error" onClick={() => setConfirmDeleteOpen(true)}>删除</Button>
+              )}
+              <Button variant='text' onClick={handleSubmit}>{isEdit ? '保存修改' : '创建任务'}</Button>
           </Stack>
         </Box>
-      */}
+      )}
       </Box>
 
       <Dialog open={confirmDeleteOpen} onClose={() => setConfirmDeleteOpen(false)}>
