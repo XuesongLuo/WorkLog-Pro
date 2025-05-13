@@ -83,9 +83,35 @@ export default function TaskDetail({ id, embedded = false, onClose }) {
           </Button>
         )}
 
-        <Typography variant="h5" gutterBottom textAlign="center">
-          {task.title}
-        </Typography>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+          <Typography variant="h5" gutterBottom textAlign="center">
+            {task.title}
+            {embedded && (
+              <IconButton onClick={() => navigate(`/task/${task.id}`)}>
+                <OpenInNewIcon />
+              </IconButton>
+            )}
+          </Typography>
+
+          <Stack direction="row" spacing={1}>
+            {isEdit && embedded && (
+              <IconButton color="error" onClick={() => setConfirmDeleteOpen(true)}>
+                <DeleteIcon />
+              </IconButton>
+            )}
+            {embedded && ( 
+              <IconButton color="primary" onClick={handleEditClick}>
+                <SaveIcon />
+              </IconButton>
+            )}
+            {embedded && (  
+              <IconButton onClick={onClose}>
+                <CancelIcon />
+              </IconButton>
+            )}
+          </Stack>
+
+        </Box>
         <Divider sx={{ mb: 2 }} />
 
       <Grid container spacing={2}>

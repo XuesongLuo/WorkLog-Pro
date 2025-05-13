@@ -142,9 +142,10 @@ export default function CreateOrEditTask({ id: propId, embedded = false, onClose
                 <DeleteIcon />
               </IconButton>
             )}
-            {embedded && ( <IconButton color="primary" onClick={handleSubmit}>
-              <SaveIcon />
-            </IconButton>
+            {embedded && ( 
+              <IconButton color="primary" onClick={handleSubmit}>
+                <SaveIcon />
+              </IconButton>
             )}
             {embedded && (  
               <IconButton onClick={onClose}>

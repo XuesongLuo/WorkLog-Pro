@@ -142,6 +142,8 @@ export default function Editor() {
     const [canMergeCells, setCanMergeCells] = useState(false)        //  标记单元格是否可以合并
     const [canSplitCell, setCanSplitCell] = useState(false)       //  标记单元格是否可以拆分
 
+    const [floatingPosition, setFloatingPosition] = useState({ top: 0, left: 0 });
+
     const toolbarRef = useRef(null)
     const fileInputRef = useRef(null)
 
@@ -163,12 +165,6 @@ export default function Editor() {
             }),
             CustomBulletList,
             CustomOrderedList,
-            /*
-            TaskList,
-            CustomTaskItem.configure({
-                nested: true,
-            }),
-            */
             TaskList.configure({ nested: true }),
             TaskItem.configure({ nested: true }),
             Image,
@@ -179,7 +175,7 @@ export default function Editor() {
             TableCell,
             TableHeader,
         ],
-        content: '<p>Hello ✨ 完整升级版！</p>',
+        content: '',
     })
 
     // 点击页面空白区域自动收起色板或表格选择器，或者关闭右键菜单
@@ -434,21 +430,26 @@ export default function Editor() {
                         <span className="color-preview" style={{ backgroundColor: currentTextColor || '#000' }}></span>
                         </button>
                         <button
-                        className="split-toggle"
-                        onClick={() => {
-                            setShowTextColor(!showTextColor);
-                            setShowBgColor(false);
-                            setShowBulletListStyles(false);
-                            setShowOrderedListStyles(false);
-                            setShowTableSelector(false);
-                        }}
+                            className="split-toggle"
+                            onClick={(e) => {
+                                const rect = e.currentTarget.getBoundingClientRect();
+                                setFloatingPosition({
+                                    top: rect.bottom + 4, // 稍微下移一点
+                                    left: rect.left,
+                                });
+                                setShowTextColor(!showTextColor);
+                                setShowBgColor(false);
+                                setShowBulletListStyles(false);
+                                setShowOrderedListStyles(false);
+                                setShowTableSelector(false);
+                            }}
                         >
                         ▼
                         </button>
                     </div>
 
                     {showTextColor && (
-                        <div className="color-palette floating">
+                        <div className="color-palette floating" style={{ top: floatingPosition.top, left: floatingPosition.left }}>
                         {colors.map((color) => (
                             <button
                             key={color}
@@ -477,7 +478,12 @@ export default function Editor() {
                         </button>
                         <button
                         className="split-toggle"
-                        onClick={() => {
+                        onClick={(e) => {
+                            const rect = e.currentTarget.getBoundingClientRect();
+                            setFloatingPosition({
+                                top: rect.bottom + 4,
+                                left: rect.left,
+                            });
                             setShowBgColor(!showBgColor);
                             setShowTextColor(false);
                             setShowBulletListStyles(false);
@@ -490,7 +496,7 @@ export default function Editor() {
                     </div>
 
                     {showBgColor && (
-                        <div className="color-palette floating">
+                        <div className="color-palette floating" style={{ top: floatingPosition.top, left: floatingPosition.left }}>
                         {colors.map((color) => (
                             <button
                             key={color}
