@@ -7,6 +7,7 @@ import {
   Grid,
   Typography,
   Stack,
+  IconButton,
   Button,
   Divider,
   Dialog,
@@ -14,6 +15,10 @@ import {
   DialogActions,
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
+import CancelIcon from '@mui/icons-material/Cancel';
+import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 
 import TaskPane from './TaskPane';
 
@@ -94,14 +99,14 @@ export default function TaskDetail({ id, embedded = false, onClose }) {
           </Typography>
 
           <Stack direction="row" spacing={1}>
-            {isEdit && embedded && (
+            {embedded && (
               <IconButton color="error" onClick={() => setConfirmDeleteOpen(true)}>
                 <DeleteIcon />
               </IconButton>
             )}
             {embedded && ( 
               <IconButton color="primary" onClick={handleEditClick}>
-                <SaveIcon />
+                <EditIcon />
               </IconButton>
             )}
             {embedded && (  
@@ -174,39 +179,42 @@ export default function TaskDetail({ id, embedded = false, onClose }) {
         >
           {task.descriptions || '暂无描述内容'}
         </Box>
-
-       <Stack direction="row" spacing={2} mt="auto" pt={embedded ? 4 : 1} justifyContent="center">
-       
-        {embedded && (
-        <Button
-          variant="outlined"
-          onClick={() => navigate(`/task/${task.id}`)}
-        >
-          独立查看
-        </Button>
-        )}
-
-        <Button 
-          variant={embedded ? 'outlined' : 'text'}
-          size={embedded ? 'medium' : 'large'} 
-          onClick={handleEditClick}
-        >
-          编辑
-        </Button>
-        <Button
-          variant={embedded ? 'outlined' : 'text'}
-          size={embedded ? 'medium' : 'large'} 
-          color="error"
-          onClick={() => setConfirmDeleteOpen(true)}
-        >
-          删除
-        </Button>
-        {embedded && (
-          <Button variant="outlined" onClick={onClose}>
-            退出
+      {!embedded && (
+        <Stack direction="row" spacing={2} mt="auto" pt={1} justifyContent="center">
+          {/* 
+          {embedded && (
+          <Button
+            variant="outlined"
+            onClick={() => navigate(`/task/${task.id}`)}
+          >
+            独立查看
           </Button>
-        )}
-      </Stack>
+          )}
+          */}
+          <Button 
+            variant={embedded ? 'outlined' : 'text'}
+            size={embedded ? 'medium' : 'large'} 
+            onClick={handleEditClick}
+          >
+            编辑
+          </Button>
+          <Button
+            variant={embedded ? 'outlined' : 'text'}
+            size={embedded ? 'medium' : 'large'} 
+            color="error"
+            onClick={() => setConfirmDeleteOpen(true)}
+          >
+            删除
+          </Button>
+          {/* 
+          {embedded && (
+            <Button variant="outlined" onClick={onClose}>
+              退出
+            </Button>
+          )}
+          */}
+        </Stack>
+      )}
       </Box>
 
       <Dialog open={confirmDeleteOpen} onClose={() => setConfirmDeleteOpen(false)}>

@@ -86,8 +86,8 @@ export default function Home() {
               width: showDetail ? '50%' : '100%', // 明确指定宽度
               maxWidth: showDetail ? '50%' : '100%', // 在未选择任务时允许更大的宽度
               flexBasis: showDetail ? '50%' : '100%', // 设置flex基础大小
-              pl: 2, // 左侧间距
-              pr: 2, // 右侧间距
+              pl: 1, // 左侧间距
+              pr: 1, // 右侧间距
               ml: showDetail ? 0 : 'auto',
               mr: showDetail ? 0 : 'auto',
               height: '100%',

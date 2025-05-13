@@ -42,15 +42,16 @@ export default function CalendarView({ events, onSelectEvent, style }) {
 
   const [viewDate, setViewDate] = useState(new Date());
 
-  // ❶ 把 events ➜ coloredEvents：全局扫描线
+  // 把 events ➜ coloredEvents：全局扫描线
   const coloredEvents = useMemo(() => {
+    console.time('coloredEvents');
     if (!events?.length) return [];
 
     // 克隆，避免直接改 props
     const out = events.map(e => ({ ...e }));
 
     // 按 start 时间排序
-    out.sort((a, b) => a.start - b.start);
+    out.sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());
 
     const active = [];          // 当前重叠集合：存 { end, _colorIdx }
     const used = new Set();     // 当前被占用的颜色 idx
@@ -64,14 +65,21 @@ export default function CalendarView({ events, onSelectEvent, style }) {
         }
       }
 
-      // 找第一支闲置颜色
-      let idx = 0;
-      while (used.has(idx)) idx = (idx + 1) % PALETTE.length;
+      // 分配新颜色：防止死循环
+      let idx = 0, tries = 0;
+      while (used.has(idx) && tries < PALETTE.length) {
+        idx = (idx + 1) % PALETTE.length;
+        tries++;
+      }
+      // 超出颜色数就默认回到0或者给个透明色
+      if (tries >= PALETTE.length) {
+        idx = 0; // 或者 ev._colorIdx = -1 代表“透明样式”
+      }
       ev._colorIdx = idx;
       used.add(idx);
       active.push(ev);
     });
-
+    console.timeEnd('coloredEvents');
     return out;
   }, [events]);
 

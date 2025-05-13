@@ -147,7 +147,7 @@
 .ProseMirror {
   outline: none;
   min-height: 30vh;     /* 最小高度，根据屏幕高度变化 */
-  max-height: 35vh;     /* 最大不超过一半视口高度 */
+  max-height: 40vh;     /* 最大不超过一半视口高度 */
   overflow-y: auto;
   padding: 12px 4px;
   background: white; /* 文本区背景改为白色 */

@@ -158,9 +158,21 @@ export default function CreateOrEditTask({ id: propId, embedded = false, onClose
         <Divider sx={{ mb: 2 }} />
 
           
-        <Grid container spacing={2}>
+        <Grid 
+          container 
+          spacing={2} 
+          columns={12} 
+          sx={{ 
+            display: 'grid', 
+            gridTemplateColumns: {
+              xs: 'repeat(1, 1fr)',
+              sm: 'repeat(6, 1fr)',
+              md: 'repeat(8, 1fr)',
+              lg: 'repeat(12, 1fr)',
+            }, 
+          }}>
           {/* 第1行：任务标题、项目类型选择*/}
-          <Grid item s={12} sm={6}>
+          <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 4', md: 'span 6', lg: 'span 8' } }}>
             <TextField 
               name="title" 
               label="任务标题" 
@@ -170,28 +182,28 @@ export default function CreateOrEditTask({ id: propId, embedded = false, onClose
               onChange={handleChange} 
             />
           </Grid>
-            <Grid item s={12} sm={6}>
-              <FormControl fullWidth size="small">
-                <InputLabel id="type-label">项目类型</InputLabel>
-                  <Select
-                    labelId="type-label"
-                    name="type"
-                    value={form.type}
-                    onChange={handleChange}
-                    label="项目类型"
-                    sx={{ minWidth: 120 }}
-                  >
-                    {types.map((option) => (
-                      <MenuItem key={option} value={option}>
-                        {option}
-                      </MenuItem>
-                    ))}
-                  </Select>
-              </FormControl>
-            </Grid>
+          <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 2', md: 'span 2', lg: 'span 4' } }}>
+            <FormControl fullWidth size="small">
+              <InputLabel id="type-label">项目类型</InputLabel>
+              <Select
+                labelId="type-label"
+                name="type"
+                value={form.type}
+                onChange={handleChange}
+                label="项目类型"
+                sx={{ minWidth: 120 }}
+              >
+                {types.map((option) => (
+                  <MenuItem key={option} value={option}>
+                    {option}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Grid>
 
           {/* 第2行：地址、城市、邮政编码 */}
-          <Grid item s={12} sm={4}>
+          <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 6', md: 'span 6', lg: 'span 6' } }}>
             <TextField 
               name="address" 
               label="地址" 
@@ -201,7 +213,7 @@ export default function CreateOrEditTask({ id: propId, embedded = false, onClose
               onChange={handleChange} 
             />
           </Grid>
-          <Grid item s={12} sm={4}>
+          <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 3', md: 'span 1', lg: 'span 3' } }}>
             <TextField 
               name="city" 
               label="城市" 
@@ -211,7 +223,7 @@ export default function CreateOrEditTask({ id: propId, embedded = false, onClose
               onChange={handleChange} 
             />
           </Grid>
-          <Grid item s={12} sm={4}>
+          <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 3', md: 'span 1', lg: 'span 3' } }}>
             <TextField 
               name="zipcode" 
               label="邮政编码" 
@@ -223,7 +235,7 @@ export default function CreateOrEditTask({ id: propId, embedded = false, onClose
           </Grid>
 
           {/* 第3行：公司、项目申请人、项目负责人 */}
-          <Grid item s={12} sm={4}>
+          <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 6', md: 'span 4', lg: 'span 6' } }}>
             <TextField 
               name="company" 
               label="公司" 
@@ -233,7 +245,7 @@ export default function CreateOrEditTask({ id: propId, embedded = false, onClose
               onChange={handleChange} 
             />
           </Grid>
-          <Grid item s={12} sm={4}>
+          <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 3', md: 'span 2', lg: 'span 3' } }}>
             <TextField 
               name="applicant" 
               label="项目申请人" 
@@ -243,7 +255,7 @@ export default function CreateOrEditTask({ id: propId, embedded = false, onClose
               onChange={handleChange} 
             />
           </Grid>
-          <Grid item s={12} sm={4}>
+          <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 3', md: 'span 2', lg: 'span 3' } }}>
             <TextField 
               name="manager" 
               label="项目负责人" 
@@ -255,7 +267,7 @@ export default function CreateOrEditTask({ id: propId, embedded = false, onClose
           </Grid>
 
           {/* 第4行：开始日期、结束日期 */}
-          <Grid item s={12} sm={6}>
+          <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 6', md: 'span 4', lg: 'span 6' } }}>
             <LocalizationProvider dateAdapter={AdapterDateFns}>
               <DateTimePicker
                 label="开始时间"
@@ -265,7 +277,7 @@ export default function CreateOrEditTask({ id: propId, embedded = false, onClose
               />
             </LocalizationProvider>
           </Grid>
-          <Grid item s={12} sm={6}>
+          <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 6', md: 'span 4', lg: 'span 6' } }}>
             <LocalizationProvider dateAdapter={AdapterDateFns}>
               <DateTimePicker
                 label="结束时间"
@@ -275,45 +287,30 @@ export default function CreateOrEditTask({ id: propId, embedded = false, onClose
               />
             </LocalizationProvider>
           </Grid>
-        </Grid>
-        <Divider sx={{ my: 2 }} />
-        <Grid 
-          item 
-          xs={12}
-        >
-          <Typography gutterBottom>
-            <strong>详细描述</strong>
-          </Typography>
-          
+
+          <Grid 
+            item 
+            sx={{ gridColumn: '1 / -1' }}
+          >
+            <Typography gutterBottom>
+              <strong>详细描述</strong>
+            </Typography>
             <Editor />
-          
+          </Grid>
         </Grid>
+
 
  
       
       {/* ---------- 按钮区 ---------- */}
       {!embedded && (
-        <Box sx={{ mt: 2, pt: 2, borderTop: '1px solid #eee' }}>
-              <Stack direction="row" spacing={2} justifyContent="space-between" sx={{ mt: 3 }}>
-              {/*  
-              {embedded && (
-              <Button
-                variant="outlined"
-                onClick={() => navigate(isEdit ? `/task/edit/${id}` : '/task/new')}
-              >
-                独立查看
-              </Button>
-              )}
-              {embedded && (
-              <Button variant="outlined" onClick={onClose}>取消</Button>
-              )}
-              */}
-              {isEdit &&(
-                <Button variant='text' color="error" onClick={() => setConfirmDeleteOpen(true)}>删除</Button>
-              )}
-              <Button variant='text' onClick={handleSubmit}>{isEdit ? '保存修改' : '创建任务'}</Button>
-          </Stack>
-        </Box>
+        <Stack direction="row" spacing={2} mt="auto" pt={1} justifyContent="center">
+          {isEdit &&(
+            <Button variant='text' color="error" onClick={() => setConfirmDeleteOpen(true)}>删除</Button>
+          )}
+          <Button variant='text' onClick={handleSubmit}>{isEdit ? '保存修改' : '创建任务'}</Button>
+        </Stack>
+
       )}
       </Box>
 
