@@ -1,7 +1,7 @@
 // src/components/TaskDetail.jsx
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useTasks } from '../context/TaskContext';
+//import { useTasks } from '../context/TaskContext';
 import {
   Box,
   Grid,
@@ -19,26 +19,33 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import CancelIcon from '@mui/icons-material/Cancel';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
-
 import TaskPane from './TaskPane';
-
+import { api } from '../api/tasks';
 
 export default function TaskDetail({ id, embedded = false, onClose }) {
   const navigate = useNavigate();
-  const { tasks, dispatch } = useTasks();
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [task, setTask] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const task = tasks.find((t) => t.id === parseInt(id));
+  useEffect(() => {
+    api.getTask(id)
+      .then(data => {
+        setTask(data);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error('获取任务失败', err);
+        setLoading(false);
+        if (embedded && onClose) onClose();
+      });
+  }, [id]);
 
-
+  /*
   useEffect(() => {
       if (!task && embedded && onClose) onClose();
   }, [task, embedded, onClose]);
-
-  if (!task) {
-    return embedded ? null : <Typography sx={{ mt: 4, textAlign: 'center' }}>任务未找到</Typography>;
-  }
-
+  */
 
   const handleEditClick = () => {
     if (embedded) {
@@ -48,16 +55,25 @@ export default function TaskDetail({ id, embedded = false, onClose }) {
     }
   };
 
-
   const handleDelete = () => {
-    dispatch({ type: 'DELETE_TASK', payload: parseInt(id) });
-    if (embedded && onClose) {
-      onClose(); // 关闭嵌入式详情
-    } else {
-      navigate('/'); // 导航回首页
-    }
+    api.deleteTask(id)
+    .then(() => {
+      if (embedded && onClose) {
+        onClose(); // 关闭嵌入式详情
+      } else {
+        navigate('/'); // 返回首页
+      }
+    })
+    .catch(err => console.error('删除失败', err));
   };
 
+
+  if (loading) {
+    return embedded ? null : <Typography sx={{ mt: 4, textAlign: 'center' }}>加载中...</Typography>;
+  }
+  if (!task) {
+    return embedded ? null : <Typography sx={{ mt: 4, textAlign: 'center' }}>任务未找到</Typography>;
+  }
   return (
     <TaskPane embedded={embedded}>
       <Box sx={{ 

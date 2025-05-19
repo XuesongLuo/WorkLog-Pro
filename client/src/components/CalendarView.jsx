@@ -44,7 +44,9 @@ export default function CalendarView({ events, onSelectEvent, style }) {
 
   // 把 events ➜ coloredEvents：全局扫描线
   const coloredEvents = useMemo(() => {
-    console.time('coloredEvents');
+    if (import.meta.env.DEV) {
+      console.time('coloredEvents');
+    }
     if (!events?.length) return [];
 
     // 克隆，避免直接改 props
@@ -79,7 +81,9 @@ export default function CalendarView({ events, onSelectEvent, style }) {
       used.add(idx);
       active.push(ev);
     });
-    console.timeEnd('coloredEvents');
+    if (import.meta.env.DEV) {
+      console.timeEnd('coloredEvents');
+    }
     return out;
   }, [events]);
 

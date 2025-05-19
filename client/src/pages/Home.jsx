@@ -18,21 +18,28 @@ import TaskList from '../components/TaskList';
 import CalendarView from '../components/CalendarView';
 import TaskDetail from '../components/TaskDetail';
 import CreateOrEditTask from '../components/CreateOrEditTask';
+import { api } from '../api/tasks';
+import { useEffect } from 'react';
 
 
-import { useTasks } from '../context/TaskContext';
+
+
 
 export default function Home() {
-  const { tasks } = useTasks();
+  const [tasks, setTasks] = useState([]);
   const [lang, setLang] = useState('zh');
   const [selectedTask, setSelectedTask] = useState(null); // null / {id} / {id:'new'} / {id:x,mode:'edit'}
   const [viewMode, setViewMode] = useState('calendar'); // 'calendar' | 'list'
   const navigate = useNavigate();
 
+  // 从后端加载任务列表
+  useEffect(() => {
+    api.getTasks()
+      .then(data => setTasks(data))
+      .catch(err => console.error('获取任务失败:', err));
+  }, []);
 
-
-
-  // 顶部语言切换
+  // 语言切换
   const handleLangChange = (e) => setLang(e.target.value);
   // 视图切换
   const toggleView = () =>

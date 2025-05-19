@@ -3,7 +3,6 @@ import TaskPane from './TaskPane';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import {
-  Container,
   IconButton,
   Grid,
   Box,
@@ -15,7 +14,6 @@ import {
   MenuItem,
   Stack,
   Button,
-  Paper,
   Divider,
   Dialog,
   DialogTitle,
@@ -32,27 +30,17 @@ import Editor from './Editor';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { DateTimePicker }      from '@mui/x-date-pickers';
 import { AdapterDateFns }      from '@mui/x-date-pickers/AdapterDateFns';
-
-import { useTasks } from '../context/TaskContext';
+import { api } from '../api/tasks';
+//import { useTasks } from '../context/TaskContext';
 
 const types = ['室外工程', '室内工程', '后院施工', '除霉处理'];
 
 export default function CreateOrEditTask({ id: propId, embedded = false, onClose }) {
   const { id: routeId } = useParams();              // URL 参数
-  const { tasks, dispatch } = useTasks();
   const navigate = useNavigate();
-
-  /* 1️⃣ 统一 id 来源：父组件传的优先生效 */
   const id = propId ?? routeId;
-
   const isEdit = Boolean(id);
-
-
-  /* 2️⃣ 有 id 就找旧任务，没有就用空模板 */
-  const existing = tasks.find(t => t.id === Number(id));
-
-  const [form, setForm] = useState(
-    existing ?? {
+  const [form, setForm] = useState({
     title: '',
     address: '',
     city: '',
@@ -62,18 +50,18 @@ export default function CreateOrEditTask({ id: propId, embedded = false, onClose
     type: '',
     start: new Date(),
     end: new Date(),
+    zipcode: '',
+    descriptions: ''
   });
-
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
 
   useEffect(() => {
     if (isEdit) {
-      const existingTask = tasks.find((task) => task.id === parseInt(id));
-      if (existingTask) {
-        setForm(existingTask);
-      }
+      api.getTask(id)
+        .then(data => setForm(data))
+        .catch(err => console.error('加载任务失败', err));
     }
-  }, [id, isEdit, tasks]);
+  }, [id]);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -81,16 +69,19 @@ export default function CreateOrEditTask({ id: propId, embedded = false, onClose
 
   const handleSubmit = () => {
     if (isEdit) {
-      dispatch({ type: 'UPDATE_TASK', payload: { ...form, id: parseInt(id) } });
+      api.updateTask(id, form)
+        .then(() => navigate('/'))
+        .catch(err => console.error('更新失败', err));
     } else {
-      dispatch({ type: 'ADD_TASK', payload: form });
+      api.createTask(form)
+        .then(() => navigate('/'))
+        .catch(err => console.error('创建失败', err));
     }
-    navigate('/');
   };
-
   const handleDelete = () => {
-    dispatch({ type: 'DELETE_TASK', payload: parseInt(id) });
-    navigate('/');
+    api.deleteTask(id)
+      .then(() => navigate('/'))
+      .catch(err => console.error('delete failed', err));
   };
 
   return (
@@ -137,21 +128,21 @@ export default function CreateOrEditTask({ id: propId, embedded = false, onClose
           </Typography>
           <Stack direction="row" spacing={1}>
            
-            {isEdit && embedded && (
-              <IconButton color="error" onClick={() => setConfirmDeleteOpen(true)}>
-                <DeleteIcon />
-              </IconButton>
-            )}
-            {embedded && ( 
+            {embedded && (
+            <>
+              {isEdit && (
+                <IconButton color="error" onClick={() => setConfirmDeleteOpen(true)}>
+                  <DeleteIcon />
+                </IconButton>
+              )}
               <IconButton color="primary" onClick={handleSubmit}>
                 <SaveIcon />
               </IconButton>
-            )}
-            {embedded && (  
               <IconButton onClick={onClose}>
                 <CancelIcon />
               </IconButton>
-            )}
+            </>
+          )}
           </Stack>
         </Box>
       
@@ -295,7 +286,10 @@ export default function CreateOrEditTask({ id: propId, embedded = false, onClose
             <Typography gutterBottom>
               <strong>详细描述</strong>
             </Typography>
-            <Editor />
+            <Editor
+              value={form.descriptions}
+              onChange={(val) => setForm({ ...form, descriptions: val })}
+            />
           </Grid>
         </Grid>
 

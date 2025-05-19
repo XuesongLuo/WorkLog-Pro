@@ -10,4 +10,12 @@ export default defineConfig({
       src: path.resolve(__dirname, './src'),
     },
   },
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost:5000', // ✅ 后端地址
+        changeOrigin: true,
+      },
+    },
+  },
 })
