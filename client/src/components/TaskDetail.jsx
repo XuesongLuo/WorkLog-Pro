@@ -126,7 +126,9 @@ export default function TaskDetail({ id, embedded = false, onClose }) {
               </IconButton>
             )}
             {embedded && (  
-              <IconButton onClick={onClose}>
+              <IconButton onClick={
+              () => {onClose?.()}
+              }>
                 <CancelIcon />
               </IconButton>
             )}
@@ -197,16 +199,6 @@ export default function TaskDetail({ id, embedded = false, onClose }) {
         </Box>
       {!embedded && (
         <Stack direction="row" spacing={2} mt="auto" pt={1} justifyContent="center">
-          {/* 
-          {embedded && (
-          <Button
-            variant="outlined"
-            onClick={() => navigate(`/task/${task.id}`)}
-          >
-            独立查看
-          </Button>
-          )}
-          */}
           <Button 
             variant={embedded ? 'outlined' : 'text'}
             size={embedded ? 'medium' : 'large'} 
@@ -222,13 +214,6 @@ export default function TaskDetail({ id, embedded = false, onClose }) {
           >
             删除
           </Button>
-          {/* 
-          {embedded && (
-            <Button variant="outlined" onClick={onClose}>
-              退出
-            </Button>
-          )}
-          */}
         </Stack>
       )}
       </Box>

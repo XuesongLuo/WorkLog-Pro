@@ -2,16 +2,13 @@ import { useState, useEffect, useRef } from 'react'
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Underline from '@tiptap/extension-underline'
-import Strike from '@tiptap/extension-strike'
 import { CustomTextStyle } from './EditorComponents/CustomTextStyle'
 import Color from '@tiptap/extension-color'
 import { CustomHighlight } from './EditorComponents/CustomHighlight'
 import Image from '@tiptap/extension-image'
 
 import TaskList from '@tiptap/extension-task-list'
-//import { CustomTaskItem } from './EditorComponents/CustomTaskItem'
 import TaskItem from '@tiptap/extension-task-item'
-
 import Table from '@tiptap/extension-table'
 import TableRow from '@tiptap/extension-table-row'
 import TableCell from '@tiptap/extension-table-cell'
@@ -122,7 +119,7 @@ const CustomBulletList = BulletList.extend({
     },
   });
 
-export default function Editor() {
+export default function Editor({ value = '', onChange }) {
     const [showTextColor, setShowTextColor] = useState(false)
     const [showBgColor, setShowBgColor] = useState(false)
     const [currentTextColor, setCurrentTextColor] = useState('')
@@ -150,7 +147,6 @@ export default function Editor() {
     const editor = useEditor({
         extensions: [
             Underline,
-            Strike,
             CustomTextStyle,
             Color.configure({ 
                 types: ['textStyle'],
@@ -175,8 +171,19 @@ export default function Editor() {
             TableCell,
             TableHeader,
         ],
-        content: '',
+        content: value || '',
+        onUpdate({ editor }) {
+            if (onChange) {
+                onChange(editor.getHTML());
+            }
+        },
     })
+
+    useEffect(() => {
+        if (editor && value !== undefined) {
+            editor.commands.setContent(value || '')
+        }
+    }, [editor, value])
 
     // 点击页面空白区域自动收起色板或表格选择器，或者关闭右键菜单
     useEffect(() => {

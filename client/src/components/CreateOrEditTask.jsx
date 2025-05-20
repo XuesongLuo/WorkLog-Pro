@@ -31,15 +31,30 @@ import { LocalizationProvider } from '@mui/x-date-pickers';
 import { DateTimePicker }      from '@mui/x-date-pickers';
 import { AdapterDateFns }      from '@mui/x-date-pickers/AdapterDateFns';
 import { api } from '../api/tasks';
-//import { useTasks } from '../context/TaskContext';
 
 const types = ['室外工程', '室内工程', '后院施工', '除霉处理'];
 
 export default function CreateOrEditTask({ id: propId, embedded = false, onClose }) {
-  const { id: routeId } = useParams();              // URL 参数
   const navigate = useNavigate();
-  const id = propId ?? routeId;
+
+  /*
+  const { id: routeId } = useParams();              // URL 参数
+  const isCreateMode = routeId === 'new';
+  const id = propId ?? (!isCreateMode ? routeId : undefined);
   const isEdit = Boolean(id);
+  */
+
+
+  const { id: routeId } = useParams();
+  const isRouteCreateMode = routeId === 'new';
+  const isEmbeddedCreateMode = embedded && !propId && !routeId;
+  const isCreateMode = isRouteCreateMode || isEmbeddedCreateMode;
+
+  const id = propId ?? (!isRouteCreateMode ? routeId : undefined);
+  const isEdit = !isCreateMode;
+
+
+
   const [form, setForm] = useState({
     title: '',
     address: '',
@@ -56,12 +71,13 @@ export default function CreateOrEditTask({ id: propId, embedded = false, onClose
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
 
   useEffect(() => {
+    if (!isEdit || !id) return;
     if (isEdit) {
       api.getTask(id)
         .then(data => setForm(data))
         .catch(err => console.error('加载任务失败', err));
     }
-  }, [id]);
+  }, [id, isEdit]);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -70,17 +86,35 @@ export default function CreateOrEditTask({ id: propId, embedded = false, onClose
   const handleSubmit = () => {
     if (isEdit) {
       api.updateTask(id, form)
-        .then(() => navigate('/'))
+        .then(() => {
+          if (embedded) {
+            onClose?.();
+          } else {
+            navigate('/');
+          }
+        })
         .catch(err => console.error('更新失败', err));
     } else {
       api.createTask(form)
-        .then(() => navigate('/'))
+        .then(() => {
+          if (embedded) {
+            onClose?.();
+          } else {
+            navigate('/');
+          }
+        })
         .catch(err => console.error('创建失败', err));
     }
   };
   const handleDelete = () => {
     api.deleteTask(id)
-      .then(() => navigate('/'))
+      .then(() => {
+          if (embedded) {
+            onClose?.();
+          } else {
+            navigate('/');
+          }
+        })
       .catch(err => console.error('delete failed', err));
   };
 
@@ -138,7 +172,7 @@ export default function CreateOrEditTask({ id: propId, embedded = false, onClose
               <IconButton color="primary" onClick={handleSubmit}>
                 <SaveIcon />
               </IconButton>
-              <IconButton onClick={onClose}>
+              <IconButton onClick={() => {onClose?.()}}>
                 <CancelIcon />
               </IconButton>
             </>

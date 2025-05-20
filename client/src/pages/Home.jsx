@@ -1,15 +1,8 @@
 // src/pages/Home.jsx
 import { useState } from 'react';
-import {
-  AppBar, Toolbar, Typography, IconButton,
-  Box, Button, Stack, Select, MenuItem,
-  Grid, Container, Fade
-} from '@mui/material';
-import MenuIcon from '@mui/icons-material/Menu';
+import { Typography, Box, Button, Stack, Grid, Container, Slide} from '@mui/material';
 import ViewListIcon from '@mui/icons-material/ViewList';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
-
-import { Slide } from '@mui/material';
 
 import { useNavigate } from 'react-router-dom';
 
@@ -21,14 +14,12 @@ import CreateOrEditTask from '../components/CreateOrEditTask';
 import { api } from '../api/tasks';
 import { useEffect } from 'react';
 
-
-
+import useTaskDetailState from '../hooks/useTaskDetailState';
 
 
 export default function Home() {
   const [tasks, setTasks] = useState([]);
   const [lang, setLang] = useState('zh');
-  const [selectedTask, setSelectedTask] = useState(null); // null / {id} / {id:'new'} / {id:x,mode:'edit'}
   const [viewMode, setViewMode] = useState('calendar'); // 'calendar' | 'list'
   const navigate = useNavigate();
 
@@ -45,7 +36,8 @@ export default function Home() {
   const toggleView = () =>
     setViewMode(prev => (prev === 'calendar' ? 'list' : 'calendar'));
 
-
+  /*
+  const [selectedTask, setSelectedTask] = useState(null); // null / {id} / {id:'new'} / {id:x,mode:'edit'}
   // 控制“是否展示 TaskDetail”的变量
   const [showDetail, setShowDetail] = useState(false);
   // 设置任务
@@ -58,7 +50,15 @@ export default function Home() {
     setShowDetail(false);         // 日历滑回来
     setTimeout(() => setSelectedTask(null), 200); // 延迟卸载右侧面板
   };
-
+  */
+  const {
+    selectedTask,
+    showDetail,
+    openTaskDetail,
+    openTaskEdit,
+    openTaskCreate,
+    handleTaskClose
+  } = useTaskDetailState();
   
   /* --------------------- 组件渲染 --------------------- */
   return (
@@ -114,10 +114,10 @@ export default function Home() {
               
 
               <Stack direction="row" spacing={2}>
-                <Button variant="outlined" onClick={handleCloseTask}>
+                <Button variant="outlined" onClick={/*handleCloseTask*/handleTaskClose}>
                   返回首页
                 </Button>
-                <Button variant="contained" color="secondary" onClick={() => handleSelectTask({ id: 'new' })}>
+                <Button variant="contained" color="secondary" /*onClick={() => handleSelectTask({ id: 'new' })}*/ onClick={openTaskCreate}>
                   新增任务
                 </Button>
 
@@ -135,12 +135,14 @@ export default function Home() {
               <CalendarView
                 events={tasks}
                 style={{ height: '100%', width: '100%' }}
-                onSelectEvent={(event) => handleSelectTask(event)}
+                //onSelectEvent={(event) => handleSelectTask(event)}
+                onSelectEvent={(event) => openTaskDetail(event.id)}
               />
             ) : (
               <TaskList
                 tasks={tasks}
-                onSelectTask={(task) => handleSelectTask(task)}
+                //onSelectTask={(task) => handleSelectTask(task)}
+                onSelectEvent={(task) => openTaskDetail(task.id)}
                 sx={{ height: '100%' }}
               />
             )}
@@ -169,33 +171,61 @@ export default function Home() {
               <Slide direction="left" in={!!selectedTask} mountOnEnter unmountOnExit>
               <Box sx={{ width: '100%', height: '100%', overflow: 'auto', }}>
                 {/* Fade 里的直接子元素必须是能接收 ref 的 DOM；TaskPane.forwardRef 已满足 */}
+                {/*
                 {selectedTask?.id === 'new' ? (
                   <CreateOrEditTask
                     key="new"
                     embedded
-                    onClose={handleCloseTask}
+                    onClose={
+                      //handleCloseTask
+                      handleTaskClose
+                    }
                   />
                 ) : selectedTask?.mode === 'edit' ? (
                   <CreateOrEditTask
                     key={selectedTask.id}   // ← id 变化时强制重建组件
                     embedded
                     id={selectedTask.id}
-                    onClose={handleCloseTask}
+                    onClose={
+                      //handleCloseTask
+                      handleTaskClose
+                    }
                   />
                 ) : selectedTask ? (
                   <TaskDetail
                     id={selectedTask.id}
                     embedded
                     // 在 TaskDetail 内点击“编辑”时把 mode 带回
-                    onClose={(payload) => {
+                    onClose={
+                      
+                      (payload) => {
                       if (payload) {
                         setSelectedTask(payload);
                       } else {
                         handleCloseTask();  // 点击“退出”
                       }
-                    }}
+                    }
+                     
+                    handleTaskClose}
                   />
                 ): null}
+                */}
+                {selectedTask?.mode === 'edit' && (
+                  <CreateOrEditTask
+                    key={selectedTask?.id ?? 'new'}
+                    embedded
+                    id={selectedTask?.id}
+                    onClose={handleTaskClose}
+                  />
+                )}
+
+                {selectedTask?.mode === 'view' && (
+                  <TaskDetail
+                    id={selectedTask.id}
+                    embedded
+                    onClose={handleTaskClose}
+                  />
+                )}
                 </Box>
               </Slide>
             </Grid>
