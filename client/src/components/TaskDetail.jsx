@@ -19,6 +19,8 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import CancelIcon from '@mui/icons-material/Cancel';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
+
+import Editor from './Editor';
 import TaskPane from './TaskPane';
 import { api } from '../api/tasks';
 
@@ -29,11 +31,22 @@ export default function TaskDetail({ id, embedded = false, onClose }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    setLoading(true);
+    Promise.all([
+      api.getTask(id),
+      api.getTaskDescription(id),
+    ])
+    .then(([taskData, descData]) => {
+      setTask({ ...taskData, description: descData.description });
+      setLoading(false);
+    })
+    /*
     api.getTask(id)
       .then(data => {
         setTask(data);
         setLoading(false);
       })
+      */
       .catch(err => {
         console.error('获取任务失败', err);
         setLoading(false);
@@ -41,25 +54,28 @@ export default function TaskDetail({ id, embedded = false, onClose }) {
       });
   }, [id]);
 
-  /*
-  useEffect(() => {
-      if (!task && embedded && onClose) onClose();
-  }, [task, embedded, onClose]);
-  */
-
   const handleEditClick = () => {
-    if (embedded) {
-      onClose?.({ id: task.id, mode: 'edit' });   // 通知父组件切换到编辑表单
-    } else {
-      navigate(`/task/edit/${task.id}`);          // 常规页面跳转
-    }
+    if (!task) return;
+    const { description, ...taskWithoutDescription } = task;
+    // 使用 requestAnimationFrame 延迟执行，避免阻塞当前事件循环
+    requestAnimationFrame(() => {
+      if (embedded) {
+        setTimeout(() => {
+          onClose?.({ id: task.id, mode: 'edit', task: taskWithoutDescription });   // 通知父组件切换到编辑表单
+        }, 0);
+      } else {
+        setTimeout(() => {
+          navigate(`/task/edit/${task.id}`, { state: { task: taskWithoutDescription } });     // 常规页面跳转
+        }, 0);      
+      }
+    });
   };
 
   const handleDelete = () => {
     api.deleteTask(id)
     .then(() => {
       if (embedded && onClose) {
-        onClose(); // 关闭嵌入式详情
+        onClose('reload'); // 关闭嵌入式详情
       } else {
         navigate('/'); // 返回首页
       }
@@ -108,7 +124,7 @@ export default function TaskDetail({ id, embedded = false, onClose }) {
           <Typography variant="h5" gutterBottom textAlign="center">
             {task.title}
             {embedded && (
-              <IconButton onClick={() => navigate(`/task/${task.id}`)}>
+              <IconButton onClick={() => navigate(`/task/${task.id}`, { state: { task } } )}>
                 <OpenInNewIcon />
               </IconButton>
             )}
@@ -182,6 +198,10 @@ export default function TaskDetail({ id, embedded = false, onClose }) {
         <Typography gutterBottom>
         <strong>详细描述：</strong>
         </Typography>
+        <Box sx={{ mt: 2 }}>
+          <Editor value={task.description} readOnly hideToolbar />
+        </Box>
+        {/*
         <Box
           sx={{
             flexGrow: 1,
@@ -194,9 +214,10 @@ export default function TaskDetail({ id, embedded = false, onClose }) {
             borderRadius: 1,
             border: '1px solid #ddd',
           }}
+          dangerouslySetInnerHTML={{__html:task.description || '<p>暂无描述内容</p>'}}
         >
-          {task.descriptions || '暂无描述内容'}
         </Box>
+        */}
       {!embedded && (
         <Stack direction="row" spacing={2} mt="auto" pt={1} justifyContent="center">
           <Button 

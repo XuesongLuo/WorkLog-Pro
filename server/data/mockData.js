@@ -14,7 +14,6 @@ const mockTasks = [
     manager: '赵六',
     applicant: '刘二',
     type: '除霉处理',
-    descriptions: '项目细节：需要清理杂草，修建围栏，重新铺设草坪。注意施工期间安全防护。'
   },
   {
     id: 2,
@@ -28,9 +27,29 @@ const mockTasks = [
     manager: '李强',
     applicant: '王伟',
     type: '室外工程',
-    descriptions: '项目细节：需要清理杂草，修建围栏，重新铺设草坪。注意施工期间安全防护。'
   },
   // ... 如需更多，可粘贴前端 TaskContext 中生成的条目（建议删掉重复的）
 ];
 
-module.exports = mockTasks;
+const mockTaskDescriptions = {
+    1: `
+    <p><strong>项目细节：</strong>清除霉斑与异味，施工区域包括厨房与浴室。</p>
+    <p><em>注意事项：</em></p>
+    <ul>
+      <li>工人需佩戴防护口罩</li>
+      <li>避免化学清洗剂残留</li>
+      <li>预计工期：<strong>2天</strong></li>
+    </ul>
+  `,
+    2: `
+    <p><strong>后院改造</strong>包括以下内容：</p>
+    <ol>
+      <li>清理杂草</li>
+      <li>修建围栏</li>
+      <li><em>铺设草坪（人工草或真草）</em></li>
+    </ol>
+    <p>所有施工由“清洁之家”负责。</p>
+  `,
+}
+
+module.exports = {mockTasks, mockTaskDescriptions};

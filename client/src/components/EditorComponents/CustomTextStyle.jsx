@@ -32,7 +32,54 @@ export const CustomTextStyle = Mark.create({
     }
   },
 
-  renderHTML({ HTMLAttributes }) {
-    return ['span', HTMLAttributes, 0]
+  // 添加这个方法
+  parseHTML() {
+    return [
+      {
+        tag: 'span',
+        getAttrs: (element) => {
+          const hasStyles = element.hasAttribute('style')
+          if (!hasStyles) return false
+          
+          const style = element.getAttribute('style')
+          const colorMatch = style.match(/color:\s*([^;]+)/)
+          const fontFamilyMatch = style.match(/font-family:\s*([^;]+)/)
+          const fontSizeMatch = style.match(/font-size:\s*([^;]+)/)
+          
+          if (colorMatch || fontFamilyMatch || fontSizeMatch) {
+            return {}
+          }
+          
+          return false
+        },
+      },
+    ]
   },
+
+  renderHTML({ HTMLAttributes = {} }) {
+    // 合并样式
+    const styleList = []
+  
+    if (HTMLAttributes.color) {
+      styleList.push(`color: ${HTMLAttributes.color}`)
+    }
+  
+    if (HTMLAttributes.fontFamily) {
+      styleList.push(`font-family: ${HTMLAttributes.fontFamily}`)
+    }
+  
+    if (HTMLAttributes.fontSize) {
+      styleList.push(`font-size: ${HTMLAttributes.fontSize}`)
+    }
+  
+    // 拷贝 HTMLAttributes，避免污染原对象
+    const attrs = { ...HTMLAttributes }
+  
+    // 设置最终合并后的 style 字符串
+    if (styleList.length > 0) {
+      attrs.style = styleList.join('; ')
+    }
+  
+    return ['span', attrs, 0]
+  }
 })

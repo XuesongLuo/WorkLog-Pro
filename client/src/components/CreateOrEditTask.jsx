@@ -1,7 +1,8 @@
 // src/pages/CreateOrEditTask.jsx
 import TaskPane from './TaskPane'; 
 import { useParams, useNavigate } from 'react-router-dom';
-import { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
+import { useEffect, useState, useCallback } from 'react';
 import {
   IconButton,
   Grid,
@@ -25,36 +26,33 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import CancelIcon from '@mui/icons-material/Cancel';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 
-import Editor from './Editor';
-
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { DateTimePicker }      from '@mui/x-date-pickers';
 import { AdapterDateFns }      from '@mui/x-date-pickers/AdapterDateFns';
 import { api } from '../api/tasks';
 
+import React, { lazy, Suspense } from 'react';
+const LazyEditor = lazy(() => 
+  import('./Editor').then(module => ({
+    default: React.memo(module.default)
+  }))
+);
+
 const types = ['室外工程', '室内工程', '后院施工', '除霉处理'];
 
-export default function CreateOrEditTask({ id: propId, embedded = false, onClose }) {
+export default function CreateOrEditTask({ id: propId, task: propTask, embedded = false, onClose }) {
   const navigate = useNavigate();
-
-  /*
-  const { id: routeId } = useParams();              // URL 参数
-  const isCreateMode = routeId === 'new';
-  const id = propId ?? (!isCreateMode ? routeId : undefined);
-  const isEdit = Boolean(id);
-  */
-
+  const location = useLocation();
+  const taskFromRoute = location.state?.task;
 
   const { id: routeId } = useParams();
-  const isRouteCreateMode = routeId === 'new';
-  const isEmbeddedCreateMode = embedded && !propId && !routeId;
-  const isCreateMode = isRouteCreateMode || isEmbeddedCreateMode;
-
-  const id = propId ?? (!isRouteCreateMode ? routeId : undefined);
-  const isEdit = !isCreateMode;
-
-
-
+  // 最终 ID：优先使用 props 传入，其次是路由参数
+  const id = propId ?? taskFromRoute?.id ?? (routeId !== 'new' ? routeId : undefined);
+  // 判断是否是“新建”任务
+  const isCreateMode = routeId === 'new' || (embedded && !id);
+  // 编辑模式 = 非创建模式，且 id 存在
+  const isEdit = Boolean(id) && !isCreateMode;
+  
   const [form, setForm] = useState({
     title: '',
     address: '',
@@ -69,36 +67,91 @@ export default function CreateOrEditTask({ id: propId, embedded = false, onClose
     descriptions: ''
   });
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [editorReady, setEditorReady] = useState(false);
 
   useEffect(() => {
     if (!isEdit || !id) return;
-    if (isEdit) {
-      api.getTask(id)
-        .then(data => setForm(data))
-        .catch(err => console.error('加载任务失败', err));
+  
+    const cachedTask = propTask ?? taskFromRoute;
+  
+    if (cachedTask) {
+      const parsedTask = {
+        ...cachedTask,
+        start: new Date(cachedTask.start),
+        end: new Date(cachedTask.end),
+        description: '',
+      };
+      setForm(parsedTask);
+
+      api.getTaskDescription(id)
+        .then(descData => {
+          setForm(prev => ({ ...prev, description: descData.description }));
+          // 等富文本内容准备好后，再延迟加载 Editor
+          requestIdleCallback(() => setEditorReady(true));
+        })
+        .catch(err => console.error('加载描述失败', err));
+  
+    } else {
+      // 完全从接口获取所有数据
+      Promise.all([
+        api.getTask(id),
+        api.getTaskDescription(id),
+      ])
+      .then(([taskData, descData]) => {
+        setForm({ ...taskData, description: descData.description });
+        requestIdleCallback(() => setEditorReady(true));
+      })
+      .catch(err => console.error('加载任务失败', err));
     }
-  }, [id, isEdit]);
+  }, [id, isEdit, propTask, taskFromRoute]);
 
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
-
+  // 使用 useCallback 优化 handleChange
+  const handleChange = useCallback((e) => {
+    const { name, value } = e.target;
+    setForm(prev => ({ ...prev, [name]: value }));
+  }, []);
+  // 使用 useCallback 优化日期更改
+  const handleStartDateChange = useCallback((newValue) => {
+    setForm(prev => ({ ...prev, start: newValue }));
+  }, []);
+  
+  const handleEndDateChange = useCallback((newValue) => {
+    setForm(prev => ({ ...prev, end: newValue }));
+  }, []);
+  // 使用 useCallback 优化描述更改
+  const handleDescriptionChange = useCallback((val) => {
+    setForm(prev => ({ ...prev, description: val }));
+  }, []);
+  
   const handleSubmit = () => {
+    const {
+      description, // 单独提取 description
+      ...mainData  // 主体数据：form 中除 description 外的所有字段
+    } = form;
+  
     if (isEdit) {
-      api.updateTask(id, form)
+      // 更新任务：先更新主体，再更新描述
+      Promise.all([
+        api.updateTask(id, mainData),
+        api.updateTaskDescription(id, description)
+      ])
         .then(() => {
           if (embedded) {
-            onClose?.();
+            onClose?.('reload');
           } else {
             navigate('/');
           }
         })
         .catch(err => console.error('更新失败', err));
     } else {
-      api.createTask(form)
+      // 创建任务：先创建主体，再用新 ID 更新描述
+      api.createTask(mainData)
+        .then((newTask) => {
+          return api.updateTaskDescription(newTask.id, description).then(() => newTask);
+        })
         .then(() => {
           if (embedded) {
-            onClose?.();
+            onClose?.('reload');
           } else {
             navigate('/');
           }
@@ -106,11 +159,12 @@ export default function CreateOrEditTask({ id: propId, embedded = false, onClose
         .catch(err => console.error('创建失败', err));
     }
   };
+
   const handleDelete = () => {
     api.deleteTask(id)
       .then(() => {
           if (embedded) {
-            onClose?.();
+            onClose?.('reload');
           } else {
             navigate('/');
           }
@@ -153,9 +207,9 @@ export default function CreateOrEditTask({ id: propId, embedded = false, onClose
         {/* 任务创建类型 */}
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
           <Typography variant="h5" gutterBottom sx={{ m: 0 }}>
-            {isEdit ? '编辑任务' : '创建新任务'}
+            {isCreateMode ? '新建任务' : '编辑任务'}
             {embedded && (
-              <IconButton onClick={() => navigate(isEdit ? `/task/edit/${id}` : '/task/new')}>
+              <IconButton onClick={() => navigate(isEdit ? `/task/edit/${id}` : '/task/new', { state: { task: form } } )}>
                 <OpenInNewIcon />
               </IconButton>
             )}
@@ -172,7 +226,12 @@ export default function CreateOrEditTask({ id: propId, embedded = false, onClose
               <IconButton color="primary" onClick={handleSubmit}>
                 <SaveIcon />
               </IconButton>
-              <IconButton onClick={() => {onClose?.()}}>
+              <IconButton onClick={() => {
+                requestAnimationFrame(() => {
+                  onClose?.();
+                });
+              }}
+              >
                 <CancelIcon />
               </IconButton>
             </>
@@ -297,7 +356,7 @@ export default function CreateOrEditTask({ id: propId, embedded = false, onClose
               <DateTimePicker
                 label="开始时间"
                 value={form.start}
-                onChange={(newValue) => setForm({ ...form, start: newValue })}
+                onChange={handleStartDateChange}
                 slotProps={{ textField: { size: 'small', fullWidth: true } }}
               />
             </LocalizationProvider>
@@ -307,7 +366,7 @@ export default function CreateOrEditTask({ id: propId, embedded = false, onClose
               <DateTimePicker
                 label="结束时间"
                 value={form.end}
-                onChange={(newValue) => setForm({ ...form, end: newValue })}
+                onChange={handleEndDateChange}
                 slotProps={{ textField: { size: 'small', fullWidth: true } }}
               />
             </LocalizationProvider>
@@ -320,16 +379,19 @@ export default function CreateOrEditTask({ id: propId, embedded = false, onClose
             <Typography gutterBottom>
               <strong>详细描述</strong>
             </Typography>
-            <Editor
-              value={form.descriptions}
-              onChange={(val) => setForm({ ...form, descriptions: val })}
-            />
+            {editorReady ? (
+              <Suspense fallback={<Typography variant="body2">加载编辑器中...</Typography>}>
+                <LazyEditor
+                  value={form.description}
+                  onChange={handleDescriptionChange}
+                />
+              </Suspense>
+            ) : (
+              <Typography variant="body2" sx={{ color: '#aaa' }}>等待编辑器加载...</Typography>
+            )}
           </Grid>
         </Grid>
 
-
- 
-      
       {/* ---------- 按钮区 ---------- */}
       {!embedded && (
         <Stack direction="row" spacing={2} mt="auto" pt={1} justifyContent="center">

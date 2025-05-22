@@ -5,7 +5,7 @@ import { useState } from 'react'
  * 自定义 Hook：统一管理任务详情、编辑、新增状态。
  * 用于 Home.jsx 中简化 selectedTask、showDetail 和切换逻辑。
  */
-export default function useTaskDetailState() {
+export default function useTaskDetailState(onReload) {
   const [selectedTask, setSelectedTask] = useState(null);  // { id?, mode: 'view' | 'edit' | 'new' } | null
   const [showDetail, setShowDetail] = useState(false);
 
@@ -23,14 +23,26 @@ export default function useTaskDetailState() {
 
   // 打开任务创建
   const openTaskCreate = () => {
-    setSelectedTask({ mode: 'new' });
+    setSelectedTask({ mode: 'edit' });
     setShowDetail(true);
   };
 
   // 从任务组件中回调关闭或切换编辑
   const handleTaskClose = (payload) => {
+    if (payload === 'reload') {
+      if (typeof onReload === 'function') onReload();
+      setShowDetail(false);
+      setTimeout(() => setSelectedTask(null), 200);
+      return;
+    }
     if (payload?.mode === 'edit') {
-      setSelectedTask(payload);
+      // 如果带有 task 数据就合并进来
+      if (payload.task) {
+        setSelectedTask({ ...payload.task, id: payload.id, mode: 'edit' });
+      } else {
+        setSelectedTask(payload);
+      }
+      setShowDetail(true);
     } else {
       setShowDetail(false);
       setTimeout(() => setSelectedTask(null), 200); // 延迟卸载右侧面板

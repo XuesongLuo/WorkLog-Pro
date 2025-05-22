@@ -5,7 +5,7 @@ export const CustomHighlight = Mark.create({
 
   addOptions() {
     return {
-      multicolor: false,
+      multicolor: true,
       HTMLAttributes: {},
     }
   },
@@ -14,7 +14,6 @@ export const CustomHighlight = Mark.create({
     return {
       color: {
         default: null,
-        parseHTML: element => element.style.backgroundColor || null,
         renderHTML: attributes => {
           if (!attributes.color) {
             return {}
@@ -31,13 +30,29 @@ export const CustomHighlight = Mark.create({
     return [
       {
         tag: 'span',
-        style: 'background-color',
+        getAttrs: element => {
+          const backgroundColor = element.style.backgroundColor
+          return backgroundColor ? { color: backgroundColor } : false
+        }
       },
+      {
+        tag: 'mark',
+        getAttrs: element => {
+          const backgroundColor = element.style.backgroundColor || element.getAttribute('data-color')
+          return backgroundColor ? { color: backgroundColor } : false
+        }
+      }
     ]
   },
 
   renderHTML({ HTMLAttributes }) {
-    return ['span', { ...this.options.HTMLAttributes, ...HTMLAttributes }, 0]
+    const { color, ...rest } = HTMLAttributes
+
+    return ['span', { 
+      style: color ? `background-color: ${color}` : undefined, 
+      ...this.options.HTMLAttributes, 
+      ...rest
+    }, 0]
   },
 
   addCommands() {

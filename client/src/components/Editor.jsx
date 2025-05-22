@@ -1,28 +1,28 @@
 import { useState, useEffect, useRef } from 'react'
 import { useEditor, EditorContent } from '@tiptap/react'
+
 import StarterKit from '@tiptap/starter-kit'
 import Underline from '@tiptap/extension-underline'
-import { CustomTextStyle } from './EditorComponents/CustomTextStyle'
+import TextStyle  from '@tiptap/extension-text-style'
 import Color from '@tiptap/extension-color'
-import { CustomHighlight } from './EditorComponents/CustomHighlight'
+import Highlight from '@tiptap/extension-highlight'
 import Image from '@tiptap/extension-image'
-
 import TaskList from '@tiptap/extension-task-list'
 import TaskItem from '@tiptap/extension-task-item'
 import Table from '@tiptap/extension-table'
 import TableRow from '@tiptap/extension-table-row'
 import TableCell from '@tiptap/extension-table-cell'
 import TableHeader from '@tiptap/extension-table-header'
-import { findParentNodeClosestToPos } from 'prosemirror-utils'
-
-
 import BulletList from '@tiptap/extension-bullet-list';
 import OrderedList from '@tiptap/extension-ordered-list';
 
-import './editor.css'
+import { CustomTextStyle } from './EditorComponents/CustomTextStyle'
+//import { CustomHighlight } from './EditorComponents/CustomHighlight'
 
-
+import { findParentNodeClosestToPos } from 'prosemirror-utils'
 import { DOMSerializer } from 'prosemirror-model';
+
+import './editor.css'
 
 
 // 表格选择器最大尺寸
@@ -119,7 +119,10 @@ const CustomBulletList = BulletList.extend({
     },
   });
 
-export default function Editor({ value = '', onChange }) {
+export default function Editor({ value = '', onChange, readOnly = false, hideToolbar = false  }) {
+    // 添加字体状态
+    const [currentFontFamily, setCurrentFontFamily] = useState('Arial')
+
     const [showTextColor, setShowTextColor] = useState(false)
     const [showBgColor, setShowBgColor] = useState(false)
     const [currentTextColor, setCurrentTextColor] = useState('')
@@ -146,19 +149,16 @@ export default function Editor({ value = '', onChange }) {
 
     const editor = useEditor({
         extensions: [
-            Underline,
-            CustomTextStyle,
-            Color.configure({ 
-                types: ['textStyle'],
-            }),
-            CustomHighlight.configure({ 
-                multicolor: true, 
-            }),
             StarterKit.configure({
                 bulletList: false,
                 orderedList: false,
                 table: false,
+                highlight: false,  
             }),
+            Color.configure({ types: ['textStyle'] }), // 让 Color 只作用于 textStyle
+            Highlight.configure({ multicolor: true }), // 支持多种背景色
+            Underline,
+            CustomTextStyle,
             CustomBulletList,
             CustomOrderedList,
             TaskList.configure({ nested: true }),
@@ -173,9 +173,15 @@ export default function Editor({ value = '', onChange }) {
         ],
         content: value || '',
         onUpdate({ editor }) {
-            if (onChange) {
+            if (onChange && !readOnly) {
                 onChange(editor.getHTML());
             }
+        },
+        editorProps: {
+            attributes: {
+              class: 'custom-editor',
+            },
+            editable: () => !readOnly, // 只读模式判断
         },
     })
 
@@ -207,6 +213,42 @@ export default function Editor({ value = '', onChange }) {
             document.removeEventListener('mousedown', handleClickOutside)
         }
     }, [])
+
+
+    // 在 useEffect 中添加颜色状态监听
+    useEffect(() => {
+        if (!editor) return
+        
+        const updateColorStates = () => {
+            // 更新文字颜色状态
+            const textColor = editor.getAttributes('textStyle').color
+            if (textColor) {
+                setCurrentTextColor(textColor)
+            }
+            // 更新背景色状态
+            const highlight = editor.getAttributes('highlight')
+            if (highlight.color) {
+                setCurrentBgColor(highlight.color)
+            }
+            // 更新字体大小状态
+            const fontSize = editor.getAttributes('textStyle').fontSize
+            if (fontSize) {
+                setCurrentFontSize(fontSize)
+            }
+            // 更新字体状态
+            const fontFamily = editor.getAttributes('textStyle').fontFamily
+            if (fontFamily) {
+                setCurrentFontFamily(fontFamily)
+            }
+        }
+        editor.on('selectionUpdate', updateColorStates)
+        editor.on('transaction', updateColorStates)
+        return () => {
+            editor.off('selectionUpdate', updateColorStates)
+            editor.off('transaction', updateColorStates)
+        }
+    }, [editor])
+
 
     // 单元格是否可以合并和拆分监听
     useEffect(() => {
@@ -354,329 +396,331 @@ export default function Editor({ value = '', onChange }) {
 
     return (
         <div className="editor-container">
-            <div className="toolbar" ref={toolbarRef}>
-                {/* 块类型选择 */}
-                <select
-                onChange={(e) => {
-                    const value = e.target.value;
-                    if (value === 'paragraph') {
-                    editor.chain().focus().setParagraph().run();
-                    } else if (value === 'blockquote') {
-                    editor.chain().focus().toggleBlockquote().run();
-                    } else if (value === 'codeBlock') {
-                    editor.chain().focus().toggleCodeBlock().run();
-                    } else {
-                    editor.chain().focus().toggleHeading({ level: Number(value) }).run();
+            {!hideToolbar && (
+                <div className="toolbar" ref={toolbarRef}>
+                    {/* 块类型选择 */}
+                    <select
+                    onChange={(e) => {
+                        const value = e.target.value;
+                        if (value === 'paragraph') {
+                        editor.chain().focus().setParagraph().run();
+                        } else if (value === 'blockquote') {
+                        editor.chain().focus().toggleBlockquote().run();
+                        } else if (value === 'codeBlock') {
+                        editor.chain().focus().toggleCodeBlock().run();
+                        } else {
+                        editor.chain().focus().toggleHeading({ level: Number(value) }).run();
+                        }
+                    }}
+                    value={
+                        editor.isActive('heading', { level: 1 }) ? '1'
+                        : editor.isActive('heading', { level: 2 }) ? '2'
+                        : editor.isActive('heading', { level: 3 }) ? '3'
+                        : editor.isActive('blockquote') ? 'blockquote'
+                        : editor.isActive('codeBlock') ? 'codeBlock'
+                        : 'paragraph'
                     }
-                }}
-                value={
-                    editor.isActive('heading', { level: 1 }) ? '1'
-                    : editor.isActive('heading', { level: 2 }) ? '2'
-                    : editor.isActive('heading', { level: 3 }) ? '3'
-                    : editor.isActive('blockquote') ? 'blockquote'
-                    : editor.isActive('codeBlock') ? 'codeBlock'
-                    : 'paragraph'
-                }
-                >
-                <option value="paragraph">正文</option>
-                <option value="1">标题1</option>
-                <option value="2">标题2</option>
-                <option value="3">标题3</option>
-                <option value="blockquote">引用块</option>
-                <option value="codeBlock">代码块</option>
-                </select>
+                    >
+                    <option value="paragraph">正文</option>
+                    <option value="1">标题1</option>
+                    <option value="2">标题2</option>
+                    <option value="3">标题3</option>
+                    <option value="blockquote">引用块</option>
+                    <option value="codeBlock">代码块</option>
+                    </select>
 
-                {/* 字体类型选择 */}
-                <select
-                onChange={(e) => {
-                    const font = e.target.value
-                    const { state, view } = editor
-                    const { from, to, empty } = state.selection
-                    if (empty) {
-                        // 没有选中文字，只是光标停着
-                        editor.chain().focus().setMark('textStyle', { fontFamily: font }).run()
-                    } else {
-                        // 有选中文字，给选区设置textStyle
-                        editor.chain().focus().setMark('textStyle', { fontFamily: font }).run()
-                    }
-                }}
-                >
-                {fontFamilies.map(item => (
-                    <option key={item.value} value={item.value}>{item.label}</option>
-                ))}
-                </select>
+                    {/* 字体类型选择 */}
+                    <select
+                    onChange={(e) => {
+                        const font = e.target.value
+                        const { state, view } = editor
+                        const { from, to, empty } = state.selection
+                        if (empty) {
+                            // 没有选中文字，只是光标停着
+                            editor.chain().focus().setMark('textStyle', { fontFamily: font }).run()
+                        } else {
+                            // 有选中文字，给选区设置textStyle
+                            editor.chain().focus().setMark('textStyle', { fontFamily: font }).run()
+                        }
+                    }}
+                    >
+                    {fontFamilies.map(item => (
+                        <option key={item.value} value={item.value}>{item.label}</option>
+                    ))}
+                    </select>
 
-                {/* 字体大小选择 */}
-                <select
-                onChange={(e) => {
-                    const size = e.target.value;
-                    editor.chain().focus().setMark('textStyle', { fontSize: size }).run();
-                    setCurrentFontSize(size)
-                }}
-                value={currentFontSize}
-                >
-                {fontSizes.map(size => (
-                    <option key={size} value={size}>{size}</option>
-                ))}
-                </select>
+                    {/* 字体大小选择 */}
+                    <select
+                    onChange={(e) => {
+                        const size = e.target.value;
+                        editor.chain().focus().setMark('textStyle', { fontSize: size }).run();
+                        setCurrentFontSize(size)
+                    }}
+                    value={currentFontSize}
+                    >
+                    {fontSizes.map(size => (
+                        <option key={size} value={size}>{size}</option>
+                    ))}
+                    </select>
 
-                {/* 基本格式 */}
-                <button onClick={() => editor.chain().focus().toggleBold().run()} className={editor.isActive('bold') ? 'is-active' : ''}>B</button>
-                <button onClick={() => editor.chain().focus().toggleItalic().run()} className={editor.isActive('italic') ? 'is-active' : ''}><i>I</i></button>
-                <button onClick={() => editor.chain().focus().toggleUnderline().run()} className={editor.isActive('underline') ? 'is-active' : ''}><u>U</u></button>
-                <button onClick={() => editor.chain().focus().toggleStrike().run()} className={editor.isActive('strike') ? 'is-active' : ''}><s>S</s></button>
+                    {/* 基本格式 */}
+                    <button onClick={() => editor.chain().focus().toggleBold().run()} className={editor.isActive('bold') ? 'is-active' : ''}>B</button>
+                    <button onClick={() => editor.chain().focus().toggleItalic().run()} className={editor.isActive('italic') ? 'is-active' : ''}><i>I</i></button>
+                    <button onClick={() => editor.chain().focus().toggleUnderline().run()} className={editor.isActive('underline') ? 'is-active' : ''}><u>U</u></button>
+                    <button onClick={() => editor.chain().focus().toggleStrike().run()} className={editor.isActive('strike') ? 'is-active' : ''}><s>S</s></button>
 
-                {/* 文字颜色选择 */}
-                <div className="dropdown">
-                    <div className="split-button">
-                        <button
-                        onClick={() => {
-                            editor.chain().focus().setColor(currentTextColor || '#000').run();
-                        }}
-                        >
-                        <span className="color-preview" style={{ backgroundColor: currentTextColor || '#000' }}></span>
-                        </button>
-                        <button
+                    {/* 文字颜色选择 */}
+                    <div className="dropdown">
+                        <div className="split-button">
+                            <button
+                            onClick={() => {
+                                editor.chain().focus().setColor(currentTextColor || '#000').run();
+                            }}
+                            >
+                            <span className="color-preview" style={{ backgroundColor: currentTextColor || '#000' }}></span>
+                            </button>
+                            <button
+                                className="split-toggle"
+                                onClick={(e) => {
+                                    const rect = e.currentTarget.getBoundingClientRect();
+                                    setFloatingPosition({
+                                        top: rect.bottom + 4, // 稍微下移一点
+                                        left: rect.left,
+                                    });
+                                    setShowTextColor(!showTextColor);
+                                    setShowBgColor(false);
+                                    setShowBulletListStyles(false);
+                                    setShowOrderedListStyles(false);
+                                    setShowTableSelector(false);
+                                }}
+                            >
+                            ▼
+                            </button>
+                        </div>
+
+                        {showTextColor && (
+                            <div className="color-palette floating" style={{ top: floatingPosition.top, left: floatingPosition.left }}>
+                            {colors.map((color) => (
+                                <button
+                                key={color}
+                                style={{ backgroundColor: color }}
+                                className={`color-button ${editor.getAttributes('textStyle').color === color ? 'is-active' : ''}`}
+                                onClick={() => {
+                                    editor.chain().focus().setColor(color).run();
+                                    setCurrentTextColor(color);
+                                    setShowTextColor(false);
+                                }}
+                                />
+                            ))}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* 背景颜色选择 */}
+                    <div className="dropdown">
+                        <div className="split-button">
+                            <button
+                            onClick={() => {
+                                editor.chain().focus().setHighlight({ color: currentBgColor || '#fff' }).run();
+                            }}
+                            >
+                            <span className="color-preview" style={{ backgroundColor: currentBgColor || '#fff' }}></span>
+                            </button>
+                            <button
                             className="split-toggle"
                             onClick={(e) => {
                                 const rect = e.currentTarget.getBoundingClientRect();
                                 setFloatingPosition({
-                                    top: rect.bottom + 4, // 稍微下移一点
+                                    top: rect.bottom + 4,
                                     left: rect.left,
                                 });
-                                setShowTextColor(!showTextColor);
-                                setShowBgColor(false);
+                                setShowBgColor(!showBgColor);
+                                setShowTextColor(false);
                                 setShowBulletListStyles(false);
                                 setShowOrderedListStyles(false);
                                 setShowTableSelector(false);
                             }}
-                        >
-                        ▼
-                        </button>
+                            >
+                            ▼
+                            </button>
+                        </div>
+
+                        {showBgColor && (
+                            <div className="color-palette floating" style={{ top: floatingPosition.top, left: floatingPosition.left }}>
+                            {colors.map((color) => (
+                                <button
+                                key={color}
+                                style={{ backgroundColor: color }}
+                                className={`color-button ${editor.isActive('highlight', { color }) ? 'is-active' : ''}`}
+                                onClick={() => {
+                                    editor.chain().focus().setHighlight({ color }).run();
+                                    setCurrentBgColor(color);
+                                    setShowBgColor(false);
+                                }}
+                                />
+                            ))}
+                            </div>
+                        )}
                     </div>
 
-                    {showTextColor && (
-                        <div className="color-palette floating" style={{ top: floatingPosition.top, left: floatingPosition.left }}>
-                        {colors.map((color) => (
-                            <button
-                            key={color}
-                            style={{ backgroundColor: color }}
-                            className={`color-button ${editor.getAttributes('textStyle').color === color ? 'is-active' : ''}`}
-                            onClick={() => {
-                                editor.chain().focus().setColor(color).run();
-                                setCurrentTextColor(color);
-                                setShowTextColor(false);
-                            }}
-                            />
-                        ))}
+                    {/* 无序列表按钮 */}
+                    <div className="dropdown">
+                        <div className="split-button">
+                            <button onClick={() => {
+                                if (editor.isActive('bulletList')) {
+                                    // 处于无序列表：彻底清理掉 ul 和它的属性
+                                    editor.chain().focus()
+                                        .clearNodes({ types: ['bulletList'] })
+                                        .run()
+                                } else {
+                                    // 不在列表：开一个新的 ul 并加上样式
+                                    editor.chain().focus()
+                                        .toggleBulletList()
+                                        .updateAttributes('bulletList', { listStyleType: currentBulletStyle })
+                                        .run()
+                                }
+                            }}>
+                                {currentBulletStyle === 'disc' ? '•' : currentBulletStyle === 'circle' ? '○' : '▪'}
+                            </button>
+                            <button className="split-toggle" 
+                                onClick={() => {
+                                    setShowBulletListStyles(!showBulletListStyles)
+                                    setShowOrderedListStyles(false)
+                                }}
+                            >
+                            ▼
+                            </button>
                         </div>
-                    )}
-                </div>
-
-                {/* 背景颜色选择 */}
-                <div className="dropdown">
-                    <div className="split-button">
-                        <button
-                        onClick={() => {
-                            editor.chain().focus().setHighlight({ color: currentBgColor || '#fff' }).run();
-                        }}
-                        >
-                        <span className="color-preview" style={{ backgroundColor: currentBgColor || '#fff' }}></span>
-                        </button>
-                        <button
-                        className="split-toggle"
-                        onClick={(e) => {
-                            const rect = e.currentTarget.getBoundingClientRect();
-                            setFloatingPosition({
-                                top: rect.bottom + 4,
-                                left: rect.left,
-                            });
-                            setShowBgColor(!showBgColor);
-                            setShowTextColor(false);
-                            setShowBulletListStyles(false);
-                            setShowOrderedListStyles(false);
-                            setShowTableSelector(false);
-                        }}
-                        >
-                        ▼
-                        </button>
+                        {showBulletListStyles && (
+                            <div className="list-style-palette floating">
+                            <button onClick={() => handleBulletListStyle('disc')}>•</button>
+                            <button onClick={() => handleBulletListStyle('circle')}>○</button>
+                            <button onClick={() => handleBulletListStyle('square')}>▪</button>
+                            </div>
+                        )}
                     </div>
-
-                    {showBgColor && (
-                        <div className="color-palette floating" style={{ top: floatingPosition.top, left: floatingPosition.left }}>
-                        {colors.map((color) => (
-                            <button
-                            key={color}
-                            style={{ backgroundColor: color }}
-                            className={`color-button ${editor.isActive('highlight', { color }) ? 'is-active' : ''}`}
-                            onClick={() => {
-                                editor.chain().focus().setHighlight({ color }).run();
-                                setCurrentBgColor(color);
-                                setShowBgColor(false);
-                            }}
-                            />
-                        ))}
-                        </div>
-                    )}
-                </div>
-
-                {/* 无序列表按钮 */}
-                <div className="dropdown">
-                    <div className="split-button">
-                        <button onClick={() => {
-                            if (editor.isActive('bulletList')) {
-                                // 处于无序列表：彻底清理掉 ul 和它的属性
+                    {/* 有序列表按钮 */}
+                    <div className="dropdown">
+                        <div className="split-button">
+                            {/* 主按钮 - 点击直接应用默认有序列表 */}
+                            <button onClick={() => {
+                            if (editor.isActive('orderedList')) {
                                 editor.chain().focus()
-                                    .clearNodes({ types: ['bulletList'] })
+                                    .clearNodes({ types: ['orderedList'] })
                                     .run()
-                            } else {
-                                // 不在列表：开一个新的 ul 并加上样式
+                                } else {
                                 editor.chain().focus()
-                                    .toggleBulletList()
-                                    .updateAttributes('bulletList', { listStyleType: currentBulletStyle })
+                                    .toggleOrderedList()
+                                    .updateAttributes('orderedList', { listStyleType: currentOrderedStyle })
                                     .run()
-                            }
-                        }}>
-                            {currentBulletStyle === 'disc' ? '•' : currentBulletStyle === 'circle' ? '○' : '▪'}
-                        </button>
-                        <button className="split-toggle" 
+                                }
+                            }}>
+                                {
+                                    currentOrderedStyle === 'decimal' ? '1. ' :
+                                    currentOrderedStyle === 'lower-alpha' ? 'a.' :
+                                    currentOrderedStyle === 'upper-alpha' ? 'A.' :
+                                    currentOrderedStyle === 'lower-roman' ? 'i. ' :
+                                    currentOrderedStyle === 'upper-roman' ? 'I. ' : '1. '
+                                }
+                            </button>
+
+                            {/* 小三角按钮 - 点击展开样式选择 */}
+                            <button
+                            className="split-toggle"
                             onClick={() => {
-                                setShowBulletListStyles(!showBulletListStyles)
-                                setShowOrderedListStyles(false)
+                                setShowOrderedListStyles(!showOrderedListStyles);
+                                setShowBulletListStyles(false);
                             }}
-                        >
-                        ▼
-                        </button>
-                    </div>
-                    {showBulletListStyles && (
-                        <div className="list-style-palette floating">
-                        <button onClick={() => handleBulletListStyle('disc')}>•</button>
-                        <button onClick={() => handleBulletListStyle('circle')}>○</button>
-                        <button onClick={() => handleBulletListStyle('square')}>▪</button>
+                            >
+                            ▼
+                            </button>
                         </div>
-                    )}
-                </div>
-                {/* 有序列表按钮 */}
-                <div className="dropdown">
-                    <div className="split-button">
-                        {/* 主按钮 - 点击直接应用默认有序列表 */}
-                        <button onClick={() => {
-                           if (editor.isActive('orderedList')) {
-                            editor.chain().focus()
-                                .clearNodes({ types: ['orderedList'] })
-                                .run()
-                            } else {
-                            editor.chain().focus()
-                                .toggleOrderedList()
-                                .updateAttributes('orderedList', { listStyleType: currentOrderedStyle })
-                                .run()
-                            }
-                        }}>
-                            {
-                                currentOrderedStyle === 'decimal' ? '1. ' :
-                                currentOrderedStyle === 'lower-alpha' ? 'a.' :
-                                currentOrderedStyle === 'upper-alpha' ? 'A.' :
-                                currentOrderedStyle === 'lower-roman' ? 'i. ' :
-                                currentOrderedStyle === 'upper-roman' ? 'I. ' : '1. '
-                            }
-                        </button>
 
-                        {/* 小三角按钮 - 点击展开样式选择 */}
-                        <button
-                        className="split-toggle"
-                        onClick={() => {
-                            setShowOrderedListStyles(!showOrderedListStyles);
-                            setShowBulletListStyles(false);
-                        }}
-                        >
-                        ▼
-                        </button>
+                        {/* 浮动下拉列表 */}
+                        {showOrderedListStyles && (
+                            <div className="list-style-palette floating">
+                            <button onClick={() => handleOrderedListStyle('decimal')}>1.2.3</button>
+                            <button onClick={() => handleOrderedListStyle('lower-alpha')}>a.b.c</button>
+                            <button onClick={() => handleOrderedListStyle('upper-alpha')}>A.B.C</button>
+                            <button onClick={() => handleOrderedListStyle('lower-roman')}>i.ii.iii</button>
+                            <button onClick={() => handleOrderedListStyle('upper-roman')}>I.II.III</button>
+                            </div>
+                        )}
                     </div>
 
-                    {/* 浮动下拉列表 */}
-                    {showOrderedListStyles && (
-                        <div className="list-style-palette floating">
-                        <button onClick={() => handleOrderedListStyle('decimal')}>1.2.3</button>
-                        <button onClick={() => handleOrderedListStyle('lower-alpha')}>a.b.c</button>
-                        <button onClick={() => handleOrderedListStyle('upper-alpha')}>A.B.C</button>
-                        <button onClick={() => handleOrderedListStyle('lower-roman')}>i.ii.iii</button>
-                        <button onClick={() => handleOrderedListStyle('upper-roman')}>I.II.III</button>
-                        </div>
-                    )}
-                </div>
+                    <button onClick={() => editor.chain().focus().toggleTaskList().run()} className={editor.isActive('taskList') ? 'is-active' : ''}>✅</button>
+                    {/* ✅  ☑️ */}
 
-                <button onClick={() => editor.chain().focus().toggleTaskList().run()} className={editor.isActive('taskList') ? 'is-active' : ''}>✅</button>
-                {/* ✅  ☑️ */}
-
-                <button
-                    onClick={() => {
-                        if (editor.isActive('taskList')) {
-                            editor.chain().focus().sinkListItem('taskItem').run()
-                        } else {
-                            editor.chain().focus().sinkListItem('listItem').run()
-                        }
-                    }}
-                    title="Increase indent"
-                    >
-                    →{/* 或者用图标 */}
-                    </button>
-                    {/* 取消缩进 */}
                     <button
-                    onClick={() => {
-                        if (editor.isActive('taskList')) {
-                            editor.chain().focus().liftListItem('taskItem').run()
-                        } else {
-                            editor.chain().focus().liftListItem('listItem').run()
-                        }
-                    }}
-                    title="Decrease indent"
-                    >
-                    ←{/* 或者用图标 */}
-                </button>
+                        onClick={() => {
+                            if (editor.isActive('taskList')) {
+                                editor.chain().focus().sinkListItem('taskItem').run()
+                            } else {
+                                editor.chain().focus().sinkListItem('listItem').run()
+                            }
+                        }}
+                        title="Increase indent"
+                        >
+                        →{/* 或者用图标 */}
+                        </button>
+                        {/* 取消缩进 */}
+                        <button
+                        onClick={() => {
+                            if (editor.isActive('taskList')) {
+                                editor.chain().focus().liftListItem('taskItem').run()
+                            } else {
+                                editor.chain().focus().liftListItem('listItem').run()
+                            }
+                        }}
+                        title="Decrease indent"
+                        >
+                        ←{/* 或者用图标 */}
+                    </button>
 
 
-                {/* 插入图片 */}
-                <button onClick={() => fileInputRef.current.click()}>🖼️</button>
-                <input
-                type="file"
-                accept="image/*"
-                style={{ display: 'none' }}
-                ref={fileInputRef}
-                onChange={handleUploadImage}
-                />
+                    {/* 插入图片 */}
+                    <button onClick={() => fileInputRef.current.click()}>🖼️</button>
+                    <input
+                    type="file"
+                    accept="image/*"
+                    style={{ display: 'none' }}
+                    ref={fileInputRef}
+                    onChange={handleUploadImage}
+                    />
 
-                {/* 插入表格按钮 */}
-                <div className="dropdown">
-                <button onClick={() => setShowTableSelector(!showTableSelector)}>📋</button>
-                {showTableSelector && (
-                    <div className="table-selector">
-                    {[...Array(MAX_ROWS)].map((_, row) => (
-                        <div className="table-selector-row" key={row}>
-                        {[...Array(MAX_COLS)].map((_, col) => (
-                            <div
-                            key={col}
-                            className={`table-selector-cell ${(row <= hoverRow && col <= hoverCol) ? 'selected' : ''}`}
-                            onMouseEnter={() => {
-                                setHoverRow(row)
-                                setHoverCol(col)
-                            }}
-                            onClick={handleInsertTable}
-                            />
+                    {/* 插入表格按钮 */}
+                    <div className="dropdown">
+                    <button onClick={() => setShowTableSelector(!showTableSelector)}>📋</button>
+                    {showTableSelector && (
+                        <div className="table-selector">
+                        {[...Array(MAX_ROWS)].map((_, row) => (
+                            <div className="table-selector-row" key={row}>
+                            {[...Array(MAX_COLS)].map((_, col) => (
+                                <div
+                                key={col}
+                                className={`table-selector-cell ${(row <= hoverRow && col <= hoverCol) ? 'selected' : ''}`}
+                                onMouseEnter={() => {
+                                    setHoverRow(row)
+                                    setHoverCol(col)
+                                }}
+                                onClick={handleInsertTable}
+                                />
+                            ))}
+                            </div>
                         ))}
+                        {hoverRow >= 0 && hoverCol >= 0 && (
+                            <div className="table-size-info">{hoverRow + 1} × {hoverCol + 1}</div>
+                        )}
                         </div>
-                    ))}
-                    {hoverRow >= 0 && hoverCol >= 0 && (
-                        <div className="table-size-info">{hoverRow + 1} × {hoverCol + 1}</div>
                     )}
                     </div>
-                )}
+
+
+                    {/* 撤销重做 */}
+                    <button onClick={() => editor.chain().focus().undo().run()}>↺</button>
+                    <button onClick={() => editor.chain().focus().redo().run()}>↻</button>
                 </div>
-
-
-                {/* 撤销重做 */}
-                <button onClick={() => editor.chain().focus().undo().run()}>↺</button>
-                <button onClick={() => editor.chain().focus().redo().run()}>↻</button>
-            </div>
+            )}
             <EditorContent 
                 editor={editor} 
                 onContextMenu={handleContextMenu} 

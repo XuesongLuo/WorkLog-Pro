@@ -1,5 +1,6 @@
 // src/pages/Home.jsx
-import { useState } from 'react';
+import React from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Typography, Box, Button, Stack, Grid, Container, Slide} from '@mui/material';
 import ViewListIcon from '@mui/icons-material/ViewList';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
@@ -12,16 +13,91 @@ import CalendarView from '../components/CalendarView';
 import TaskDetail from '../components/TaskDetail';
 import CreateOrEditTask from '../components/CreateOrEditTask';
 import { api } from '../api/tasks';
-import { useEffect } from 'react';
 
+import { useDebounce } from '../hooks/useDebounce';
 import useTaskDetailState from '../hooks/useTaskDetailState';
 
+
+const SlideContent = React.memo(
+  ({ selectedTask, handleTaskClose }) => (
+    <Box sx={{ width: '100%', height: '100%', overflow: 'auto' }}>
+      {selectedTask?.mode === 'edit' && (
+        <CreateOrEditTask
+          key={selectedTask?.id ?? 'new'}
+          embedded
+          id={selectedTask?.id}
+          task={selectedTask}
+          onClose={handleTaskClose}
+        />
+      )}
+      {selectedTask?.mode === 'view' && (
+        <TaskDetail
+          id={selectedTask.id}
+          embedded
+          onClose={handleTaskClose}
+        />
+      )}
+    </Box>
+  ),
+  (prevProps, nextProps) =>
+    prevProps.selectedTask?.id === nextProps.selectedTask?.id &&
+    prevProps.selectedTask?.mode === nextProps.selectedTask?.mode &&
+    prevProps.handleTaskClose === nextProps.handleTaskClose
+);
 
 export default function Home() {
   const [tasks, setTasks] = useState([]);
   const [lang, setLang] = useState('zh');
   const [viewMode, setViewMode] = useState('calendar'); // 'calendar' | 'list'
   const navigate = useNavigate();
+
+  const fetchTasks = () => {
+    api.getTasks()
+      .then(data => setTasks(data))
+      .catch(err => console.error('获取任务失败:', err));
+  };
+  const {
+    selectedTask,
+    showDetail,
+    openTaskDetail,
+    openTaskEdit,
+    openTaskCreate,
+    handleTaskClose
+  } = useTaskDetailState(fetchTasks);
+
+  const debouncedTaskClose = useDebounce(handleTaskClose, 100);   // 包装防抖版本的 handleTaskClose
+
+  // 使用 useMemo 优化计算
+  const gridStyles = useMemo(() => ({
+    display: 'flex',
+    flexDirection: 'column',
+    transition: 'all 0.5s ease',
+    flexGrow: 1,
+    width: showDetail ? '50%' : '100%',
+    maxWidth: showDetail ? '50%' : '100%',
+    flexBasis: showDetail ? '50%' : '100%',
+    pl: 1,
+    pr: 1,
+    ml: showDetail ? 0 : 'auto',
+    mr: showDetail ? 0 : 'auto',
+    height: '100%',
+  }), [showDetail]);
+
+  const rightPanelStyles = useMemo(() => ({
+    display: 'flex',
+    flexDirection: 'column',
+    flexGrow: showDetail ? 1 : 0,
+    width: showDetail ? '50%' : 0,
+    maxWidth: showDetail ? '50%' : 0,
+    flexBasis: showDetail ? '50%' : 0,
+    transition: 'all 0.5s ease',
+    opacity: showDetail ? 1 : 0,
+    pl: showDetail ? 2 : 0,
+    borderLeft: showDetail ? '1px solid #ddd' : 'none',
+    height: '100%',
+    overflow: 'hidden',
+  }), [showDetail]);
+
 
   // 从后端加载任务列表
   useEffect(() => {
@@ -30,35 +106,24 @@ export default function Home() {
       .catch(err => console.error('获取任务失败:', err));
   }, []);
 
+  // 卸载行为延迟进行
+  const DelayedUnmount = ({ show, children }) => {
+    const [render, setRender] = useState(show);
+    useEffect(() => {
+      if (show) setRender(true);
+      else {
+        const id = setTimeout(() => setRender(false), 500); // 等动画完成
+        return () => clearTimeout(id);
+      }
+    }, [show]);
+    return render ? children : null;
+  };
+
   // 语言切换
   const handleLangChange = (e) => setLang(e.target.value);
   // 视图切换
   const toggleView = () =>
     setViewMode(prev => (prev === 'calendar' ? 'list' : 'calendar'));
-
-  /*
-  const [selectedTask, setSelectedTask] = useState(null); // null / {id} / {id:'new'} / {id:x,mode:'edit'}
-  // 控制“是否展示 TaskDetail”的变量
-  const [showDetail, setShowDetail] = useState(false);
-  // 设置任务
-  const handleSelectTask = (task) => {
-    setShowDetail(true);          // 日历滑到左边
-    setSelectedTask(task);        // 右侧详情出现
-  };
-  // 关闭任务面板
-  const handleCloseTask = () => {
-    setShowDetail(false);         // 日历滑回来
-    setTimeout(() => setSelectedTask(null), 200); // 延迟卸载右侧面板
-  };
-  */
-  const {
-    selectedTask,
-    showDetail,
-    openTaskDetail,
-    openTaskEdit,
-    openTaskCreate,
-    handleTaskClose
-  } = useTaskDetailState();
   
   /* --------------------- 组件渲染 --------------------- */
   return (
@@ -84,22 +149,7 @@ export default function Home() {
           }}
         >
           {/* 日历或列表 列 */}
-          <Grid
-            sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              transition: 'all 0.5s ease',
-              flexGrow: 1,
-              width: showDetail ? '50%' : '100%', // 明确指定宽度
-              maxWidth: showDetail ? '50%' : '100%', // 在未选择任务时允许更大的宽度
-              flexBasis: showDetail ? '50%' : '100%', // 设置flex基础大小
-              pl: 1, // 左侧间距
-              pr: 1, // 右侧间距
-              ml: showDetail ? 0 : 'auto',
-              mr: showDetail ? 0 : 'auto',
-              height: '100%',
-            }}
-          >
+          <Grid sx={gridStyles}>
             <Stack direction="row" justifyContent="space-between" mb={2}>
               <Button
                   variant="outlined"
@@ -112,9 +162,8 @@ export default function Home() {
                 {viewMode === 'calendar' ? '项目--日历' : '项目--列表'}
               </Typography>
               
-
               <Stack direction="row" spacing={2}>
-                <Button variant="outlined" onClick={/*handleCloseTask*/handleTaskClose}>
+                <Button variant="outlined" onClick={debouncedTaskClose}>
                   返回首页
                 </Button>
                 <Button variant="contained" color="secondary" /*onClick={() => handleSelectTask({ id: 'new' })}*/ onClick={openTaskCreate}>
@@ -150,83 +199,38 @@ export default function Home() {
 
 
           {/* 右侧面板：详情 / 新建 / 编辑 */}
-          <Grid
-              sx={{
-                display: 'flex',         // ⚠️ 保留容器
-                flexDirection: 'column',
-                flexGrow: showDetail ? 1 : 0,
-                width: showDetail ? '50%' : 0,                  // ⚠️ 动画收缩
-                maxWidth: showDetail ? '50%' : 0,
-                flexBasis: showDetail ? '50%' : 0,
-                transition: 'all 0.5s ease',                      // ⚠️ 动画
-                opacity: showDetail ? 1 : 0,   
-                pl: showDetail ? 2 : 0,
-                borderLeft: showDetail ? '1px solid #ddd' : 'none',
-                
-                height: '100%', 
-                //height: '80vh',
-                overflow: 'hidden',
-              }}
-            >
-              <Slide direction="left" in={!!selectedTask} mountOnEnter unmountOnExit>
-              <Box sx={{ width: '100%', height: '100%', overflow: 'auto', }}>
-                {/* Fade 里的直接子元素必须是能接收 ref 的 DOM；TaskPane.forwardRef 已满足 */}
-                {/*
-                {selectedTask?.id === 'new' ? (
-                  <CreateOrEditTask
-                    key="new"
-                    embedded
-                    onClose={
-                      //handleCloseTask
-                      handleTaskClose
-                    }
+          <Grid sx={rightPanelStyles}>
+            <Slide direction="left" in={!!selectedTask} mountOnEnter unmountOnExit>
+              <div>
+                <DelayedUnmount show={!!selectedTask}>
+                  <SlideContent
+                    selectedTask={selectedTask}
+                    handleTaskClose={debouncedTaskClose}
                   />
-                ) : selectedTask?.mode === 'edit' ? (
-                  <CreateOrEditTask
-                    key={selectedTask.id}   // ← id 变化时强制重建组件
-                    embedded
-                    id={selectedTask.id}
-                    onClose={
-                      //handleCloseTask
-                      handleTaskClose
-                    }
-                  />
-                ) : selectedTask ? (
-                  <TaskDetail
-                    id={selectedTask.id}
-                    embedded
-                    // 在 TaskDetail 内点击“编辑”时把 mode 带回
-                    onClose={
-                      
-                      (payload) => {
-                      if (payload) {
-                        setSelectedTask(payload);
-                      } else {
-                        handleCloseTask();  // 点击“退出”
-                      }
-                    }
-                     
-                    handleTaskClose}
-                  />
-                ): null}
-                */}
-                {selectedTask?.mode === 'edit' && (
-                  <CreateOrEditTask
-                    key={selectedTask?.id ?? 'new'}
-                    embedded
-                    id={selectedTask?.id}
-                    onClose={handleTaskClose}
-                  />
-                )}
+                </DelayedUnmount>
+              </div>
+                {/* Fade 里的直接子元素必须是能接收 ref 的 DOM；TaskPane.forwardRef 已满足 
+                <Box sx={{ width: '100%', height: '100%', overflow: 'auto', }}>
+                  
+                  {selectedTask?.mode === 'edit' && (
+                    <CreateOrEditTask
+                      key={selectedTask?.id ?? 'new'}
+                      embedded
+                      id={selectedTask?.id}
+                      task={selectedTask}
+                      onClose={handleTaskClose}
+                    />
+                  )}
 
-                {selectedTask?.mode === 'view' && (
-                  <TaskDetail
-                    id={selectedTask.id}
-                    embedded
-                    onClose={handleTaskClose}
-                  />
-                )}
+                  {selectedTask?.mode === 'view' && (
+                    <TaskDetail
+                      id={selectedTask.id}
+                      embedded
+                      onClose={handleTaskClose}
+                    />
+                  )}
                 </Box>
+                */}
               </Slide>
             </Grid>
         </Grid>

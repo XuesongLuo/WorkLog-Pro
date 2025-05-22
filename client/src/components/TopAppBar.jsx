@@ -22,7 +22,7 @@ import {
             <MenuIcon />
           </IconButton>
           <Typography variant="h6" sx={{ flexGrow: 1 }}>
-            WorkLog Pro
+            WorkLog
           </Typography>
           <Select
             value={lang}
