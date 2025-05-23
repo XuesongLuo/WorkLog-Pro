@@ -105,6 +105,13 @@ export default function CreateOrEditTask({ id: propId, task: propTask, embedded 
     }
   }, [id, isEdit, propTask, taskFromRoute]);
 
+  useEffect(() => {
+    if (!isEdit) {
+      // 新建模式直接准备好编辑器
+      requestIdleCallback(() => setEditorReady(true));
+    }
+  }, [isEdit]);
+
   // 使用 useCallback 优化 handleChange
   const handleChange = useCallback((e) => {
     const { name, value } = e.target;
