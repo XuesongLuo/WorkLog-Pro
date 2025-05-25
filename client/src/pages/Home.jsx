@@ -51,9 +51,18 @@ export default function Home() {
   const [viewMode, setViewMode] = useState('calendar'); // 'calendar' | 'list'
   const navigate = useNavigate();
 
+
+  // 确保 start 和 end 是 Date 对象（react-big-calendar 要求），否则如点击 "+more" 时会报错
+  const normalizeTaskDates = (tasks) =>
+  tasks.map(task => ({
+    ...task,
+    start: new Date(task.start),
+    end: new Date(task.end),
+  }));
+
   const fetchTasks = () => {
     api.getTasks()
-      .then(data => setTasks(data))
+      .then(data => setTasks(normalizeTaskDates(data)))
       .catch(err => console.error('获取任务失败:', err));
   };
   const {
@@ -98,11 +107,10 @@ export default function Home() {
     overflow: 'hidden',
   }), [showDetail]);
 
-
   // 从后端加载任务列表
   useEffect(() => {
     api.getTasks()
-      .then(data => setTasks(data))
+      .then(data => setTasks(normalizeTaskDates(data)))
       .catch(err => console.error('获取任务失败:', err));
   }, []);
 
@@ -184,14 +192,12 @@ export default function Home() {
               <CalendarView
                 events={tasks}
                 style={{ height: '100%', width: '100%' }}
-                //onSelectEvent={(event) => handleSelectTask(event)}
                 onSelectEvent={(event) => openTaskDetail(event.id)}
               />
             ) : (
               <TaskList
                 tasks={tasks}
-                //onSelectTask={(task) => handleSelectTask(task)}
-                onSelectEvent={(task) => openTaskDetail(task.id)}
+                onSelectTask={(task) => openTaskDetail(task.id)}
                 sx={{ height: '100%' }}
               />
             )}
