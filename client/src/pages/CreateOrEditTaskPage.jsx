@@ -1,16 +1,19 @@
 // src/pages/CreateOrEditTaskPage.jsx
-import { useParams } from 'react-router-dom';
-import CreateOrEditTask from '../components/CreateOrEditTask';
+import { useParams, useNavigate } from 'react-router-dom';
 import { Box } from '@mui/material';
-
+import CreateOrEditTask from '../components/CreateOrEditTask';
 import TopAppBar from '../components/TopAppBar';
 
 export default function CreateOrEditTaskPage() {
   const { id } = useParams();
+  const navigate = useNavigate();
 
   return (
     <Box sx={{ width: '100vw', minHeight: '100vh' }}>
-      <TopAppBar />
+      <TopAppBar 
+        showHomeButton         
+        onHomeClick={() => navigate('/')}
+      />
       <Box sx={{ 
           width: '100%', 
           margin: '0 auto', // 水平居中

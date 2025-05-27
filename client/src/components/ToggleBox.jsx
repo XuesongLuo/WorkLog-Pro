@@ -1,19 +1,16 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { TableCell, Box, Checkbox, TextField } from '@mui/material';
 
-const ToggleBox = React.memo(function ToggleBox({
-  section,
-  rowIndex,
-  data,
-  onToggleActive,
-  onDateChange            // 直接复用 handleChange
-}) {
+const ToggleBox = React.memo(function ToggleBox({section, data, onToggleActive, onDateChange}) {
   const { active, startDate } = data;
 
-  const toggle = React.useCallback(() => onToggleActive(rowIndex, section), [rowIndex, section, onToggleActive]);
+  const toggle = React.useCallback(
+    () => onToggleActive(section), 
+    [section, onToggleActive]
+  );
   const changeDate = React.useCallback(
-    e => onDateChange(rowIndex, section, 'startDate', e.target.value),
-    [rowIndex, section, onDateChange]
+    e => onDateChange(section, 'startDate', e.target.value),
+    [section, onDateChange]
   );
 
   return (

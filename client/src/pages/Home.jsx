@@ -1,20 +1,17 @@
 // src/pages/Home.jsx
-import React from 'react';
-import { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Typography, Box, Button, Stack, Grid, Container, Slide} from '@mui/material';
 import ViewListIcon from '@mui/icons-material/ViewList';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
-
-import { useNavigate } from 'react-router-dom';
 
 import TopAppBar from '../components/TopAppBar';
 import TaskList from '../components/TaskList'; 
 import CalendarView from '../components/CalendarView';
 import TaskDetail from '../components/TaskDetail';
 import CreateOrEditTask from '../components/CreateOrEditTask';
-import { api } from '../api/tasks';
-
-import { useDebounce } from '../hooks/useDebounce';
+import api from '../api/tasks';
+import useDebounce from '../hooks/useDebounce';
 import useTaskDetailState from '../hooks/useTaskDetailState';
 
 
@@ -136,10 +133,7 @@ export default function Home() {
   /* --------------------- 组件渲染 --------------------- */
   return (
     <Box sx={{ width: '100vw', minHeight: '100vh' }}>
-      {/* 顶部导航栏 */}
       <TopAppBar /> 
-
-      {/* 主体 */}
       <Container
         maxWidth="lg"
         disableGutters
@@ -169,23 +163,20 @@ export default function Home() {
               <Typography variant="h5">
                 {viewMode === 'calendar' ? '项目--日历' : '项目--列表'}
               </Typography>
-              
               <Stack direction="row" spacing={2}>
                 <Button variant="outlined" onClick={debouncedTaskClose}>
                   返回首页
                 </Button>
-                <Button variant="contained" color="secondary" /*onClick={() => handleSelectTask({ id: 'new' })}*/ onClick={openTaskCreate}>
+                <Button variant="contained" color="secondary" onClick={openTaskCreate}>
                   新增任务
                 </Button>
-
                 <Button
                   variant="outlined"
                   color="primary"
-                  onClick={() => navigate('/excel')}
+                  onClick={() => navigate('/project-table')}
                 >
-                  打开 Excel 编辑器
+                  打开项目编辑器
                 </Button>
-                
               </Stack>
             </Stack>
             {viewMode === 'calendar' ? (
@@ -202,8 +193,6 @@ export default function Home() {
               />
             )}
           </Grid>
-
-
           {/* 右侧面板：详情 / 新建 / 编辑 */}
           <Grid sx={rightPanelStyles}>
             <Slide direction="left" in={!!selectedTask} mountOnEnter unmountOnExit>
@@ -215,28 +204,6 @@ export default function Home() {
                   />
                 </DelayedUnmount>
               </div>
-                {/* Fade 里的直接子元素必须是能接收 ref 的 DOM；TaskPane.forwardRef 已满足 
-                <Box sx={{ width: '100%', height: '100%', overflow: 'auto', }}>
-                  
-                  {selectedTask?.mode === 'edit' && (
-                    <CreateOrEditTask
-                      key={selectedTask?.id ?? 'new'}
-                      embedded
-                      id={selectedTask?.id}
-                      task={selectedTask}
-                      onClose={handleTaskClose}
-                    />
-                  )}
-
-                  {selectedTask?.mode === 'view' && (
-                    <TaskDetail
-                      id={selectedTask.id}
-                      embedded
-                      onClose={handleTaskClose}
-                    />
-                  )}
-                </Box>
-                */}
               </Slide>
             </Grid>
         </Grid>

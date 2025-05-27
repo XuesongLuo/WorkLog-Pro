@@ -1,89 +1,107 @@
-import React, { useState, useRef, useEffect, useMemo, memo } from 'react';
-import { TableCell, TextField } from '@mui/material';
+import React, { useState, useRef, useCallback } from 'react';
+import { TableCell, Popover, TextField } from '@mui/material';
 
-
-// 将样式对象提取到组件外部，避免每次渲染都重新创建
+// 公共样式：与表格保持一致
 const cellStyles = {
-    cursor: 'pointer',
-    textAlign: 'center',
-    whiteSpace: 'pre-wrap',
-    wordBreak: 'break-word',
-    padding: '4px',
+  cursor: 'pointer',
+  textAlign: 'center',
+  whiteSpace: 'pre-wrap',
+  wordBreak: 'break-word',
+  padding: '4px',
+  fontSize: '0.875rem',
 };
 
+/**
+ * Popover 行内编辑版 EditableCell
+ *
+ * props
+ * ─────────────────────────────────────────
+ * rowIndex : number     // 行号（仅用于 key 或调试，不会回传）
+ * field    : string     // 字段名，如 'year' | 'insurance' …
+ * value    : any        // 当前值
+ * onChange : (section:string, key:null, value:any) => void
+ *            与 DataRow.useRowCallbacks 返回的 change 保持一致：
+ *            1️⃣ section = 字段名
+ *            2️⃣ key     = null（顶层字段）
+ *            3️⃣ value   = 新值
+ */
+function EditableCell({ field, value, onChange }) {
+  const [anchorEl, setAnchorEl] = useState(null); // Popover 锚点
+  const [draft, setDraft] = useState(value ?? '');
+  const inputRef = useRef(null);
 
-const getTextFieldStyles = (isEditing) => ({
-    transition: 'none !important',
-    width: '100%',
-    '& .MuiInputBase-root': {
-        padding: 0,
-        height: '100%',
-        overflow: 'hidden',
-        transition: 'none !important',
-    },
-    '& .MuiInputBase-input': {
-        fontSize: '0.875rem',
-        padding: 0,
-        lineHeight: '1.43',
-        textAlign: 'center',
-        whiteSpace: 'pre-wrap',
-        wordBreak: 'break-word',
-        height: '100%',
-        transition: 'none !important',
-    },
-    '& .MuiInput-underline:before': {
-        borderBottom: isEditing ? '1px solid #ddd' : '0px',
-    },
-    '& .MuiInput-underline:after': {
-        borderBottom: isEditing ? '1px solid #000' : '0px',
-        transition: 'none !important',
-    },
-});
+  /**
+   * 打开编辑器
+   */
+  const openEditor = (e) => {
+    setDraft(value ?? '');       // 每次打开时取最新值
+    setAnchorEl(e.currentTarget);
+  };
 
-function EditableCell({ rowIndex, field, value, onChange }) {
-    const [editing, setEditing] = useState(false);
-    const isEditing = editing;
-    const [draft, setDraft]   = useState(value); 
-    const inputRef = useRef();
+  /**
+   * 关闭 Popover
+   */
+  const closeEditor = useCallback(() => setAnchorEl(null), []);
 
-    useEffect(() => {
-        if (isEditing && inputRef.current) {
-            inputRef.current.focus();
-        }
-    }, [isEditing]);
+  /**
+   * 提交修改
+   * 注意：这里调用 onChange 的签名必须与 DataRow 的 `change` 一致。
+   * 不需要 rowIndex，因为 DataRow 已经在闭包里注入。
+   */
+  const commit = useCallback(() => {
+    closeEditor();
+    if (draft !== value) {
+      onChange(field, null, draft); // ✅ section = field, key = null
+    }
+  }, [closeEditor, draft, value, field, onChange]);
 
-    // 使用useMemo缓存样式对象
-    const textFieldStyles = useMemo(() => getTextFieldStyles(isEditing), [isEditing]);
-    
-    // 单元格“提交”
-    const commit = () => {
-        setEditing(false);
-            if (draft !== value) onChange(rowIndex, field, null, draft);
-        };
+  const open = Boolean(anchorEl);
+  const baseWidth = anchorEl?.getBoundingClientRect().width ?? 100;
+  const popWidth  = Math.min(baseWidth + 16, 180);
 
-   return (
-    <TableCell
-        sx={cellStyles}
-        onClick={() => !editing && setEditing(true)}
-    >
-        {editing ? (
+  return (
+    <>
+      {/* 展示态 */}
+      <TableCell sx={cellStyles} onClick={openEditor}>
+        {value || ' '}
+      </TableCell>
+
+      {/* 编辑态 */}
+      <Popover
+        open={open}
+        anchorEl={anchorEl}
+        onClose={commit}
+        anchorOrigin={{ vertical: 'top', horizontal: 'left' }}
+        transformOrigin={{ vertical: 'top', horizontal: 'left' }}
+        PaperProps={{ 
+            sx: { 
+                p: 0.5,
+                width: popWidth 
+            } 
+        }}
+      >
         <TextField
-            inputRef={inputRef}
-            fullWidth
-            variant="standard"
-            multiline
-            maxRows={10}
-            value={draft}
-            onChange={e => setDraft(e.target.value)}
-            onBlur={commit}
-            onKeyDown={e => e.key === 'Enter' && commit()}
-            sx={getTextFieldStyles(true)}
+          inputRef={inputRef}
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onBlur={commit}
+          onKeyDown={(e) => e.key === 'Enter' && commit()}
+          variant="standard"
+          autoFocus
+          multiline
+          maxRows={10}
+          sx={{
+            width: '100%',  
+            '& .MuiInputBase-input': {
+              fontSize: '0.875rem',
+              p: '4px',
+              textAlign: 'center',
+            },
+          }}
         />
-        ) : (
-        <span>{value || ' '}</span>
-        )}
-    </TableCell>
-    );
-};
+      </Popover>
+    </>
+  );
+}
 
-export default memo(EditableCell);
+export default React.memo(EditableCell);

@@ -1,16 +1,19 @@
 // src/pages/TaskDetailPage.jsx
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
+import { Box } from '@mui/material';
 import TaskDetail from '../components/TaskDetail';
-import { Box, Container } from '@mui/material';
-
 import TopAppBar from '../components/TopAppBar';
 
 export default function TaskDetailPage() {
   const { id } = useParams();
+  const navigate = useNavigate();
 
   return (
     <Box sx={{ width: '100vw', minHeight: '100vh' }}>
-      <TopAppBar />
+      <TopAppBar 
+        showHomeButton         
+        onHomeClick={() => navigate('/')}
+      />
       <Box 
         sx={{ 
           width: '100%', 
