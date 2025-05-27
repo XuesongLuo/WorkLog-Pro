@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   Table,
   TableBody,
@@ -13,8 +13,13 @@ import {
   Box,
   Divider
 } from '@mui/material';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import CancelIcon from '@mui/icons-material/Cancel';
+
+import EditableCell from './EditableCell';
+import ToggleBox from './ToggleBox';
+
+const EXTRA_FIELDS = ['pout', 'pack', 'ctrc', 'demo', 'itel', 'eq', 'pick', 'ctrc'];
+const ESTIMATE = ['Send', 'Review', 'Agree'];
+
 
 const initialData = [
   {
@@ -61,28 +66,227 @@ const initialData = [
       estimateAgree: true,
       estimateAgreeAmount: 3200
     },
-    payment: 9628.21
+    payment: 9628.21,
+    comments: ''
+  },
+  {
+    location: '5215 Rosemead Blvd APT F, San Gabriel, CA 91776',
+    year: 1984,
+    insurance: 'State Farms',
+    arol: true,
+    test: true,
+    pak: {
+      active: true,
+      startDate: '2024-05-01',
+      pout: true,
+      pack: true,
+      estimateSend: true,
+      estimateSendAmount: 1000,
+      estimateReview: true,
+      estimateReviewAmount: 2000,
+      estimateAgree: true,
+      estimateAgreeAmount: 3000
+    },
+    wtr: {
+      active: false,
+      startDate: '',
+      ctrc: false,
+      demo: false,
+      itel: false,
+      eq: false,
+      pick: false,
+      estimateSend: false,
+      estimateSendAmount: '',
+      estimateReview: false,
+      estimateReviewAmount: '',
+      estimateAgree: false,
+      estimateAgreeAmount: ''
+    },
+    str: {
+      active: true,
+      startDate: '2024-06-01',
+      ctrc: true,
+      estimateSend: true,
+      estimateSendAmount: 1200,
+      estimateReview: true,
+      estimateReviewAmount: 2200,
+      estimateAgree: true,
+      estimateAgreeAmount: 3200
+    },
+    payment: 9628.21,
+    comments: ''
   }
 ];
+
+function useRowCallbacks(rowIndex, onFieldChange, onToggleActive) {
+  // 顶层字段或嵌套字段都走同一个入口
+    const change = useCallback(
+        (section, key, val) => onFieldChange(rowIndex, section, key, val),
+        [rowIndex, onFieldChange]
+    );
+    const toggleMain = useCallback(
+        section => onToggleActive(rowIndex, section),
+        [rowIndex, onToggleActive]
+    );
+    return { change, toggleMain };
+}
+
+
+const DataRow = React.memo(function DataRow({ row, index, onFieldChange, onToggleActive }) {
+    const { change, toggleMain } = useRowCallbacks(index, onFieldChange, onToggleActive);
+
+    const toggleArol = useCallback(e => change('arol', null, e.target.checked), [change]);
+    const toggleTest = useCallback(e => change('test', null, e.target.checked), [change]);
+    return (
+        <TableRow>
+            <EditableCell rowIndex={index} field="location"  value={row.location}  onChange={onFieldChange} />
+            <EditableCell rowIndex={index} field="year"      value={row.year}      onChange={onFieldChange} />
+            <EditableCell rowIndex={index} field="insurance" value={row.insurance} onChange={onFieldChange} />
+            <TableCell ><Checkbox checked={row.arol} onChange={(e) => change('arol', null, e.target.checked)} /></TableCell>
+            <TableCell ><Checkbox checked={row.test} onChange={(e) => change('test', null, e.target.checked)} /></TableCell>
+
+            <ToggleBox
+                section="pak"
+                rowIndex={index}
+                data={row.pak}
+                onToggleActive={toggleMain} 
+                onDateChange={change}
+            />
+            {EXTRA_FIELDS.slice(0, 2).map(key => (   // 'pout', 'pack'
+                <TableCell key={key}>
+                <Checkbox
+                    disabled={!row.pak.active}
+                    checked={row.pak[key] || false}
+                    onChange={e =>
+                    change('pak', key, e.target.checked)
+                    }
+                />
+                </TableCell>
+            ))}
+            {renderEstimateCells(row, 'pak', index, !row.pak.active)} 
+
+            <ToggleBox                   // ① WTR 主开关 + 日期
+                section="wtr"
+                rowIndex={index}
+                data={row.wtr}
+                onToggleActive={toggleMain} 
+                onDateChange={change}
+            />
+            {EXTRA_FIELDS.slice(2, 7).map(key => (   // 'ctrc', 'demo', 'itel', 'eq', 'pick'
+                <TableCell key={key}>
+                <Checkbox
+                    disabled={!row.wtr.active}
+                    checked={row.wtr[key] || false}
+                    onChange={e =>
+                    change('wtr', key, e.target.checked)
+                    }
+                />
+                </TableCell>
+            ))}
+            {renderEstimateCells(row, 'wtr', index, !row.wtr.active)} 
+
+            <ToggleBox                   // ① STR 主开关 + 日期
+                section="str"
+                rowIndex={index}
+                data={row.str}
+                onToggleActive={toggleMain} 
+                onDateChange={change}
+            />
+            {EXTRA_FIELDS.slice(7, 8).map(key => (   // 'ctrc'
+                <TableCell key={key}>
+                <Checkbox
+                    disabled={!row.str.active}
+                    checked={row.str[key] || false}
+                    onChange={e =>
+                    change('str', key, e.target.checked)
+                    }
+                />
+            {renderEstimateCells(row, 'str', index, !row.str.active)} 
+            <TableCell >
+                <TextField
+                    type="number"
+                    size="small"
+                    value={row.payment || ''}
+                    onChange={(e) => change('payment', null, e.target.value)}
+                    sx={{
+                        width: '100%',
+                        '& .MuiInputBase-input': {
+                            paddingLeft: '2px',
+                            paddingRight: '2px',
+                            paddingTop: '4px',
+                            paddingBottom: '4px',
+                            fontSize: '0.85rem'
+                        },
+                        '& .MuiOutlinedInput-root': {
+                            paddingRight: 0
+                        },
+                        '& input[type=number]': {
+                            MozAppearance: 'textfield',        // Firefox
+                        },
+                        '& input[type=number]::-webkit-outer-spin-button': {
+                            WebkitAppearance: 'none',          // Chrome, Safari
+                            margin: 0
+                        },
+                        '& input[type=number]::-webkit-inner-spin-button': {
+                            WebkitAppearance: 'none',
+                            margin: 0
+                        },
+                    }}
+                />
+            </TableCell>
+            <EditableCell
+                rowIndex={index}
+                field="comments"
+                value={row.comments}
+                onChange={handleChange}
+            />
+        </TableRow>
+    );
+});
+
 
 export default function ProjectTableEditor() {
     const [rows, setRows] = useState(initialData);
     const [feedback, setFeedback] = useState({});
 
-    const handleChange = (rowIndex, section, key, value) => {
-        const updatedRows = [...rows];
-        if (section === 'arol' || section === 'test' || section === 'payment') {
-        updatedRows[rowIndex][section] = value;
-        } else {
-        updatedRows[rowIndex][section][key] = value;
-        }
-        setRows(updatedRows);
-    };
+    const handleChangeStable = useCallback((rowIndex, section, key, value) => {
+        //if (['arol', 'test', 'payment', 'location', 'year', 'insurance', 'comments'].includes(section)) {
+        //    updatedRows[rowIndex][section] = value;
+        //}
+        setRows(prev =>
+            prev.map((r,i) =>
+                i !== rowIndex
+                ? r
+                : key == null
+                    ? { ...r, [section]: value }                             // 顶层字段
+                    : { ...r, [section]: { ...r[section], [key]: value } }   // 嵌套字段
+            )
+        );
+    }, []);
+
+    const handleToggleActiveStable = useCallback((rowIndex, section) => {
+        setRows(prev => prev.map((r,i)=>
+            i!==rowIndex
+            ? r
+            : { ...r, [section]: { ...r[section], active: !r[section].active } }
+        ));
+        const id = `${rowIndex}-${section}`;
+        setFeedback(p => ({ ...p, [id]: true }));
+        setTimeout(() => setFeedback(p => ({ ...p, [id]: false })), 800);
+    }, []);
+
 
     const handleToggleActive = (rowIndex, section) => {
-        const updatedRows = [...rows];
-        updatedRows[rowIndex][section].active = !updatedRows[rowIndex][section].active;
-        setRows(updatedRows);
+        //const updatedRows = [...rows];
+        //updatedRows[rowIndex][section].active = !updatedRows[rowIndex][section].active;
+        //setRows(updatedRows);
+        setRows(prev =>
+            prev.map((r,i)=>
+                i!==rowIndex
+                ? r
+                : { ...r, [section]: { ...r[section], active: !r[section].active } }
+            )
+        );
 
         const id = `${rowIndex}-${section}`;
         setFeedback((prev) => ({ ...prev, [id]: true }));
@@ -91,9 +295,8 @@ export default function ProjectTableEditor() {
         }, 800);
     };
 
-    const renderCheckAndInput = (active, date, onToggle, onDateChange) => {
-        const icon = active ? <CheckCircleIcon color="success" /> : <CancelIcon color="error" />;
 
+    const renderCheckAndInput = (active, date, onToggle, onDateChange) => {
         return (
             <Box
                 sx={{
@@ -123,23 +326,6 @@ export default function ProjectTableEditor() {
                     }
                     }}
                 />
-
-                {/* 中间状态图标（可继续双击切换，也可以只读） 
-                <Box
-                    onDoubleClick={onToggle}
-                    sx={{
-                    flexGrow: 1,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    width: '100%',
-                    cursor: 'pointer'
-                    }}
-                >
-                    {icon}
-                </Box>
-                */}
-
                 {/* 底部日期输入框 */}
                 <TextField
                     type="date"
@@ -161,10 +347,12 @@ export default function ProjectTableEditor() {
     };
 
     const renderEstimateCells = (row, section, index, disabled) => (
-        ["Send", "Review", "Agree"].map((type) => {
+        ESTIMATE.map((type) => {
             const lc = type.toLowerCase();
             return (
-                <TableCell key={section + lc} >
+                <TableCell 
+                    key={section + lc}
+                >
                     <Box display="flex" flexDirection="column" alignItems="center">
                         <Checkbox
                             checked={row[section]?.[`estimate${type}`] || false}
@@ -227,7 +415,7 @@ export default function ProjectTableEditor() {
                         }, 
                     }}
                 >
-                    <TableHead sx={{ '& th': { textAlign: 'center' } }}>
+                    <TableHead sx={{ '& th': { textAlign: 'center', fontWeight: 600 } }}>
                         <TableRow>
                             <TableCell rowSpan={2} >LOCATION</TableCell>
                             <TableCell rowSpan={2} >YEAR</TableCell>
@@ -248,7 +436,8 @@ export default function ProjectTableEditor() {
                             <TableCell rowSpan={2} >STR</TableCell>
                             <TableCell rowSpan={2} >CTRC</TableCell>
                             <TableCell colSpan={3} >STR ESTIMATE</TableCell>
-                            <TableCell rowSpan={2} >付款</TableCell>
+                            <TableCell rowSpan={2} >PAYMENT</TableCell>
+                            <TableCell rowSpan={2} >COMMENTS</TableCell>
                         </TableRow>
                         <TableRow>
                             <TableCell >SEND</TableCell>
@@ -264,24 +453,111 @@ export default function ProjectTableEditor() {
                     </TableHead>
                     <TableBody>
                         {rows.map((row, index) => (
-                        <TableRow key={index}>
-                            <TableCell>{row.location}</TableCell>
-                            <TableCell >{row.year}</TableCell>
-                            <TableCell >{row.insurance}</TableCell>
+                            <DataRow
+                                key={index}
+                                row={row}
+                                index={index}
+                                onFieldChange={handleChangeStable}
+                                onToggleActive={handleToggleActiveStable}
+                            />
+                          /*<TableRow key={index}>
+                            <EditableCell
+                                rowIndex={index}
+                                field="location"
+                                value={row.location}
+                                onChange={handleChange}
+                            />
+                            <EditableCell
+                                rowIndex={index}
+                                field="year"
+                                value={row.year}
+                                onChange={handleChange}
+                            />
+                            <EditableCell
+                                rowIndex={index}
+                                field="insurance"
+                                value={row.insurance}
+                                onChange={handleChange}
+                            />
                             <TableCell ><Checkbox checked={row.arol} onChange={(e) => handleChange(index, 'arol', null, e.target.checked)} /></TableCell>
                             <TableCell ><Checkbox checked={row.test} onChange={(e) => handleChange(index, 'test', null, e.target.checked)} /></TableCell>
-                            <TableCell sx={{minHeight: '60px', minWidth: '110px', verticalAlign: 'top', position: 'relative', p: 0 }} >{renderCheckAndInput(row.pak?.active, row.pak?.startDate, () => handleToggleActive(index, 'pak'), (e) => handleChange(index, 'pak', 'startDate', e.target.value), 'pak', index)}</TableCell>
-                            <TableCell ><Checkbox disabled={!row.pak?.active} checked={row.pak?.pout} onChange={(e) => handleChange(index, 'pak', 'pout', e.target.checked)} /></TableCell>
+                            {/*<TableCell sx={{backgroundColor: '#f8bcbc', minHeight: '60px', minWidth: '110px', verticalAlign: 'top', position: 'relative', p: 0 }} >{renderCheckAndInput(row.pak?.active, row.pak?.startDate, () => handleToggleActive(index, 'pak'), (e) => handleChange(index, 'pak', 'startDate', e.target.value), 'pak', index)}</TableCell>
+                            <ToggleBox
+                                section="pak"
+                                rowIndex={index}
+                                data={row.pak}
+                                onToggleActive={handleToggleActive}
+                                onDateChange={handleChange}
+                            />
+                            {EXTRA_FIELDS.slice(0, 2).map(key => (   // 'pout', 'pack'
+                                <TableCell key={key}>
+                                <Checkbox
+                                    disabled={!row.pak.active}
+                                    checked={row.pak[key] || false}
+                                    onChange={e =>
+                                    handleChange(index, 'pak', key, e.target.checked)
+                                    }
+                                />
+                                </TableCell>
+                            ))}
+                            {renderEstimateCells(row, 'pak', index, !row.pak.active)} 
+                           <TableCell ><Checkbox disabled={!row.pak?.active} checked={row.pak?.pout} onChange={(e) => handleChange(index, 'pak', 'pout', e.target.checked)} /></TableCell>
                             <TableCell ><Checkbox disabled={!row.pak?.active} checked={row.pak?.pack} onChange={(e) => handleChange(index, 'pak', 'pack', e.target.checked)} /></TableCell>
                             {renderEstimateCells(row, 'pak', index, !row.pak?.active)}
-                            <TableCell sx={{minHeight: '60px', minWidth: '110px', verticalAlign: 'top', position: 'relative', p: 0 }} >{renderCheckAndInput(row.wtr?.active, row.wtr?.startDate, () => handleToggleActive(index, 'wtr'), (e) => handleChange(index, 'wtr', 'startDate', e.target.value), 'wtr', index)}</TableCell>
+                            <ToggleBox                   // ① WTR 主开关 + 日期
+                                section="wtr"
+                                rowIndex={index}
+                                data={row.wtr}
+                                onToggleActive={handleToggleActive}
+                                onDateChange={handleChange}
+                            />
+
+                            {EXTRA_FIELDS.slice(2, 7).map(key => (   // 'ctrc', 'demo', 'itel', 'eq', 'pick'
+                                <TableCell key={key}>
+                                <Checkbox
+                                    disabled={!row.wtr.active}
+                                    checked={row.wtr[key] || false}
+                                    onChange={e =>
+                                    handleChange(index, 'wtr', key, e.target.checked)
+                                    }
+                                />
+                                </TableCell>
+                            ))}
+                    
+                            {renderEstimateCells(row, 'wtr', index, !row.wtr.active)} 
+
+                            {/*<TableCell sx={{backgroundColor: '#f8bcbc', minHeight: '60px', minWidth: '110px', verticalAlign: 'top', position: 'relative', p: 0 }} >{renderCheckAndInput(row.wtr?.active, row.wtr?.startDate, () => handleToggleActive(index, 'wtr'), (e) => handleChange(index, 'wtr', 'startDate', e.target.value), 'wtr', index)}</TableCell>
                             <TableCell ><Checkbox disabled={!row.wtr?.active} checked={row.wtr?.ctrc} onChange={(e) => handleChange(index, 'wtr', 'ctrc', e.target.checked)} /></TableCell>
                             <TableCell ><Checkbox disabled={!row.wtr?.active} checked={row.wtr?.demo} onChange={(e) => handleChange(index, 'wtr', 'demo', e.target.checked)} /></TableCell>
                             <TableCell ><Checkbox disabled={!row.wtr?.active} checked={row.wtr?.itel} onChange={(e) => handleChange(index, 'wtr', 'itel', e.target.checked)} /></TableCell>
                             <TableCell ><Checkbox disabled={!row.wtr?.active} checked={row.wtr?.eq} onChange={(e) => handleChange(index, 'wtr', 'eq', e.target.checked)} /></TableCell>
                             <TableCell ><Checkbox disabled={!row.wtr?.active} checked={row.wtr?.pick} onChange={(e) => handleChange(index, 'wtr', 'pick', e.target.checked)} /></TableCell>
                             {renderEstimateCells(row, 'wtr', index, !row.wtr?.active)}
-                            <TableCell sx={{minHeight: '60px', minWidth: '110px', verticalAlign: 'top', position: 'relative', p: 0 }} >{renderCheckAndInput(row.str?.active, row.str?.startDate, () => handleToggleActive(index, 'str'), (e) => handleChange(index, 'str', 'startDate', e.target.value), 'str', index)}</TableCell>
+
+                            <ToggleBox                   // ① STR 主开关 + 日期
+                                section="str"
+                                rowIndex={index}
+                                data={row.str}
+                                onToggleActive={handleToggleActive}
+                                onDateChange={handleChange}
+                            />
+
+                          
+                            {EXTRA_FIELDS.slice(7, 8).map(key => (   // 'ctrc'
+                                <TableCell key={key}>
+                                <Checkbox
+                                    disabled={!row.str.active}
+                                    checked={row.str[key] || false}
+                                    onChange={e =>
+                                    handleChange(index, 'str', key, e.target.checked)
+                                    }
+                                />
+                                </TableCell>
+                            ))}
+
+                            
+                            {renderEstimateCells(row, 'str', index, !row.str.active)} 
+                            {/*<TableCell sx={{backgroundColor: '#f8bcbc', minHeight: '60px', minWidth: '110px', verticalAlign: 'top', position: 'relative', p: 0 }} >{renderCheckAndInput(row.str?.active, row.str?.startDate, () => handleToggleActive(index, 'str'), (e) => handleChange(index, 'str', 'startDate', e.target.value), 'str', index)}</TableCell>
                             <TableCell ><Checkbox disabled={!row.str?.active} checked={row.str?.ctrc} onChange={(e) => handleChange(index, 'str', 'ctrc', e.target.checked)} /></TableCell>
                             {renderEstimateCells(row, 'str', index, !row.str?.active)}
                             <TableCell >
@@ -316,7 +592,14 @@ export default function ProjectTableEditor() {
                                     }}
                                 />
                             </TableCell>
-                        </TableRow>
+                            <EditableCell
+                                rowIndex={index}
+                                field="comments"
+                                value={row.comments}
+                                onChange={handleChange}
+                            />
+                            
+                        </TableRow>*/
                         ))}
                     </TableBody>
                 </Table>
