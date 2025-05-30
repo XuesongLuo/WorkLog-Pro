@@ -20,16 +20,18 @@ import {
   DialogTitle,
   DialogActions
 } from '@mui/material';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import SaveIcon from '@mui/icons-material/Save';
 import DeleteIcon from '@mui/icons-material/Delete';
 import CancelIcon from '@mui/icons-material/Cancel';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 
 import { LocalizationProvider } from '@mui/x-date-pickers';
-import { DateTimePicker }      from '@mui/x-date-pickers';
+import { DatePicker }      from '@mui/x-date-pickers';
 import { AdapterDateFns }      from '@mui/x-date-pickers/AdapterDateFns';
 import { api } from '../api/tasks';
+import { useTasks } from '../contexts/TaskStore';
+
+import CircularProgress from '@mui/material/CircularProgress'; 
 
 import React, { lazy, Suspense } from 'react';
 const LazyEditor = lazy(() => 
@@ -54,16 +56,17 @@ export default function CreateOrEditTask({ id: propId, task: propTask, embedded 
   const isEdit = Boolean(id) && !isCreateMode;
   
   const [form, setForm] = useState({
-    title: '',
     address: '',
     city: '',
+    zipcode: '',
+    year: '',
+    insurance: '',
+    type: '',
     company: '',
     manager: '',
     applicant: '',
-    type: '',
     start: new Date(),
     end: new Date(),
-    zipcode: '',
     descriptions: ''
   });
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
@@ -129,13 +132,18 @@ export default function CreateOrEditTask({ id: propId, task: propTask, embedded 
   const handleDescriptionChange = useCallback((val) => {
     setForm(prev => ({ ...prev, description: val }));
   }, []);
+
+  const { api } = useTasks(); 
+  const [saving, setSaving] = useState(false);
   
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+  //const handleSubmit = () => {
     const {
       description, // 单独提取 description
       ...mainData  // 主体数据：form 中除 description 外的所有字段
     } = form;
-  
+    
+    /*
     if (isEdit) {
       // 更新任务：先更新主体，再更新描述
       Promise.all([
@@ -153,18 +161,41 @@ export default function CreateOrEditTask({ id: propId, task: propTask, embedded 
     } else {
       // 创建任务：先创建主体，再用新 ID 更新描述
       api.createTask(mainData)
-        .then((newTask) => {
-          return api.updateTaskDescription(newTask.id, description).then(() => newTask);
-        })
-        .then(() => {
-          if (embedded) {
-            onClose?.('reload');
-          } else {
-            navigate('/');
-          }
-        })
-        .catch(err => console.error('创建失败', err));
+      .then((newTask) => {
+        return api.updateTaskDescription(newTask.id, description).then(() => newTask);
+      })
+      .then(() => {
+        if (embedded) {
+          onClose?.('reload');
+        } else {
+          navigate('/');
+        }
+      })
+      .catch(err => console.error('创建失败', err));
     }
+    */
+    try {
+      setSaving(true);
+      let taskId = id;
+
+      if (isEdit) {
+        await Promise.all([
+          api.update(id, mainData),
+          api.updateDesc(id, description),
+        ]);
+      } else {
+        const newTask = await api.create(mainData);   // 乐观插入已完成
+        taskId = newTask.id;
+        await api.updateDesc(taskId, description);    // 才写描述
+      }
+
+      embedded ? onClose?.('reload') : navigate('/');
+    } catch (e) {
+      /* fetcher 已有全局报错，若要局部提示可加 enqueueSnackbar */
+    } finally {
+      setSaving(false);
+    }
+
   };
 
   const handleDelete = () => {
@@ -197,20 +228,6 @@ export default function CreateOrEditTask({ id: propId, task: propTask, embedded 
         mb: embedded ? 0 : 4,
         pt: 0,
        }}>
-
-        {/* 顶部返回按钮，只在独立页面出现 */}
-        {!embedded && (
-          <Button 
-            onClick={() => navigate('/')} 
-            variant="text" 
-            size="small" 
-            startIcon={<ArrowBackIcon />}
-            sx={{ alignSelf: 'flex-start', mb: 2 }}
-          >
-            返回首页
-          </Button>
-        )}
-
         {/* 任务创建类型 */}
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
           <Typography variant="h5" gutterBottom sx={{ m: 0 }}>
@@ -222,7 +239,6 @@ export default function CreateOrEditTask({ id: propId, task: propTask, embedded 
             )}
           </Typography>
           <Stack direction="row" spacing={1}>
-           
             {embedded && (
             <>
               {isEdit && (
@@ -262,38 +278,7 @@ export default function CreateOrEditTask({ id: propId, task: propTask, embedded 
               lg: 'repeat(12, 1fr)',
             }, 
           }}>
-          {/* 第1行：任务标题、项目类型选择*/}
-          <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 4', md: 'span 6', lg: 'span 8' } }}>
-            <TextField 
-              name="title" 
-              label="任务标题" 
-              size="small" 
-              fullWidth 
-              value={form.title} 
-              onChange={handleChange} 
-            />
-          </Grid>
-          <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 2', md: 'span 2', lg: 'span 4' } }}>
-            <FormControl fullWidth size="small">
-              <InputLabel id="type-label">项目类型</InputLabel>
-              <Select
-                labelId="type-label"
-                name="type"
-                value={form.type}
-                onChange={handleChange}
-                label="项目类型"
-                sx={{ minWidth: 120 }}
-              >
-                {types.map((option) => (
-                  <MenuItem key={option} value={option}>
-                    {option}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
-
-          {/* 第2行：地址、城市、邮政编码 */}
+          {/* 第1行：地址、城市、邮政编码 */}
           <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 6', md: 'span 6', lg: 'span 6' } }}>
             <TextField 
               name="address" 
@@ -323,6 +308,46 @@ export default function CreateOrEditTask({ id: propId, task: propTask, embedded 
               value={form.zipcode || ''} 
               onChange={(e) => setForm({ ...form, zipcode: e.target.value })} 
             />
+          </Grid>
+          {/* 第2行：房子年份、保险公司、项目类型选择*/}
+          <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 6', md: 'span 6', lg: 'span 2' } }}>
+            <TextField 
+              name="year" 
+              label="年份" 
+              size="small" 
+              fullWidth 
+              value={form.year} 
+              onChange={handleChange} 
+            />
+          </Grid>
+          <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 3', md: 'span 1', lg: 'span 6' } }}>
+            <TextField 
+              name="insurance" 
+              label="保险公司" 
+              size="small" 
+              fullWidth 
+              value={form.insurance} 
+              onChange={handleChange} 
+            />
+          </Grid>
+          <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 2', md: 'span 2', lg: 'span 4' } }}>
+            <FormControl fullWidth size="small">
+              <InputLabel id="type-label">项目类型</InputLabel>
+              <Select
+                labelId="type-label"
+                name="type"
+                value={form.type}
+                onChange={handleChange}
+                label="项目类型"
+                sx={{ minWidth: 120 }}
+              >
+                {types.map((option) => (
+                  <MenuItem key={option} value={option}>
+                    {option}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
           </Grid>
 
           {/* 第3行：公司、项目申请人、项目负责人 */}
@@ -360,8 +385,14 @@ export default function CreateOrEditTask({ id: propId, task: propTask, embedded 
           {/* 第4行：开始日期、结束日期 */}
           <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 6', md: 'span 4', lg: 'span 6' } }}>
             <LocalizationProvider dateAdapter={AdapterDateFns}>
-              <DateTimePicker
+              {/*<DateTimePicker
                 label="开始时间"
+                value={form.start}
+                onChange={handleStartDateChange}
+                slotProps={{ textField: { size: 'small', fullWidth: true } }}
+              />*/}
+              <DatePicker
+                label="开始日期"
                 value={form.start}
                 onChange={handleStartDateChange}
                 slotProps={{ textField: { size: 'small', fullWidth: true } }}
@@ -370,8 +401,14 @@ export default function CreateOrEditTask({ id: propId, task: propTask, embedded 
           </Grid>
           <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 6', md: 'span 4', lg: 'span 6' } }}>
             <LocalizationProvider dateAdapter={AdapterDateFns}>
-              <DateTimePicker
+              {/*<DateTimePicker
                 label="结束时间"
+                value={form.end}
+                onChange={handleEndDateChange}
+                slotProps={{ textField: { size: 'small', fullWidth: true } }}
+              />*/}
+              <DatePicker
+                label="结束日期"
                 value={form.end}
                 onChange={handleEndDateChange}
                 slotProps={{ textField: { size: 'small', fullWidth: true } }}
@@ -405,7 +442,13 @@ export default function CreateOrEditTask({ id: propId, task: propTask, embedded 
           {isEdit &&(
             <Button variant='text' color="error" onClick={() => setConfirmDeleteOpen(true)}>删除</Button>
           )}
-          <Button variant='text' onClick={handleSubmit}>{isEdit ? '保存修改' : '创建任务'}</Button>
+          {/*<Button variant='text' onClick={handleSubmit}>{isEdit ? '保存修改' : '创建任务'}</Button>*/}
+          <Button
+            loading={saving}
+            onClick={handleSubmit}
+          >
+            {isEdit ? '保存修改' : '创建任务'}
+          </Button>
         </Stack>
 
       )}

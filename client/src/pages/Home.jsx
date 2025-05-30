@@ -10,9 +10,11 @@ import TaskList from '../components/TaskList';
 import CalendarView from '../components/CalendarView';
 import TaskDetail from '../components/TaskDetail';
 import CreateOrEditTask from '../components/CreateOrEditTask';
-import api from '../api/tasks';
-import useDebounce from '../hooks/useDebounce';
+import { api } from '../api/tasks';
+import { useDebounce}  from '../hooks/useDebounce';
 import useTaskDetailState from '../hooks/useTaskDetailState';
+
+import { useTasks } from '../contexts/TaskStore'; 
 
 
 const SlideContent = React.memo(
@@ -43,18 +45,21 @@ const SlideContent = React.memo(
 );
 
 export default function Home() {
-  const [tasks, setTasks] = useState([]);
+  //const [tasks, setTasks] = useState([]);
+  const { tasks, api } = useTasks(); 
   const [lang, setLang] = useState('zh');
   const [viewMode, setViewMode] = useState('calendar'); // 'calendar' | 'list'
   const navigate = useNavigate();
 
 
   // 确保 start 和 end 是 Date 对象（react-big-calendar 要求），否则如点击 "+more" 时会报错
+  /*
   const normalizeTaskDates = (tasks) =>
   tasks.map(task => ({
     ...task,
     start: new Date(task.start),
     end: new Date(task.end),
+    title: `${task.address ?? ''}, ${task.city ?? ''}, ${task.zipcode ?? ''}`, 
   }));
 
   const fetchTasks = () => {
@@ -62,6 +67,14 @@ export default function Home() {
       .then(data => setTasks(normalizeTaskDates(data)))
       .catch(err => console.error('获取任务失败:', err));
   };
+  */
+  const normalizeTaskDates = (tasks) => tasks.map(t => ({
+    ...t,
+    start: new Date(t.start),
+    end:   new Date(t.end),
+    title: `${t.address ?? ''}, ${t.city ?? ''}, ${t.zipcode ?? ''}`,
+  }));
+
   const {
     selectedTask,
     showDetail,
@@ -69,7 +82,8 @@ export default function Home() {
     openTaskEdit,
     openTaskCreate,
     handleTaskClose
-  } = useTaskDetailState(fetchTasks);
+  //} = useTaskDetailState(fetchTasks);
+  } = useTaskDetailState(() => api.load());
 
   const debouncedTaskClose = useDebounce(handleTaskClose, 100);   // 包装防抖版本的 handleTaskClose
 
@@ -105,11 +119,16 @@ export default function Home() {
   }), [showDetail]);
 
   // 从后端加载任务列表
+  /*
   useEffect(() => {
     api.getTasks()
       .then(data => setTasks(normalizeTaskDates(data)))
       .catch(err => console.error('获取任务失败:', err));
   }, []);
+  */
+  useEffect(() => {         // 组件挂载 → 拉一次任务
+    api.load();
+  }, [api]);
 
   // 卸载行为延迟进行
   const DelayedUnmount = ({ show, children }) => {
@@ -181,7 +200,8 @@ export default function Home() {
             </Stack>
             {viewMode === 'calendar' ? (
               <CalendarView
-                events={tasks}
+                //events={tasks}
+                events={normalizeTaskDates(tasks)}
                 style={{ height: '100%', width: '100%' }}
                 onSelectEvent={(event) => openTaskDetail(event.id)}
               />

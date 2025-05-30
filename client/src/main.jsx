@@ -19,19 +19,20 @@ if (!window.cancelIdleCallback) {
 }
 
 
-
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import AppRouter from './router.jsx';
 import './i18n';
-
-import { TaskProvider } from './context/TaskContext';
+import { LoadingProvider } from './contexts/LoadingContext';
+import { TaskProvider } from './contexts/TaskStore';
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <TaskProvider>
-    <AppRouter />
-    </TaskProvider>
+    <LoadingProvider>
+      <TaskProvider>
+         <AppRouter />
+      </TaskProvider>
+    </LoadingProvider>
   </StrictMode>
 );

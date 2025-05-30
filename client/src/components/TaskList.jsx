@@ -9,8 +9,13 @@ import { forwardRef, useState, useMemo } from 'react';          // 供 <Fade> �
 const getComparator = (field, order) => (a, b) => {
     const [x, y] = order === 'asc' ? [a, b] : [b, a];
   
-    const vx = x[field];
-    const vy = y[field];
+    const vx = field === 'fulladdress'
+    ? `${x.address ?? ''}, ${x.city ?? ''}, ${x.zipcode ?? ''}`
+    : x[field];
+
+  const vy = field === 'fulladdress'
+    ? `${y.address ?? ''}, ${y.city ?? ''}, ${y.zipcode ?? ''}`
+    : y[field];
   
     // 1) 日期 / 数字
     if (vx instanceof Date && vy instanceof Date) {
@@ -55,10 +60,9 @@ const TaskList = forwardRef(function TaskList(
           <TableHead>
             <TableRow>
                 {[
-                    { field: 'title',   label: '标题' },
-                    { field: 'address', label: '地址' },
-                    { field: 'city',    label: '城市' },
-                    { field: 'company', label: '公司' },
+                    { field: 'fulladdress', label: '地址' },
+                    { field: 'year', label: '房屋年份' },
+                    { field: 'insurance', label: '保险公司' },
                     { field: 'type',    label: '类型', align: 'right' },
                 ].map(col => (
                 <TableCell
@@ -85,10 +89,9 @@ const TaskList = forwardRef(function TaskList(
                 onClick={() => onSelectTask(t)}
                 sx={{ cursor: 'pointer' }}
               >
-                <TableCell>{t.title}</TableCell>
-                <TableCell>{t.address}</TableCell>
-                <TableCell>{t.city}</TableCell>
-                <TableCell>{t.company}</TableCell>
+                <TableCell>{`${t.address}, ${t.city}, ${t.zipcode}`}</TableCell>
+                <TableCell>{t.year}</TableCell>
+                <TableCell>{t.insurance}</TableCell>
                 <TableCell align="right">{t.type}</TableCell>
               </TableRow>
             ))}

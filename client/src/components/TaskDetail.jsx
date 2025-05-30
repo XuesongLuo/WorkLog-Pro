@@ -40,18 +40,11 @@ export default function TaskDetail({ id, embedded = false, onClose }) {
       setTask({ ...taskData, description: descData.description });
       setLoading(false);
     })
-    /*
-    api.getTask(id)
-      .then(data => {
-        setTask(data);
-        setLoading(false);
-      })
-      */
-      .catch(err => {
-        console.error('获取任务失败', err);
-        setLoading(false);
-        if (embedded && onClose) onClose();
-      });
+    .catch(err => {
+      console.error('获取任务失败', err);
+      setLoading(false);
+      if (embedded && onClose) onClose();
+    });
   }, [id]);
 
   const handleEditClick = () => {
@@ -108,28 +101,16 @@ export default function TaskDetail({ id, embedded = false, onClose }) {
         pt: 0,
        }}>
 
-        {!embedded && (
-          <Button 
-            onClick={() => navigate('/')} 
-            variant="text" 
-            size="large" 
-            startIcon={<ArrowBackIcon />}
-            sx={{ alignSelf: 'flex-start', mb: 2 }}
-          >
-            返回首页
-          </Button>
-        )}
 
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-          <Typography variant="h5" gutterBottom textAlign="center">
-            {task.title}
+          <Typography variant="h5" textAlign="center" gutterBottom={false} sx={{ mb: 0 }}>
+            任务详细内容
             {embedded && (
               <IconButton onClick={() => navigate(`/task/${task.id}`, { state: { task } } )}>
                 <OpenInNewIcon />
               </IconButton>
             )}
           </Typography>
-
           <Stack direction="row" spacing={1}>
             {embedded && (
               <IconButton color="error" onClick={() => setConfirmDeleteOpen(true)}>
@@ -153,44 +134,44 @@ export default function TaskDetail({ id, embedded = false, onClose }) {
         </Box>
         <Divider sx={{ mb: 2 }} />
 
-      <Grid container spacing={2}>
+      <Grid 
+        container
+        spacing={2}
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: {
+            xs: 'repeat(1, 1fr)',
+            sm: 'repeat(6, 1fr)',
+            md: 'repeat(8, 1fr)',
+            lg: 'repeat(12, 1fr)',
+          },
+        }}
+      >
         {/* 第一行：地址 城市 邮编 */}
-        <Grid item xs={4}>
-          <Typography><strong>地址：</strong>{task.address}</Typography>
+        <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 12', md: 'span 12', lg: 'span 8' } }}>
+          <Typography>
+            <strong>地址：</strong>
+            {`${task.address ?? ''}, ${task.city ?? ''}, ${task.zipcode ?? ''}`}
+          </Typography>
         </Grid>
-        <Grid item xs={4}>
-          <Typography><strong>城市：</strong>{task.city}</Typography>
-        </Grid>
-        <Grid item xs={4}>
-          <Typography><strong>邮编：</strong>{task.zipcode || '未填写'}</Typography>
+        <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 3', md: 'span 3', lg: 'span 4' }, textAlign: 'right' }}>
+          <Typography><strong>房屋年份：</strong>{task.year ?? '未填写'}</Typography>
         </Grid>
 
         {/* 第二行：公司 项目申请人 项目负责人 项目类型 */}
-        <Grid item xs={3}>
-          <Typography><strong>公司：</strong>{task.company}</Typography>
+        <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 3', md: 'span 3', lg: 'span 6' } }}>
+          <Typography><strong>保险公司：</strong>{task.insurance ?? '未填写'}</Typography>
         </Grid>
-        <Grid item xs={3}>
-          <Typography><strong>项目申请人：</strong>{task.applicant}</Typography>
-        </Grid>
-        <Grid item xs={3}>
-          <Typography><strong>项目负责人：</strong>{task.manager}</Typography>
-        </Grid>
-        <Grid item xs={3}>
+        <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 6', md: 'span 2', lg: 'span 6' }, textAlign: 'right' }}>
           <Typography><strong>类型：</strong>{task.type}</Typography>
         </Grid>
       
         {/* 第三行：开始日期 结束日期 */}
-        <Grid item xs={6}>
-          <Typography>
-            <strong>开始日期：</strong>
-            {task.start ? new Date(task.start).toLocaleString() : '未填写'}
-          </Typography>
+        <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 6', md: 'span 6', lg: 'span 6' } }}>
+          <Typography><strong>开始日期：</strong>{task.start ? new Date(task.start).toLocaleDateString() : '未填写'}</Typography>
         </Grid>
-        <Grid item xs={6}>
-          <Typography>
-            <strong>结束日期：</strong>
-            {task.end ? new Date(task.end).toLocaleString() : '未填写'}
-          </Typography>
+        <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 6', md: 'span 6', lg: 'span 6' }, textAlign: 'right' }}>
+          <Typography><strong>结束日期：</strong>{task.end ? new Date(task.end).toLocaleDateString() : '未填写'}</Typography>
         </Grid>
       </Grid>
         
@@ -201,23 +182,7 @@ export default function TaskDetail({ id, embedded = false, onClose }) {
         <Box sx={{ mt: 2 }}>
           <Editor value={task.description} readOnly hideToolbar />
         </Box>
-        {/*
-        <Box
-          sx={{
-            flexGrow: 1,
-            overflow: 'auto',
-            whiteSpace: 'pre-wrap',
-            wordBreak: 'break-word',
-            maxHeight: '500px', // 限制描述高度，可滚动
-            p: 1,
-            bgcolor: 'background.paper',
-            borderRadius: 1,
-            border: '1px solid #ddd',
-          }}
-          dangerouslySetInnerHTML={{__html:task.description || '<p>暂无描述内容</p>'}}
-        >
-        </Box>
-        */}
+
       {!embedded && (
         <Stack direction="row" spacing={2} mt="auto" pt={1} justifyContent="center">
           <Button 
