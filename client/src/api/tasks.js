@@ -1,5 +1,5 @@
 //client  /src/api/tasks.js
-const BASE = import.meta.env.VITE_API_URL;
+const BASE = import.meta.env.VITE_API_URL || '';
 
 export const api = {
 
