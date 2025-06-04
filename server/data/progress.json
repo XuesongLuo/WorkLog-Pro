@@ -1,7 +1,7 @@
 {
   "20250601-1748964768920": {
     "pak": {
-      "active": true,
+      "active": false,
       "startDate": "",
       "pout": false,
       "pack": false,
@@ -28,7 +28,7 @@
       "estimateAgreeAmount": ""
     },
     "str": {
-      "active": true,
+      "active": false,
       "startDate": "",
       "ctrc": false,
       "estimateSend": false,

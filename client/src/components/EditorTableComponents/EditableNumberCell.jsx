@@ -1,13 +1,14 @@
 // src/components/EditorTableComponents/EditableNumberCell.jsx
 import React, { useState, useRef, useCallback, useEffect } from 'react';
-import { TableCell, Popover, TextField } from '@mui/material';
+import { Box, Popover, TextField } from '@mui/material';
 
+// 样式：与表格单元格保持一致
 const numberCellStyle = {
   cursor: 'pointer',
   textAlign: 'center',
   padding: '4px',
-  fontSize: '0.875rem'
-  // 可根据需要增加其他样式，例如禁用时灰色背景等
+  fontSize: '0.875rem',
+  width: '100%'  // 占满父容器宽度，便于点击和对齐
 };
 
 function EditableNumberCell({ value, onChange, disabled = false }) {
@@ -15,7 +16,7 @@ function EditableNumberCell({ value, onChange, disabled = false }) {
   const [draft, setDraft] = useState(value ?? '');
   const cellRef = useRef(null);
 
-  // 打开编辑浮层
+  // 打开编辑浮层（除非处于禁用状态）
   const openEditor = useCallback(() => {
     if (!disabled) {
       setAnchorEl(cellRef.current);
@@ -31,38 +32,41 @@ function EditableNumberCell({ value, onChange, disabled = false }) {
   // 提交修改
   const commit = useCallback(() => {
     closeEditor();
-    // 将 draft 转换为数值或原格式后提交
     if (draft !== value) {
       onChange(draft);
     }
   }, [draft, value, onChange, closeEditor]);
 
-  // 取消修改并关闭
+  // 取消修改（恢复原值）
   const cancel = useCallback(() => {
     setDraft(value ?? '');
     closeEditor();
   }, [value, closeEditor]);
 
-  // 监听 value 变化，同步更新草稿值
+  // 同步外部 value 改变到本地 draft
   useEffect(() => {
     setDraft(value ?? '');
   }, [value]);
 
   const open = Boolean(anchorEl);
-  // 计算浮层宽度：略大于单元格宽度，设定上限
+  // 计算弹出层宽度：略大于触发元素宽度，但设定上限
   const baseWidth = anchorEl?.getBoundingClientRect().width || 100;
   const popWidth = Math.min(baseWidth + 16, 180);
 
   return (
     <>
-      {/* 展示状态单元格 */}
-      <TableCell ref={cellRef} sx={numberCellStyle} onClick={openEditor}>
+      {/* 展示态内容区域 */}
+      <Box 
+        ref={cellRef} 
+        sx={numberCellStyle} 
+        onClick={openEditor}
+      >
         {value || ' '}
-      </TableCell>
-      {/* 编辑浮层：点击单元格后出现 */}
-      <Popover 
-        open={open} 
-        anchorEl={anchorEl} 
+      </Box>
+      {/* 编辑态弹出层 */}
+      <Popover
+        open={open}
+        anchorEl={anchorEl}
         onClose={commit}
         anchorOrigin={{ vertical: 'top', horizontal: 'left' }}
         transformOrigin={{ vertical: 'top', horizontal: 'left' }}
@@ -73,6 +77,7 @@ function EditableNumberCell({ value, onChange, disabled = false }) {
           variant="standard"
           autoFocus
           value={draft}
+          disabled={disabled}
           onChange={(e) => setDraft(e.target.value)}
           onBlur={() => open && commit()}
           onKeyDown={(e) => {
@@ -80,15 +85,15 @@ function EditableNumberCell({ value, onChange, disabled = false }) {
             else if (e.key === 'Escape') cancel();
           }}
           inputProps={{
-            // 控制数字输入的样式，去掉上下箭头
-            style: { textAlign: 'center' },
+            style: { textAlign: 'center' }  // 数字输入内容居中
           }}
           sx={{
             width: '100%',
             '& .MuiInputBase-input': {
               p: '4px',
-              fontSize: '0.875rem',
+              fontSize: '0.875rem'
             },
+            // 去掉数字输入框自带的上下箭头
             '& input[type=number]': {
               MozAppearance: 'textfield'
             },
