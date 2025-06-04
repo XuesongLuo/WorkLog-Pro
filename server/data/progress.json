@@ -41,7 +41,7 @@
     "payment": 0,
     "comments": "",
     "arol": false,
-    "test": true,
+    "test": false,
     "location": "12345",
     "insurance": "statse farms",
     "year": "1992"
