@@ -6,6 +6,7 @@ import EditableCell from './EditorTableComponents/EditableCell';        // 文�
 import EditableCheckbox from './EditorTableComponents/EditableCheckbox';// 独立复选框单元格
 import EditableNumberField from './EditorTableComponents/EditableNumberField';// 数字输入单元格
 import ToggleBox from './EditorTableComponents/ToggleBox';              // 阶段激活切换及日期输入单元格
+import EstimateCell from './EditorTableComponents/EstimateCell';
 
 // 子组件：表示一行数据，由 React.memo 包裹以避免不必要渲染
 const DataRow = React.memo(function DataRow({ row, onFieldChange, onToggleActive }) {
@@ -31,64 +32,45 @@ const DataRow = React.memo(function DataRow({ row, onFieldChange, onToggleActive
   const changePayment = useCallback(e => change('payment', null, e.target.value), [change]);
 
   // 预估 (estimate) 字段复选框及数字输入处理（为每个阶段构造）
-  const estimateFields = ['Send', 'Review', 'Agree'];
-  const pakEstimateCells = estimateFields.map(type => {
-    const key = `estimate${type}`;                // 例如 "estimateSend"
-    const amountKey = `${key}Amount`;             // 例如 "estimateSendAmount"
+  const estimateTypes = ['Send', 'Review', 'Agree'];
+  const pakEstimateCells = estimateTypes.map(type => {
+    const flagKey = `estimate${type}`;                // 例如 "estimateSend"
+    const amountKey = `${flagKey}Amount`;             // 例如 "estimateSendAmount"
     return (
-      //<TableCell key={`pak-${key}`} align="center">
-      <React.Fragment key={`pak-${key}`}>
-        <EditableCheckbox 
-          value={row.pak?.[key] || false}
-          onChange={e => change('pak', key, e.target.checked)}
-          disabled={!row.pak?.active}
-        />
-        <EditableNumberField 
-          value={row.pak?.[amountKey] || ''} 
-          onChange={e => change('pak', amountKey, e.target.value)} 
-          disabled={!row.pak?.active}
-        />
-      </React.Fragment>
-      //</TableCell>
-
+      <EstimateCell 
+        key={`pak-${type}`}
+        checked={row.pak?.[flagKey] || false}
+        amount={row.pak?.[amountKey] || ''}
+        disabled={!row.pak?.active}
+        onCheckChange={e => change('pak', flagKey, e.target.checked)}
+        onAmountChange={val => change('pak', amountKey, val)}
+      />
     );
   });
-  const wtrEstimateCells = estimateFields.map(type => {
-    const key = `estimate${type}`, amountKey = `${key}Amount`;
+  const wtrEstimateCells = estimateTypes.map(type => {
+    const flagKey = `estimate${type}`, amountKey = `${flagKey}Amount`;
     return (
-      //<TableCell key={`wtr-${key}`} align="center">
-      <React.Fragment key={`pak-${key}`}>
-        <EditableCheckbox 
-          value={row.wtr?.[key] || false}
-          onChange={e => change('wtr', key, e.target.checked)}
-          disabled={!row.wtr?.active}
-        />
-        <EditableNumberField 
-          value={row.wtr?.[amountKey] || ''} 
-          onChange={e => change('wtr', amountKey, e.target.value)} 
-          disabled={!row.wtr?.active}
-        />
-      </React.Fragment>
-      //</TableCell>
+      <EstimateCell 
+        key={`wtr-${type}`}
+        checked={row.wtr?.[flagKey] || false}
+        amount={row.wtr?.[amountKey] || ''}
+        disabled={!row.wtr?.active}
+        onCheckChange={e => change('wtr', flagKey, e.target.checked)}
+        onAmountChange={val => change('wtr', amountKey, val)}
+      />
     );
   });
-  const strEstimateCells = estimateFields.map(type => {
-    const key = `estimate${type}`, amountKey = `${key}Amount`;
+  const strEstimateCells = estimateTypes.map(type => {
+    const flagKey = `estimate${type}`, amountKey = `${flagKey}Amount`;
     return (
-      //<TableCell key={`str-${key}`} align="center">
-      <React.Fragment key={`pak-${key}`}>
-        <EditableCheckbox 
-          value={row.str?.[key] || false}
-          onChange={e => change('str', key, e.target.checked)}
-          disabled={!row.str?.active}
-        />
-        <EditableNumberField 
-          value={row.str?.[amountKey] || ''} 
-          onChange={e => change('str', amountKey, e.target.value)} 
-          disabled={!row.str?.active}
-        />
-      </React.Fragment>
-      //</TableCell>
+      <EstimateCell 
+        key={`str-${type}`}
+        checked={row.str?.[flagKey] || false}
+        amount={row.str?.[amountKey] || ''}
+        disabled={!row.str?.active}
+        onCheckChange={e => change('str', flagKey, e.target.checked)}
+        onAmountChange={val => change('str', amountKey, val)}
+      />
     );
   });
 
@@ -204,27 +186,30 @@ export default function ProjectProgressTable() {
         <TableCell rowSpan={2} align="center">PAK</TableCell>
         <TableCell rowSpan={2} align="center">POUT</TableCell>
         <TableCell rowSpan={2} align="center">PACK</TableCell>
-        <TableCell colSpan={2} align="center">PAK ESTIMATE</TableCell>
+        <TableCell colSpan={3} align="center">PAK ESTIMATE</TableCell>
         <TableCell rowSpan={2} align="center">WTR</TableCell>
         <TableCell rowSpan={2} align="center">CTRC</TableCell>
         <TableCell rowSpan={2} align="center">DEMO</TableCell>
         <TableCell rowSpan={2} align="center">ITEL</TableCell>
         <TableCell rowSpan={2} align="center">EQ</TableCell>
         <TableCell rowSpan={2} align="center">PICK</TableCell>
-        <TableCell colSpan={2} align="center">WTR ESTIMATE</TableCell>
+        <TableCell colSpan={3} align="center">WTR ESTIMATE</TableCell>
         <TableCell rowSpan={2} align="center">STR</TableCell>
         <TableCell rowSpan={2} align="center">CTRC</TableCell>
-        <TableCell colSpan={2} align="center">STR ESTIMATE</TableCell>
+        <TableCell colSpan={3} align="center">STR ESTIMATE</TableCell>
         <TableCell rowSpan={2} align="center">PAYMENT</TableCell>
         <TableCell rowSpan={2} align="center">COMMENTS</TableCell>
       </TableRow>
       <TableRow>
         <TableCell align="center">SEND</TableCell>
         <TableCell align="center">REVIEW</TableCell>
+        <TableCell align="center">AGREE</TableCell>
         <TableCell align="center">SEND</TableCell>
         <TableCell align="center">REVIEW</TableCell>
+        <TableCell align="center">AGREE</TableCell>
         <TableCell align="center">SEND</TableCell>
         <TableCell align="center">REVIEW</TableCell>
+        <TableCell align="center">AGREE</TableCell>
       </TableRow>
     </>
   );

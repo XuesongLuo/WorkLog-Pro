@@ -28,7 +28,7 @@
       "estimateAgreeAmount": ""
     },
     "str": {
-      "active": false,
+      "active": true,
       "startDate": "",
       "ctrc": false,
       "estimateSend": false,
@@ -89,6 +89,8 @@
     "comments": "",
     "year": "",
     "insurance": "",
-    "location": "4343"
+    "location": "4343",
+    "arol": false,
+    "test": false
   }
 }

@@ -20,7 +20,7 @@ function progressReducer(state, action) {
   switch (action.type) {
     case 'set':    return action.payload;                               // 替换整表
     case 'patch':
-      console.log('Patch action:', { id: action.id, data: action.data });
+      //console.log('Patch action:', { id: action.id, data: action.data });
       const index = state.findIndex(r => r.id === action.id);
       if (index === -1) return state; // 未找到行，保持不变
       const updatedRow = merge({}, state[index], action.data);
