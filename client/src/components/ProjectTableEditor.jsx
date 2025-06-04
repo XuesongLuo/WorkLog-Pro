@@ -6,7 +6,7 @@ import { useTasks } from '../contexts/TaskStore';
 // Import custom cell components (note: may need slight refactoring, see below)
 import EditableCell from './EditorTableComponents/EditableCell';
 import EditableCheckbox from './EditorTableComponents/EditableCheckbox';
-import EditableNumberField from './EditorTableComponents/EditableNumberField';
+import EditableNumberCell  from './EditorTableComponents/EditableNumberCell';
 import ToggleBox from './EditorTableComponents/ToggleBox';
 
 export default function ProjectTableEditor() {
@@ -507,9 +507,9 @@ export default function ProjectTableEditor() {
       header: 'PAYMENT',
       accessorKey: 'payment',
       Cell: ({ row }) => (
-        <EditableNumberField 
+        <EditableNumberCell 
           value={row.original.payment} 
-          onChange={(e) => handleChange(row.original.id, 'payment', null, e.target.value)}
+          onChange={(val) => handleChange(id, 'payment', null, val)} 
         />
       ),
     },

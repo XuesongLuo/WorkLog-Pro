@@ -1,141 +1,54 @@
 // src/components/EditorTableComponents/EditableCell.jsx
-import React, { useState, useRef, useCallback, useEffect } from 'react';
-import { TableCell, Popover, TextField } from '@mui/material';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Box, TextField } from '@mui/material';
 
-// 公共样式：与表格保持一致
-const cellStyles = {
-  cursor: 'pointer',
-  textAlign: 'center',
-  whiteSpace: 'pre-wrap',
-  wordBreak: 'break-word',
-  padding: '4px',
-  fontSize: '0.875rem',
-  backgroundColor: 'lightblue', // 调试用
-};
-
-function EditableCell({ field, value, onChange }) {
-  const [anchorEl, setAnchorEl] = useState(null); // Popover 锚点
+function EditableCell({ field, value, onChange, disabled = false }) {
   const [draft, setDraft] = useState(value ?? '');
   const inputRef = useRef(null);
-  const cellRef = useRef(null);
-  /**
-   * 打开编辑器
-   */
-  const openEditor = useCallback((e) => {
-    console.log('openEditor called', { cellRef: cellRef.current });
-    /*
-    if (cellRef.current) {
-      setAnchorEl(cellRef.current);
-      setDraft(value ?? '');
-    }
-    */
-    setAnchorEl(e.currentTarget);
-  }, [value]);
 
-  /**
-   * 关闭 Popover
-   */
-  const closeEditor = useCallback(() => {
-    console.log('closeEditor called');
-    setAnchorEl(null);
-  }, []);
-
-  /**
-   * 取消修改（恢复原值）
-   */
-  const cancel = useCallback(() => {
-    console.log('cancel called');
-    setDraft(value ?? '');
-    closeEditor();
-  }, [value, closeEditor]);
-
-  /**
-   * 提交修改
-   * 注意：这里调用 onChange 的签名必须与 DataRow 的 `change` 一致。
-   * 不需要 rowIndex，因为 DataRow 已经在闭包里注入。
-   */
-  const commit = useCallback(() => {
-    console.log('commit called:', { draft, value });
-    closeEditor();
-    if (draft !== value) {
-      onChange(field, null, draft); // ✅ section = field, key = null
-    }
-  }, [closeEditor, draft, value, field, onChange]);
-
-  const open = Boolean(anchorEl);
-  const baseWidth = anchorEl?.getBoundingClientRect().width ?? 100;
-  const popWidth  = Math.min(baseWidth + 16, 180);
-
-  useEffect(() => {
-    console.log('EditableCell state:', { field, anchorEl, open: Boolean(anchorEl) });
-    console.log('Popover opened', { anchorEl });
-    if (!anchorEl) return;
-    if (!document.contains(anchorEl) && cellRef.current) {
-      console.warn('anchorEl is invalid, resetting');
-      setAnchorEl(cellRef.current);
-    }
-    
-  }, [anchorEl]);
-
-
+  // 当 props.value 改变时，同步更新本地 draft（若非正在编辑或可根据需要调整条件）
   useEffect(() => {
     setDraft(value ?? '');
   }, [value]);
 
-  useEffect(() => {
-    if (anchorEl && inputRef.current) {
-      inputRef.current.focus();
+  // 失焦时提交修改
+  const handleBlur = useCallback(() => {
+    if (!disabled && draft !== value) {
+      // 调用上传回调，签名与现有 DataRow 的 change 函数一致
+      onChange(field, null, draft); 
     }
-  }, [anchorEl]);
+    // 可在此重置 draft 或保持现有值，视需求决定
+  }, [field, value, draft, disabled, onChange]);
 
   return (
-    <>
-      {/* 展示态 */}
-      <TableCell ref={cellRef} sx={cellStyles} onClick={openEditor}>
-        {value || ' '}
-      </TableCell>
-
-      {/* 编辑态 */}
-      <Popover
-        //open={Boolean(anchorEl)}
-        open={open}
-        anchorEl={anchorEl}
-        onClose={commit}
-        anchorOrigin={{ vertical: 'top', horizontal: 'left' }}
-        transformOrigin={{ vertical: 'top', horizontal: 'left' }}
-        PaperProps={{ 
-            sx: { 
-                p: 0.5,
-                width: popWidth 
-            } 
+    <Box 
+      onClick={() => { 
+        // 若需要点击单元格时聚焦输入框：
+        if (!disabled) inputRef.current?.focus();
+      }} 
+      sx={{ p: 0.5 }}  /* 可选：减少内边距，使输入框更贴合单元格 */
+    >
+      <TextField
+        inputRef={inputRef}
+        variant="standard"
+        fullWidth
+        multiline  // 支持多行文本
+        maxRows={10}
+        value={draft}
+        disabled={disabled}
+        onChange={(e) => setDraft(e.target.value)}
+        onBlur={handleBlur}
+        // 删除 onKeyDown 中对 Enter/Esc 的处理，保留默认行为
+        sx={{
+          '& .MuiInputBase-input': {
+            fontSize: '0.875rem',
+            textAlign: 'center',
+            p: '4px'
+          },
+          // 根据需要可调整 TextField 外观，使其与单元格融合
         }}
-      >
-        <TextField
-          inputRef={inputRef}
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          onBlur={() => {
-            if (open) commit()
-          }}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') commit();
-            else if (e.key === 'Escape') cancel();
-          }}
-          variant="standard"
-          autoFocus
-          multiline
-          maxRows={10}
-          sx={{
-            width: '100%',  
-            '& .MuiInputBase-input': {
-              fontSize: '0.875rem',
-              p: '4px',
-              textAlign: 'center',
-            },
-          }}
-        />
-      </Popover>
-    </>
+      />
+    </Box>
   );
 }
 

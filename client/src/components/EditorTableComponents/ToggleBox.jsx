@@ -14,6 +14,7 @@ const ToggleBox = React.memo(function ToggleBox({section, data, onToggleActive, 
   );
 
   return (
+    /*
     <TableCell
       sx={{
         backgroundColor: '#f8bcbc',
@@ -23,7 +24,7 @@ const ToggleBox = React.memo(function ToggleBox({section, data, onToggleActive, 
         position: 'relative',
         p: 0
       }}
-    >
+    >*/
       <Box
         sx={{
           position: 'absolute',
@@ -69,7 +70,7 @@ const ToggleBox = React.memo(function ToggleBox({section, data, onToggleActive, 
           disabled={!active}
         />
       </Box>
-    </TableCell>
+    //</TableCell>
   );
 }, 
 // 自定义比较函数：只有当 active 状态改变时才重新渲染整个组件
