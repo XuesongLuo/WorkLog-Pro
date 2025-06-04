@@ -1,4 +1,4 @@
-// EditableCheckbox.jsx
+// src/components/EditorTableComponents/EditableCheckbox.jsx
 import React from 'react';
 import { TableCell, Checkbox } from '@mui/material';
 

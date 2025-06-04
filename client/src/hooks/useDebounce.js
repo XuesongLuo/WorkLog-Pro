@@ -35,6 +35,25 @@ export const useDebounce = (callback, delay = 300, { leading = false } = {}) => 
     }, delay);
   }, [delay, leading]);
 
+  /**
+  * * 立即触发尚未执行的回调，并清空定时器
+  */
+  debounced.flush = () => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      cbRef.current(...lastArgs.current);
+      timerRef.current = null;
+    }
+  };
+
+  /**
+  * 取消等待中的回调
+  */
+  debounced.cancel = () => {
+    clearTimeout(timerRef.current);
+    timerRef.current = null;
+  };
+
   // 3 组件卸载时清理定时器
   useEffect(() => () => clearTimeout(timerRef.current), []);
 

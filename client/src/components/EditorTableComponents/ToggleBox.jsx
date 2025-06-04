@@ -1,3 +1,4 @@
+// src/components/EditorTableComponents/ToggleBox.jsx
 import React from 'react';
 import { TableCell, Box, Checkbox, TextField } from '@mui/material';
 import EditableDate from './EditableDate';
@@ -5,10 +6,8 @@ import EditableDate from './EditableDate';
 const ToggleBox = React.memo(function ToggleBox({section, data, onToggleActive, onDateChange}) {
   const { active, startDate } = data;
 
-  const toggle = React.useCallback(
-    () => onToggleActive(section), 
-    [section, onToggleActive]
-  );
+  const toggle = React.useCallback( () => onToggleActive(section),  [section, onToggleActive]);
+
   const changeDate = React.useCallback(
     e => onDateChange(section, 'startDate', e.target.value),
     [section, onDateChange]

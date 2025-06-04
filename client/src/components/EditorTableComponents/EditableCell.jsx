@@ -1,3 +1,4 @@
+// src/components/EditorTableComponents/EditableCell.jsx
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { TableCell, Popover, TextField } from '@mui/material';
 
@@ -31,26 +32,14 @@ function EditableCell({ field, value, onChange }) {
   const [draft, setDraft] = useState(value ?? '');
   const inputRef = useRef(null);
 
+  const cellRef = useRef(null);
   /**
    * 打开编辑器
    */
   const openEditor = (e) => {
-    console.log('openEditor called for field:', field, 'event:', e);
-    setDraft(value ?? '');       // 每次打开时取最新值
-    const target = e.currentTarget;
-    //setAnchorEl(e.currentTarget);
-    if (target && document.contains(target)) {
-      setAnchorEl(target);
-      setTimeout(() => {
-        if (document.contains(target)) {
-          setAnchorEl(target);
-        } else {
-          console.warn('Event target no longer in DOM');
-          setAnchorEl(null);
-        }
-      }, 0);
-    } else {
-      console.warn('Cell ref not available');
+    if (cellRef.current) {
+      setAnchorEl(cellRef.current);
+      setDraft(value ?? '');
     }
   };
 
@@ -75,6 +64,10 @@ function EditableCell({ field, value, onChange }) {
     }
   }, [closeEditor, draft, value, field, onChange]);
 
+  const open = Boolean(anchorEl);
+  const baseWidth = anchorEl?.getBoundingClientRect().width ?? 100;
+  const popWidth  = Math.min(baseWidth + 16, 180);
+
   useEffect(() => {
     /*
     console.log('EditableCell state:', { field, anchorEl, open: Boolean(anchorEl) });
@@ -85,9 +78,10 @@ function EditableCell({ field, value, onChange }) {
     */
   }, [anchorEl, field]);
 
-  const open = Boolean(anchorEl);
-  const baseWidth = anchorEl?.getBoundingClientRect().width ?? 100;
-  const popWidth  = Math.min(baseWidth + 16, 180);
+
+  useEffect(() => {
+    setDraft(value ?? '');
+  }, [value]);
 
   return (
     <>
@@ -117,7 +111,10 @@ function EditableCell({ field, value, onChange }) {
           onBlur={() => {
             if (open) commit()
           }}
-          onKeyDown={(e) => e.key === 'Enter' && commit()}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') commit();
+            else if (e.key === 'Escape') cancel();
+          }}
           variant="standard"
           autoFocus
           multiline

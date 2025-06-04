@@ -20,6 +20,7 @@ function progressReducer(state, action) {
   switch (action.type) {
     case 'set':    return action.payload;                               // 替换整表
     case 'patch':
+      console.log('Patch action:', { id: action.id, data: action.data });
       const index = state.findIndex(r => r.id === action.id);
       if (index === -1) return state; // 未找到行，保持不变
       const updatedRow = merge({}, state[index], action.data);
@@ -121,8 +122,16 @@ export function TaskProvider({ children }) {
 
   // ② 行级保存
   const saveProgress = useCallback(async (id, data) => {
+    if (!id || typeof id !== 'string') {
+      console.error('Invalid ID provided to saveProgress');
+      return;
+    }
+    if (!data || typeof data !== 'object') {
+      console.error('Invalid data provided to saveProgress');
+      return;
+    }
     try {
-      // progressDispatch({ type: 'patch', id, data });            // Optimistic UI
+      progressDispatch({ type: 'patch', id, data });            // Optimistic UI
       await fetcher(`/api/progress/${id}`, {
         method : 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -132,7 +141,8 @@ export function TaskProvider({ children }) {
     } catch (error) {
       console.error('Failed to save progress for id:', id, error);
       // 可以考虑回滚或显示错误消息
-      progressDispatch({ type: 'patch', id, data: {} }); // 清除失败的更新
+      progressDispatch({ type: 'patch', id, data: state.find(r => r.id === id) || {} }); // 清除失败的更新
+      throw error;
     }
   }, []);
 

@@ -1,4 +1,4 @@
-// EditableNumberField.jsx
+// src/components/EditorTableComponents/EditableNumberField.jsx
 import React from 'react';
 import { TableCell, TextField } from '@mui/material';
 

@@ -74,15 +74,15 @@ function renderEstimateCellsWithCallbacks(row, section, disabled, callbacks) {
 }
 
 
-function useRowCallbacks(rowIndex, onFieldChange, onToggleActive, rowId) {
+function useRowCallbacks(rowIndex, onFieldChange, onToggleActive) {
   // 顶层字段或嵌套字段都走同一个入口
     const change = useCallback(
       (section, key, val) => onFieldChange(rowIndex, section, key, val),
-      [rowIndex, onFieldChange, rowId]
+      [rowIndex, onFieldChange]
     );
     const toggleMain = useCallback(
       section => onToggleActive(rowIndex, section),
-      [rowIndex, onToggleActive, rowId]
+      [rowIndex, onToggleActive]
     );
     return { change, toggleMain };
 }
@@ -92,53 +92,53 @@ const DataRow = React.memo(function DataRow({ row, index, onFieldChange, onToggl
     //console.log('DataRow props changed:', { row, index });
     const { change, toggleMain } = useRowCallbacks(index, onFieldChange, onToggleActive);
     // 为每个独立字段创建单独的回调
-    const toggleArol = useCallback(e => change('arol', null, e.target.checked), [change, row.id]);
-    const toggleTest = useCallback(e => change('test', null, e.target.checked), [change, row.id]);
+    const toggleArol = useCallback(e => change('arol', null, e.target.checked), [change]);
+    const toggleTest = useCallback(e => change('test', null, e.target.checked), [change]);
     // PAK 相关回调
-    const togglePout = useCallback(e => change('pak', 'pout', e.target.checked), [change, row.id]);
-    const togglePack = useCallback(e => change('pak', 'pack', e.target.checked), [change, row.id]);
+    const togglePout = useCallback(e => change('pak', 'pout', e.target.checked), [change]);
+    const togglePack = useCallback(e => change('pak', 'pack', e.target.checked), [change]);
     // WTR 相关回调
-    const toggleWtrCtrc = useCallback(e => change('wtr', 'ctrc', e.target.checked), [change, row.id]);
-    const toggleDemo = useCallback(e => change('wtr', 'demo', e.target.checked), [change, row.id]);
-    const toggleItel = useCallback(e => change('wtr', 'itel', e.target.checked), [change, row.id]);
-    const toggleEq = useCallback(e => change('wtr', 'eq', e.target.checked), [change, row.id]);
-    const togglePick = useCallback(e => change('wtr', 'pick', e.target.checked), [change, row.id]);
+    const toggleWtrCtrc = useCallback(e => change('wtr', 'ctrc', e.target.checked), [change]);
+    const toggleDemo = useCallback(e => change('wtr', 'demo', e.target.checked), [change]);
+    const toggleItel = useCallback(e => change('wtr', 'itel', e.target.checked), [change]);
+    const toggleEq = useCallback(e => change('wtr', 'eq', e.target.checked), [change]);
+    const togglePick = useCallback(e => change('wtr', 'pick', e.target.checked), [change]);
     // STR 相关回调
-    const toggleStrCtrc = useCallback(e => change('str', 'ctrc', e.target.checked), [change, row.id]);
+    const toggleStrCtrc = useCallback(e => change('str', 'ctrc', e.target.checked), [change]);
     // 金额字段回调
-    const changePayment = useCallback(e => change('payment', null, e.target.value), [change, row.id]);
+    const changePayment = useCallback(e => change('payment', null, e.target.value), [change]);
     // Estimate 金额回调
-    const changePakSendAmount = useCallback(e => change('pak', 'estimateSendAmount', e.target.value), [change, row.id]);
-    const changePakReviewAmount = useCallback(e => change('pak', 'estimateReviewAmount', e.target.value), [change, row.id]);
-    const changePakAgreeAmount = useCallback(e => change('pak', 'estimateAgreeAmount', e.target.value), [change, row.id]);
+    const changePakSendAmount = useCallback(e => change('pak', 'estimateSendAmount', e.target.value), [change]);
+    const changePakReviewAmount = useCallback(e => change('pak', 'estimateReviewAmount', e.target.value), [change]);
+    const changePakAgreeAmount = useCallback(e => change('pak', 'estimateAgreeAmount', e.target.value), [change]);
     
-    const changeWtrSendAmount = useCallback(e => change('wtr', 'estimateSendAmount', e.target.value), [change, row.id]);
-    const changeWtrReviewAmount = useCallback(e => change('wtr', 'estimateReviewAmount', e.target.value), [change, row.id]);
-    const changeWtrAgreeAmount = useCallback(e => change('wtr', 'estimateAgreeAmount', e.target.value), [change, row.id]);
+    const changeWtrSendAmount = useCallback(e => change('wtr', 'estimateSendAmount', e.target.value), [change]);
+    const changeWtrReviewAmount = useCallback(e => change('wtr', 'estimateReviewAmount', e.target.value), [change]);
+    const changeWtrAgreeAmount = useCallback(e => change('wtr', 'estimateAgreeAmount', e.target.value), [change]);
     
-    const changeStrSendAmount = useCallback(e => change('str', 'estimateSendAmount', e.target.value), [change, row.id]);
-    const changeStrReviewAmount = useCallback(e => change('str', 'estimateReviewAmount', e.target.value), [change, row.id]);
-    const changeStrAgreeAmount = useCallback(e => change('str', 'estimateAgreeAmount', e.target.value), [change, row.id]);
+    const changeStrSendAmount = useCallback(e => change('str', 'estimateSendAmount', e.target.value), [change]);
+    const changeStrReviewAmount = useCallback(e => change('str', 'estimateReviewAmount', e.target.value), [change]);
+    const changeStrAgreeAmount = useCallback(e => change('str', 'estimateAgreeAmount', e.target.value), [change]);
     const pakCallbacks = {
-      estimateSend: useCallback(e => change('pak', 'estimateSend', e.target.checked), [change, row.id]),
-      estimateReview: useCallback(e => change('pak', 'estimateReview', e.target.checked), [change, row.id]),
-      estimateAgree: useCallback(e => change('pak', 'estimateAgree', e.target.checked), [change, row.id]),
+      estimateSend: useCallback(e => change('pak', 'estimateSend', e.target.checked), [change]),
+      estimateReview: useCallback(e => change('pak', 'estimateReview', e.target.checked), [change]),
+      estimateAgree: useCallback(e => change('pak', 'estimateAgree', e.target.checked), [change]),
       estimateSendAmount: changePakSendAmount,
       estimateReviewAmount: changePakReviewAmount,
       estimateAgreeAmount: changePakAgreeAmount
     };
     const wtrCallbacks = {
-      estimateSend: useCallback(e => change('wtr', 'estimateSend', e.target.checked), [change, row.id]),
-      estimateReview: useCallback(e => change('wtr', 'estimateReview', e.target.checked), [change, row.id]),
-      estimateAgree: useCallback(e => change('wtr', 'estimateAgree', e.target.checked), [change, row.id]),
+      estimateSend: useCallback(e => change('wtr', 'estimateSend', e.target.checked), [change]),
+      estimateReview: useCallback(e => change('wtr', 'estimateReview', e.target.checked), [change]),
+      estimateAgree: useCallback(e => change('wtr', 'estimateAgree', e.target.checked), [change]),
       estimateSendAmount: changeWtrSendAmount,
       estimateReviewAmount: changeWtrReviewAmount,
       estimateAgreeAmount: changeWtrAgreeAmount
     };
     const strCallbacks = {
-      estimateSend: useCallback(e => change('str', 'estimateSend', e.target.checked), [change, row.id]),
-      estimateReview: useCallback(e => change('str', 'estimateReview', e.target.checked), [change, row.id]),
-      estimateAgree: useCallback(e => change('str', 'estimateAgree', e.target.checked), [change, row.id]),
+      estimateSend: useCallback(e => change('str', 'estimateSend', e.target.checked), [change]),
+      estimateReview: useCallback(e => change('str', 'estimateReview', e.target.checked), [change]),
+      estimateAgree: useCallback(e => change('str', 'estimateAgree', e.target.checked), [change]),
       estimateSendAmount: changeStrSendAmount,
       estimateReviewAmount: changeStrReviewAmount,
       estimateAgreeAmount: changeStrAgreeAmount
@@ -213,10 +213,6 @@ export default function ProjectTableEditor() {
   const { progress, api } = useTasks();   // 真实数据
   const [feedback, setFeedback] = useState({});
   
-
-  /* 页面挂载时拉一次进度表 */
-  useEffect(() => { api.loadProgress() }, [api]);
-
   const rows = useMemo(() => {
     if (!progress) {
       console.log('无 progress 数据');
@@ -256,6 +252,18 @@ export default function ProjectTableEditor() {
     );
     // ❷ 每次修改都启动 / 重置防抖计时器
     flushPatches();
+  }, [flushPatches]);
+
+
+  
+  /* 页面挂载时拉一次进度表 */
+  useEffect(() => { api.loadProgress() }, [api]);
+
+
+  useEffect(() => {
+    return () => {
+      flushPatches.flush();
+    };
   }, [flushPatches]);
   
   /*
@@ -299,6 +307,7 @@ export default function ProjectTableEditor() {
 
   const handleChange = useCallback((rowIndex, section, key, value, rowId) => {
     if (!rowId) return;
+    console.log(rowId)
     const patch = key == null
       ? { [section]: value }
       : { [section]: { [key]: value } };
@@ -310,9 +319,10 @@ export default function ProjectTableEditor() {
 
   const handleToggleActive = useCallback((rowIndex, section, rowId) => {
     if (!rowId) return;
-    //const active = !row[section].active;
-    //const patch  = { [section]: { active } };
-    const patch = { [section]: { active: true } };
+    const rowObj = progress.find(r => r.id === rowId); 
+    if (!rowObj) return;
+    const active = !rowObj[section].active;
+    const patch  = { [section]: { active } };
     
     api.mergeProgress(rowId, patch);
     queuePatch(rowId, patch);
