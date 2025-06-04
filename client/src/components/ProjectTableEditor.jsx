@@ -224,6 +224,7 @@ export default function ProjectProgressTable() {
     <Paper style={{ height: 600, width: '100%', position: 'relative' }}>
       <TableVirtuoso
         data={rows}
+        computeItemKey={(index, row) => row.id}
         components={{
           Scroller: React.forwardRef((props, ref) => (
             // 自定义 Scroller 保持 MUI Paper 容器

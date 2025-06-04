@@ -13,35 +13,24 @@ const cellStyles = {
   backgroundColor: 'lightblue', // 调试用
 };
 
-/**
- * Popover 行内编辑版 EditableCell
- *
- * props
- * ─────────────────────────────────────────
- * rowIndex : number     // 行号（仅用于 key 或调试，不会回传）
- * field    : string     // 字段名，如 'year' | 'insurance' …
- * value    : any        // 当前值
- * onChange : (section:string, key:null, value:any) => void
- *            与 DataRow.useRowCallbacks 返回的 change 保持一致：
- *            1️⃣ section = 字段名
- *            2️⃣ key     = null（顶层字段）
- *            3️⃣ value   = 新值
- */
 function EditableCell({ field, value, onChange }) {
   const [anchorEl, setAnchorEl] = useState(null); // Popover 锚点
   const [draft, setDraft] = useState(value ?? '');
   const inputRef = useRef(null);
-
   const cellRef = useRef(null);
   /**
    * 打开编辑器
    */
-  const openEditor = (e) => {
+  const openEditor = useCallback((e) => {
+    console.log('openEditor called', { cellRef: cellRef.current });
+    /*
     if (cellRef.current) {
       setAnchorEl(cellRef.current);
       setDraft(value ?? '');
     }
-  };
+    */
+    setAnchorEl(e.currentTarget);
+  }, [value]);
 
   /**
    * 关闭 Popover
@@ -50,6 +39,15 @@ function EditableCell({ field, value, onChange }) {
     console.log('closeEditor called');
     setAnchorEl(null);
   }, []);
+
+  /**
+   * 取消修改（恢复原值）
+   */
+  const cancel = useCallback(() => {
+    console.log('cancel called');
+    setDraft(value ?? '');
+    closeEditor();
+  }, [value, closeEditor]);
 
   /**
    * 提交修改
@@ -69,29 +67,37 @@ function EditableCell({ field, value, onChange }) {
   const popWidth  = Math.min(baseWidth + 16, 180);
 
   useEffect(() => {
-    /*
     console.log('EditableCell state:', { field, anchorEl, open: Boolean(anchorEl) });
-    if (anchorEl && !document.contains(anchorEl)) {
+    console.log('Popover opened', { anchorEl });
+    if (!anchorEl) return;
+    if (!document.contains(anchorEl) && cellRef.current) {
       console.warn('anchorEl is invalid, resetting');
-      setAnchorEl(null);
+      setAnchorEl(cellRef.current);
     }
-    */
-  }, [anchorEl, field]);
+    
+  }, [anchorEl]);
 
 
   useEffect(() => {
     setDraft(value ?? '');
   }, [value]);
 
+  useEffect(() => {
+    if (anchorEl && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [anchorEl]);
+
   return (
     <>
       {/* 展示态 */}
-      <TableCell sx={cellStyles} onClick={openEditor}>
+      <TableCell ref={cellRef} sx={cellStyles} onClick={openEditor}>
         {value || ' '}
       </TableCell>
 
       {/* 编辑态 */}
       <Popover
+        //open={Boolean(anchorEl)}
         open={open}
         anchorEl={anchorEl}
         onClose={commit}

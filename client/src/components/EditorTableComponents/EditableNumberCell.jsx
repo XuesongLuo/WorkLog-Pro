@@ -6,9 +6,12 @@ import { Box, Popover, TextField } from '@mui/material';
 const numberCellStyle = {
   cursor: 'pointer',
   textAlign: 'center',
+  whiteSpace: 'pre-wrap',
+  wordBreak: 'break-word',
   padding: '4px',
   fontSize: '0.875rem',
-  width: '100%'  // 占满父容器宽度，便于点击和对齐
+  width: '100%',  // 占满父容器宽度，便于点击和对齐
+  backgroundColor: 'lightblue',
 };
 
 function EditableNumberCell({ value, onChange, disabled = false }) {
