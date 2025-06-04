@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const taskRoutes = require('./routes/tasks');
+const progressRoutes = require('./routes/progress');
 
 dotenv.config();
 
@@ -14,6 +15,7 @@ app.use(express.json());
 
 // 路由挂载
 app.use('/api/tasks', taskRoutes);
+app.use('/api/progress', progressRoutes); 
 
 app.get('/', (req, res) => {
   res.send('WorkLog-Pro 后端已启动。');

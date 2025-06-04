@@ -1,10 +1,12 @@
-import { createContext, useContext, useReducer } from 'react';
+// src/contexts/TaskStore.jsx
+import merge from 'lodash.merge'; 
+import { createContext, useContext, useReducer, useMemo, useCallback } from 'react';
 import { fetcher } from '../utils/fetcher';
 
 const TaskCtx = createContext();
 export const useTasks = () => useContext(TaskCtx);
 
-function reducer(state, action) {
+function taskReducer(state, action) {
   switch (action.type) {
     case 'set':     return action.payload;
     case 'add':     return [...state, action.payload];
@@ -14,61 +16,135 @@ function reducer(state, action) {
   }
 }
 
+function progressReducer(state, action) {
+  switch (action.type) {
+    case 'set':    return action.payload;                               // 替换整表
+    case 'patch':  return state.map(r => r.id === action.id ? merge({}, r, action.data) : r);   // 行内合并
+    default:       return state;
+  }
+}
+
 export function TaskProvider({ children }) {
-  const [tasks, dispatch] = useReducer(reducer, []);
+
+  /* ---------- Project Progress reducer ---------- */
+  const [progressRows, progressDispatch] = useReducer(progressReducer, []);
+
+  //const [tasks, dispatch] = useReducer(reducer, []);
+  const [tasks, taskDispatch] = useReducer(taskReducer, []);
 
   /* 公共 API（用 fetcher 自动带 loading + 报错） */
-  const api = {
-    async load() {
+  const load = useCallback(async () => {
       const list = await fetcher('/api/tasks');
-      dispatch({ type: 'set', payload: list });
-    },
+      taskDispatch({ type: 'set', payload: list });
+  }, []);
 
-    async create(mainData) {
-      const tempId = `temp-${Date.now()}`;              // 1️⃣ 乐观插入
-      dispatch({ type: 'add', payload: { ...mainData, id: tempId } });
-      try {
-        const real = await fetcher('/api/tasks', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body:   JSON.stringify(mainData),
-        });
-        dispatch({ type: 'replace', payload: { old: tempId, new: real } }); // 2️⃣ 成功替换
-        return real;
-      } catch (err) {
-        dispatch({ type: 'delete', payload: tempId });  // 3️⃣ 失败回滚
-        throw err;
-      }
-    },
+  // 读取单条任务
+  const getTask = useCallback(
+    (id) => fetcher(`/api/tasks/${id}`),
+    []
+  );
 
-    async remove(id) {
-      dispatch({ type: 'delete', payload: id });        // 先删
-      try {
-        await fetcher(`/api/tasks/${id}`, { method: 'DELETE' });
-      } catch (err) {
-        await this.load();                              // 失败重新拉列表
-      }
-    },
+  // 读取任务的富文本描述
+  const getTaskDescription = useCallback(
+    (id) => fetcher(`/api/tasks/${id}/description`),
+    []
+  );
+  
 
-    update(id, data) {
-      return fetcher(`/api/tasks/${id}`, {
-        method: 'PUT',
+  const create = useCallback(async (mainData) => {
+    const tempId = `temp-${Date.now()}`;              // 1️⃣ 乐观插入
+    taskDispatch({ type: 'add', payload: { ...mainData, id: tempId } });
+    try {
+      const real = await fetcher('/api/tasks', {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
+        body:   JSON.stringify(mainData),
       });
-    },
+      taskDispatch({ type: 'replace', payload: { old: tempId, new: real } }); // 2️⃣ 成功替换
+      await load();
+      return real;
+    } catch (err) {
+      taskDispatch({ type: 'delete', payload: tempId });  // 3️⃣ 失败回滚
+      throw err;
+    }
+  }, [load]);
 
-    updateDesc(id, description) {
-      return fetcher(`/api/tasks/${id}/description`, {
+  const remove = useCallback(async (id) => {
+    taskDispatch({ type: 'delete', payload: id });        // 先删
+    try {
+      await fetcher(`/api/tasks/${id}`, { method: 'DELETE' });
+      await load();
+    } catch (err) {
+      await load();                             // 删除失败时回滚
+    }
+  }, []);
+
+  const update = useCallback((id, data) => fetcher(`/api/tasks/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  }), []);
+
+  const updateDesc = useCallback((id, description) => fetcher(`/api/tasks/${id}/description`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ description }),
+  }), []);
+
+
+  // 读取全部进度 – ProjectTableEditor 首次挂载调用
+  const loadProgress = useCallback(async () => {
+    try {
+      const raw = await fetcher('/api/progress');           // ① raw 可能是对象
+      const array = Array.isArray(raw)
+        ? raw
+        : Object.entries(raw).map(([id, row]) => ({ id, ...row }));
+      progressDispatch({ type: 'set', payload: array });    // ② 一律转成数组后再塞
+    } catch (error) {
+      console.error('Failed to load progress:', error);
+    }
+  }, []);
+
+  /** ① 本地乐观合并（不打网络）——给前端即时反馈用 */
+  const mergeProgress = useCallback((id, data) => {
+    console.log('Merging progress for id:', id, 'data:', data);
+    progressDispatch({ type: 'patch', id, data });
+  }, []);
+
+  // ② 行级保存
+  const saveProgress = useCallback(async (id, data) => {
+    try {
+      progressDispatch({ type: 'patch', id, data });            // Optimistic UI
+      await fetcher(`/api/progress/${id}`, {
+        method : 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body   : JSON.stringify(data),
       });
-    },
-  };
+      console.log('Progress saved successfully for id:', id);
+    } catch (error) {
+      console.error('Failed to save progress for id:', id, error);
+      // 可以考虑回滚或显示错误消息
+    }
+  }, []);
+
+
+  const api = useMemo(() => ({ 
+    load, 
+    getTask, 
+    getTaskDescription, 
+    create, 
+    remove, 
+    update, 
+    updateDesc, 
+    loadProgress, 
+    mergeProgress, 
+    saveProgress 
+  }), [
+    load, getTask, getTaskDescription, create, remove, update, updateDesc, loadProgress, mergeProgress, saveProgress
+  ]);
 
   return (
-    <TaskCtx.Provider value={{ tasks, api }}>
+    <TaskCtx.Provider value={{ tasks, progress: progressRows, api }}>
       {children}
     </TaskCtx.Provider>
   );

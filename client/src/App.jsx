@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import reactLogo from './assets/react.svg'
 import viteLogo from '/vite.svg'
 import './App.css'
@@ -6,8 +6,13 @@ import { useLoading } from './contexts/LoadingContext';
 import { injectLoading } from './utils/fetcher';
 
 function App() {
-  injectLoading(useLoading()); 
   const [count, setCount] = useState(0)
+
+  const loadingApi = useLoading();
+
+  useEffect(() => {
+    injectLoading(loadingApi);
+  }, [loadingApi]);
   
 
   return (
@@ -36,4 +41,4 @@ function App() {
   )
 }
 
-export default App
+export default App;

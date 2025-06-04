@@ -9,9 +9,24 @@
     "company": "Zzz",
     "manager": "Ze",
     "applicant": "Ze",
-    "start": "2025-05-30T08:06:04.626Z",
-    "end": "2025-05-31T08:06:04.626Z",
+    "start": "2025-06-01T15:32:29.014Z",
+    "end": "2025-06-03T15:32:29.014Z",
     "descriptions": "",
-    "id": "20250530-1748592399471"
+    "id": "20250601-1748964768920"
+  },
+  {
+    "address": "1503 McCart Ave",
+    "city": "Brea",
+    "zipcode": "92821",
+    "year": "1995",
+    "insurance": "state farms",
+    "type": "除霉处理",
+    "company": "Zee",
+    "manager": "Ze",
+    "applicant": "Ze",
+    "start": "2025-06-03T18:29:16.643Z",
+    "end": "2025-06-04T18:29:16.643Z",
+    "descriptions": "",
+    "id": "20250604-1748975395908"
   }
 ]

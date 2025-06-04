@@ -28,10 +28,9 @@ import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { DatePicker }      from '@mui/x-date-pickers';
 import { AdapterDateFns }      from '@mui/x-date-pickers/AdapterDateFns';
-import { api } from '../api/tasks';
+import { useSnackbar } from 'notistack';
+//import { api } from '../api/tasks';
 import { useTasks } from '../contexts/TaskStore';
-
-import CircularProgress from '@mui/material/CircularProgress'; 
 
 import React, { lazy, Suspense } from 'react';
 const LazyEditor = lazy(() => 
@@ -71,6 +70,9 @@ export default function CreateOrEditTask({ id: propId, task: propTask, embedded 
   });
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [editorReady, setEditorReady] = useState(false);
+  const { api: taskApi } = useTasks();
+  const { enqueueSnackbar } = useSnackbar();
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (!isEdit || !id) return;
@@ -84,9 +86,10 @@ export default function CreateOrEditTask({ id: propId, task: propTask, embedded 
         end: new Date(cachedTask.end),
         description: '',
       };
-      setForm(parsedTask);
+      //setForm(parsedTask);
+      setForm(prev => ({ ...prev, ...parsedTask }));
 
-      api.getTaskDescription(id)
+      taskApi.getTaskDescription(id)
         .then(descData => {
           setForm(prev => ({ ...prev, description: descData.description }));
           // 等富文本内容准备好后，再延迟加载 Editor
@@ -97,8 +100,8 @@ export default function CreateOrEditTask({ id: propId, task: propTask, embedded 
     } else {
       // 完全从接口获取所有数据
       Promise.all([
-        api.getTask(id),
-        api.getTaskDescription(id),
+        taskApi.getTask(id),
+        taskApi.getTaskDescription(id),
       ])
       .then(([taskData, descData]) => {
         setForm({ ...taskData, description: descData.description });
@@ -133,9 +136,6 @@ export default function CreateOrEditTask({ id: propId, task: propTask, embedded 
     setForm(prev => ({ ...prev, description: val }));
   }, []);
 
-  const { api } = useTasks(); 
-  const [saving, setSaving] = useState(false);
-  
   const handleSubmit = async () => {
   //const handleSubmit = () => {
     const {
@@ -180,13 +180,13 @@ export default function CreateOrEditTask({ id: propId, task: propTask, embedded 
 
       if (isEdit) {
         await Promise.all([
-          api.update(id, mainData),
-          api.updateDesc(id, description),
+          taskApi.update(id, mainData),
+          taskApi.updateDesc(id, description),
         ]);
       } else {
-        const newTask = await api.create(mainData);   // 乐观插入已完成
+        const newTask = await taskApi.create(mainData);   // 乐观插入已完成
         taskId = newTask.id;
-        await api.updateDesc(taskId, description);    // 才写描述
+        await taskApi.updateDesc(taskId, description);    // 才写描述
       }
 
       embedded ? onClose?.('reload') : navigate('/');
@@ -199,15 +199,31 @@ export default function CreateOrEditTask({ id: propId, task: propTask, embedded 
   };
 
   const handleDelete = () => {
-    api.deleteTask(id)
-      .then(() => {
-          if (embedded) {
-            onClose?.('reload');
-          } else {
-            navigate('/');
-          }
-        })
-      .catch(err => console.error('delete failed', err));
+    /*
+    taskApi.remove(id)
+    .then(() => {
+      if (embedded) {
+         onClose?.('reload');
+      } else {
+        navigate('/');
+      }
+    })
+    .catch(err => console.error('delete failed', err));
+    */
+    const doDelete = async () => {       // ★ 真正的删除逻辑
+      try {
+        await taskApi.remove(id);
+        enqueueSnackbar('已删除', { variant: 'success' });
+      } catch (err) {
+        enqueueSnackbar('删除失败，已还原', { variant: 'error' });
+      }
+    };
+    
+    if (embedded) {
+      onClose?.(doDelete);               // ★ 1) 先关闭；2) 把 doDelete 交给 Home
+    } else {
+      doDelete().then(() => navigate('/'));
+    }
   };
 
   return (
@@ -385,12 +401,6 @@ export default function CreateOrEditTask({ id: propId, task: propTask, embedded 
           {/* 第4行：开始日期、结束日期 */}
           <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 6', md: 'span 4', lg: 'span 6' } }}>
             <LocalizationProvider dateAdapter={AdapterDateFns}>
-              {/*<DateTimePicker
-                label="开始时间"
-                value={form.start}
-                onChange={handleStartDateChange}
-                slotProps={{ textField: { size: 'small', fullWidth: true } }}
-              />*/}
               <DatePicker
                 label="开始日期"
                 value={form.start}
@@ -401,12 +411,6 @@ export default function CreateOrEditTask({ id: propId, task: propTask, embedded 
           </Grid>
           <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 6', md: 'span 4', lg: 'span 6' } }}>
             <LocalizationProvider dateAdapter={AdapterDateFns}>
-              {/*<DateTimePicker
-                label="结束时间"
-                value={form.end}
-                onChange={handleEndDateChange}
-                slotProps={{ textField: { size: 'small', fullWidth: true } }}
-              />*/}
               <DatePicker
                 label="结束日期"
                 value={form.end}

@@ -1,688 +1,28 @@
-import React, { useState, useCallback } from 'react';
+// src/components/ProjectTableEditor.jsx
+import merge from 'lodash/merge'; 
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
   Table,
-  TableBody,
   TableCell,
-  TableContainer,
-  TableHead,
   TableRow,
-  Paper,
   TextField,
   Checkbox,
   Typography,
   Box,
   Divider
 } from '@mui/material';
+import { TableVirtuoso } from 'react-virtuoso';
+import { useDebounce } from '../hooks/useDebounce';
+import { useTasks }   from '../contexts/TaskStore';
+import EditableCell from './EditorTableComponents/EditableCell';
+import EditableCheckbox from './EditorTableComponents/EditableCheckbox';
+import EditableNumberField from './EditorTableComponents/EditableNumberField';
+import ToggleBox from './EditorTableComponents/ToggleBox';
 
-import EditableCell from './EditableCell';
-import ToggleBox from './ToggleBox';
-
-
-const initialData = [
-  {
-    location: '5215 Rosemead Blvd APT F, San Gabriel, CA 91776',
-    year: 1984,
-    insurance: 'State Farms',
-    arol: true,
-    test: true,
-    pak: {
-      active: true,
-      startDate: '2024-05-01',
-      pout: true,
-      pack: true,
-      estimateSend: true,
-      estimateSendAmount: 1000,
-      estimateReview: true,
-      estimateReviewAmount: 2000,
-      estimateAgree: true,
-      estimateAgreeAmount: 3000
-    },
-    wtr: {
-      active: false,
-      startDate: '',
-      ctrc: false,
-      demo: false,
-      itel: false,
-      eq: false,
-      pick: false,
-      estimateSend: false,
-      estimateSendAmount: '',
-      estimateReview: false,
-      estimateReviewAmount: '',
-      estimateAgree: false,
-      estimateAgreeAmount: ''
-    },
-    str: {
-      active: true,
-      startDate: '2024-06-01',
-      ctrc: true,
-      estimateSend: true,
-      estimateSendAmount: 1200,
-      estimateReview: true,
-      estimateReviewAmount: 2200,
-      estimateAgree: true,
-      estimateAgreeAmount: 3200
-    },
-    payment: 9628.21,
-    comments: ''
-  },
-  {
-    location: '5215 Rosemead Blvd APT F, San Gabriel, CA 91776',
-    year: 1984,
-    insurance: 'State Farms',
-    arol: true,
-    test: true,
-    pak: {
-      active: true,
-      startDate: '2024-05-01',
-      pout: true,
-      pack: true,
-      estimateSend: true,
-      estimateSendAmount: 1000,
-      estimateReview: true,
-      estimateReviewAmount: 2000,
-      estimateAgree: true,
-      estimateAgreeAmount: 3000
-    },
-    wtr: {
-      active: false,
-      startDate: '',
-      ctrc: false,
-      demo: false,
-      itel: false,
-      eq: false,
-      pick: false,
-      estimateSend: false,
-      estimateSendAmount: '',
-      estimateReview: false,
-      estimateReviewAmount: '',
-      estimateAgree: false,
-      estimateAgreeAmount: ''
-    },
-    str: {
-      active: true,
-      startDate: '2024-06-01',
-      ctrc: true,
-      estimateSend: true,
-      estimateSendAmount: 1200,
-      estimateReview: true,
-      estimateReviewAmount: 2200,
-      estimateAgree: true,
-      estimateAgreeAmount: 3200
-    },
-    payment: 9628.21,
-    comments: ''
-  },
-  {
-    location: '5215 Rosemead Blvd APT F, San Gabriel, CA 91776',
-    year: 1984,
-    insurance: 'State Farms',
-    arol: true,
-    test: true,
-    pak: {
-      active: true,
-      startDate: '2024-05-01',
-      pout: true,
-      pack: true,
-      estimateSend: true,
-      estimateSendAmount: 1000,
-      estimateReview: true,
-      estimateReviewAmount: 2000,
-      estimateAgree: true,
-      estimateAgreeAmount: 3000
-    },
-    wtr: {
-      active: false,
-      startDate: '',
-      ctrc: false,
-      demo: false,
-      itel: false,
-      eq: false,
-      pick: false,
-      estimateSend: false,
-      estimateSendAmount: '',
-      estimateReview: false,
-      estimateReviewAmount: '',
-      estimateAgree: false,
-      estimateAgreeAmount: ''
-    },
-    str: {
-      active: true,
-      startDate: '2024-06-01',
-      ctrc: true,
-      estimateSend: true,
-      estimateSendAmount: 1200,
-      estimateReview: true,
-      estimateReviewAmount: 2200,
-      estimateAgree: true,
-      estimateAgreeAmount: 3200
-    },
-    payment: 9628.21,
-    comments: ''
-  },
-  {
-    location: '5215 Rosemead Blvd APT F, San Gabriel, CA 91776',
-    year: 1984,
-    insurance: 'State Farms',
-    arol: true,
-    test: true,
-    pak: {
-      active: true,
-      startDate: '2024-05-01',
-      pout: true,
-      pack: true,
-      estimateSend: true,
-      estimateSendAmount: 1000,
-      estimateReview: true,
-      estimateReviewAmount: 2000,
-      estimateAgree: true,
-      estimateAgreeAmount: 3000
-    },
-    wtr: {
-      active: false,
-      startDate: '',
-      ctrc: false,
-      demo: false,
-      itel: false,
-      eq: false,
-      pick: false,
-      estimateSend: false,
-      estimateSendAmount: '',
-      estimateReview: false,
-      estimateReviewAmount: '',
-      estimateAgree: false,
-      estimateAgreeAmount: ''
-    },
-    str: {
-      active: true,
-      startDate: '2024-06-01',
-      ctrc: true,
-      estimateSend: true,
-      estimateSendAmount: 1200,
-      estimateReview: true,
-      estimateReviewAmount: 2200,
-      estimateAgree: true,
-      estimateAgreeAmount: 3200
-    },
-    payment: 9628.21,
-    comments: ''
-  },
-  {
-    location: '5215 Rosemead Blvd APT F, San Gabriel, CA 91776',
-    year: 1984,
-    insurance: 'State Farms',
-    arol: true,
-    test: true,
-    pak: {
-      active: true,
-      startDate: '2024-05-01',
-      pout: true,
-      pack: true,
-      estimateSend: true,
-      estimateSendAmount: 1000,
-      estimateReview: true,
-      estimateReviewAmount: 2000,
-      estimateAgree: true,
-      estimateAgreeAmount: 3000
-    },
-    wtr: {
-      active: false,
-      startDate: '',
-      ctrc: false,
-      demo: false,
-      itel: false,
-      eq: false,
-      pick: false,
-      estimateSend: false,
-      estimateSendAmount: '',
-      estimateReview: false,
-      estimateReviewAmount: '',
-      estimateAgree: false,
-      estimateAgreeAmount: ''
-    },
-    str: {
-      active: true,
-      startDate: '2024-06-01',
-      ctrc: true,
-      estimateSend: true,
-      estimateSendAmount: 1200,
-      estimateReview: true,
-      estimateReviewAmount: 2200,
-      estimateAgree: true,
-      estimateAgreeAmount: 3200
-    },
-    payment: 9628.21,
-    comments: ''
-  },
-  {
-    location: '5215 Rosemead Blvd APT F, San Gabriel, CA 91776',
-    year: 1984,
-    insurance: 'State Farms',
-    arol: true,
-    test: true,
-    pak: {
-      active: true,
-      startDate: '2024-05-01',
-      pout: true,
-      pack: true,
-      estimateSend: true,
-      estimateSendAmount: 1000,
-      estimateReview: true,
-      estimateReviewAmount: 2000,
-      estimateAgree: true,
-      estimateAgreeAmount: 3000
-    },
-    wtr: {
-      active: false,
-      startDate: '',
-      ctrc: false,
-      demo: false,
-      itel: false,
-      eq: false,
-      pick: false,
-      estimateSend: false,
-      estimateSendAmount: '',
-      estimateReview: false,
-      estimateReviewAmount: '',
-      estimateAgree: false,
-      estimateAgreeAmount: ''
-    },
-    str: {
-      active: true,
-      startDate: '2024-06-01',
-      ctrc: true,
-      estimateSend: true,
-      estimateSendAmount: 1200,
-      estimateReview: true,
-      estimateReviewAmount: 2200,
-      estimateAgree: true,
-      estimateAgreeAmount: 3200
-    },
-    payment: 9628.21,
-    comments: ''
-  },
-  {
-    location: '5215 Rosemead Blvd APT F, San Gabriel, CA 91776',
-    year: 1984,
-    insurance: 'State Farms',
-    arol: true,
-    test: true,
-    pak: {
-      active: true,
-      startDate: '2024-05-01',
-      pout: true,
-      pack: true,
-      estimateSend: true,
-      estimateSendAmount: 1000,
-      estimateReview: true,
-      estimateReviewAmount: 2000,
-      estimateAgree: true,
-      estimateAgreeAmount: 3000
-    },
-    wtr: {
-      active: false,
-      startDate: '',
-      ctrc: false,
-      demo: false,
-      itel: false,
-      eq: false,
-      pick: false,
-      estimateSend: false,
-      estimateSendAmount: '',
-      estimateReview: false,
-      estimateReviewAmount: '',
-      estimateAgree: false,
-      estimateAgreeAmount: ''
-    },
-    str: {
-      active: true,
-      startDate: '2024-06-01',
-      ctrc: true,
-      estimateSend: true,
-      estimateSendAmount: 1200,
-      estimateReview: true,
-      estimateReviewAmount: 2200,
-      estimateAgree: true,
-      estimateAgreeAmount: 3200
-    },
-    payment: 9628.21,
-    comments: ''
-  },
-  {
-    location: '5215 Rosemead Blvd APT F, San Gabriel, CA 91776',
-    year: 1984,
-    insurance: 'State Farms',
-    arol: true,
-    test: true,
-    pak: {
-      active: true,
-      startDate: '2024-05-01',
-      pout: true,
-      pack: true,
-      estimateSend: true,
-      estimateSendAmount: 1000,
-      estimateReview: true,
-      estimateReviewAmount: 2000,
-      estimateAgree: true,
-      estimateAgreeAmount: 3000
-    },
-    wtr: {
-      active: false,
-      startDate: '',
-      ctrc: false,
-      demo: false,
-      itel: false,
-      eq: false,
-      pick: false,
-      estimateSend: false,
-      estimateSendAmount: '',
-      estimateReview: false,
-      estimateReviewAmount: '',
-      estimateAgree: false,
-      estimateAgreeAmount: ''
-    },
-    str: {
-      active: true,
-      startDate: '2024-06-01',
-      ctrc: true,
-      estimateSend: true,
-      estimateSendAmount: 1200,
-      estimateReview: true,
-      estimateReviewAmount: 2200,
-      estimateAgree: true,
-      estimateAgreeAmount: 3200
-    },
-    payment: 9628.21,
-    comments: ''
-  },
-  {
-    location: '5215 Rosemead Blvd APT F, San Gabriel, CA 91776',
-    year: 1984,
-    insurance: 'State Farms',
-    arol: true,
-    test: true,
-    pak: {
-      active: true,
-      startDate: '2024-05-01',
-      pout: true,
-      pack: true,
-      estimateSend: true,
-      estimateSendAmount: 1000,
-      estimateReview: true,
-      estimateReviewAmount: 2000,
-      estimateAgree: true,
-      estimateAgreeAmount: 3000
-    },
-    wtr: {
-      active: false,
-      startDate: '',
-      ctrc: false,
-      demo: false,
-      itel: false,
-      eq: false,
-      pick: false,
-      estimateSend: false,
-      estimateSendAmount: '',
-      estimateReview: false,
-      estimateReviewAmount: '',
-      estimateAgree: false,
-      estimateAgreeAmount: ''
-    },
-    str: {
-      active: true,
-      startDate: '2024-06-01',
-      ctrc: true,
-      estimateSend: true,
-      estimateSendAmount: 1200,
-      estimateReview: true,
-      estimateReviewAmount: 2200,
-      estimateAgree: true,
-      estimateAgreeAmount: 3200
-    },
-    payment: 9628.21,
-    comments: ''
-  },
-  {
-    location: '5215 Rosemead Blvd APT F, San Gabriel, CA 91776',
-    year: 1984,
-    insurance: 'State Farms',
-    arol: true,
-    test: true,
-    pak: {
-      active: true,
-      startDate: '2024-05-01',
-      pout: true,
-      pack: true,
-      estimateSend: true,
-      estimateSendAmount: 1000,
-      estimateReview: true,
-      estimateReviewAmount: 2000,
-      estimateAgree: true,
-      estimateAgreeAmount: 3000
-    },
-    wtr: {
-      active: false,
-      startDate: '',
-      ctrc: false,
-      demo: false,
-      itel: false,
-      eq: false,
-      pick: false,
-      estimateSend: false,
-      estimateSendAmount: '',
-      estimateReview: false,
-      estimateReviewAmount: '',
-      estimateAgree: false,
-      estimateAgreeAmount: ''
-    },
-    str: {
-      active: true,
-      startDate: '2024-06-01',
-      ctrc: true,
-      estimateSend: true,
-      estimateSendAmount: 1200,
-      estimateReview: true,
-      estimateReviewAmount: 2200,
-      estimateAgree: true,
-      estimateAgreeAmount: 3200
-    },
-    payment: 9628.21,
-    comments: ''
-  },
-  {
-    location: '5215 Rosemead Blvd APT F, San Gabriel, CA 91776',
-    year: 1984,
-    insurance: 'State Farms',
-    arol: true,
-    test: true,
-    pak: {
-      active: true,
-      startDate: '2024-05-01',
-      pout: true,
-      pack: true,
-      estimateSend: true,
-      estimateSendAmount: 1000,
-      estimateReview: true,
-      estimateReviewAmount: 2000,
-      estimateAgree: true,
-      estimateAgreeAmount: 3000
-    },
-    wtr: {
-      active: false,
-      startDate: '',
-      ctrc: false,
-      demo: false,
-      itel: false,
-      eq: false,
-      pick: false,
-      estimateSend: false,
-      estimateSendAmount: '',
-      estimateReview: false,
-      estimateReviewAmount: '',
-      estimateAgree: false,
-      estimateAgreeAmount: ''
-    },
-    str: {
-      active: true,
-      startDate: '2024-06-01',
-      ctrc: true,
-      estimateSend: true,
-      estimateSendAmount: 1200,
-      estimateReview: true,
-      estimateReviewAmount: 2200,
-      estimateAgree: true,
-      estimateAgreeAmount: 3200
-    },
-    payment: 9628.21,
-    comments: ''
-  },
-  {
-    location: '5215 Rosemead Blvd APT F, San Gabriel, CA 91776',
-    year: 1984,
-    insurance: 'State Farms',
-    arol: true,
-    test: true,
-    pak: {
-      active: true,
-      startDate: '2024-05-01',
-      pout: true,
-      pack: true,
-      estimateSend: true,
-      estimateSendAmount: 1000,
-      estimateReview: true,
-      estimateReviewAmount: 2000,
-      estimateAgree: true,
-      estimateAgreeAmount: 3000
-    },
-    wtr: {
-      active: false,
-      startDate: '',
-      ctrc: false,
-      demo: false,
-      itel: false,
-      eq: false,
-      pick: false,
-      estimateSend: false,
-      estimateSendAmount: '',
-      estimateReview: false,
-      estimateReviewAmount: '',
-      estimateAgree: false,
-      estimateAgreeAmount: ''
-    },
-    str: {
-      active: true,
-      startDate: '2024-06-01',
-      ctrc: true,
-      estimateSend: true,
-      estimateSendAmount: 1200,
-      estimateReview: true,
-      estimateReviewAmount: 2200,
-      estimateAgree: true,
-      estimateAgreeAmount: 3200
-    },
-    payment: 9628.21,
-    comments: ''
-  },
-  {
-    location: '5215 Rosemead Blvd APT F, San Gabriel, CA 91776',
-    year: 1984,
-    insurance: 'State Farms',
-    arol: true,
-    test: true,
-    pak: {
-      active: true,
-      startDate: '2024-05-01',
-      pout: true,
-      pack: true,
-      estimateSend: true,
-      estimateSendAmount: 1000,
-      estimateReview: true,
-      estimateReviewAmount: 2000,
-      estimateAgree: true,
-      estimateAgreeAmount: 3000
-    },
-    wtr: {
-      active: false,
-      startDate: '',
-      ctrc: false,
-      demo: false,
-      itel: false,
-      eq: false,
-      pick: false,
-      estimateSend: false,
-      estimateSendAmount: '',
-      estimateReview: false,
-      estimateReviewAmount: '',
-      estimateAgree: false,
-      estimateAgreeAmount: ''
-    },
-    str: {
-      active: true,
-      startDate: '2024-06-01',
-      ctrc: true,
-      estimateSend: true,
-      estimateSendAmount: 1200,
-      estimateReview: true,
-      estimateReviewAmount: 2200,
-      estimateAgree: true,
-      estimateAgreeAmount: 3200
-    },
-    payment: 9628.21,
-    comments: ''
-  },
-  {
-    location: '5215 Rosemead Blvd APT F, San Gabriel, CA 91776',
-    year: 1984,
-    insurance: 'State Farms',
-    arol: true,
-    test: true,
-    pak: {
-      active: true,
-      startDate: '2024-05-01',
-      pout: true,
-      pack: true,
-      estimateSend: true,
-      estimateSendAmount: 1000,
-      estimateReview: true,
-      estimateReviewAmount: 2000,
-      estimateAgree: true,
-      estimateAgreeAmount: 3000
-    },
-    wtr: {
-      active: false,
-      startDate: '',
-      ctrc: false,
-      demo: false,
-      itel: false,
-      eq: false,
-      pick: false,
-      estimateSend: false,
-      estimateSendAmount: '',
-      estimateReview: false,
-      estimateReviewAmount: '',
-      estimateAgree: false,
-      estimateAgreeAmount: ''
-    },
-    str: {
-      active: true,
-      startDate: '2024-06-01',
-      ctrc: true,
-      estimateSend: true,
-      estimateSendAmount: 1200,
-      estimateReview: true,
-      estimateReviewAmount: 2200,
-      estimateAgree: true,
-      estimateAgreeAmount: 3200
-    },
-    payment: 9628.21,
-    comments: ''
-  },
-];
-
-const EXTRA_FIELDS = ['pout', 'pack', 'ctrc', 'demo', 'itel', 'eq', 'pick', 'ctrc'];
-const ESTIMATE = ['Send', 'Review', 'Agree'];
-
-function renderEstimateCells(row, section, disabled, onChange) {
+// 修改后的 renderEstimateCells 函数，支持独立回调
+function renderEstimateCellsWithCallbacks(row, section, disabled, callbacks) {
+    const ESTIMATE = ['Send', 'Review', 'Agree'];
+    
     return ESTIMATE.map((type) => {
         const lc = type.toLowerCase();
         return (
@@ -693,7 +33,7 @@ function renderEstimateCells(row, section, disabled, onChange) {
                     <Checkbox
                         checked={row[section]?.[`estimate${type}`] || false}
                         disabled={disabled}
-                        onChange={e => onChange(section, `estimate${type}`, e.target.checked)}
+                        onChange={callbacks[`estimate${type}`]}
                     />
                     <Divider style={{ width: '100%' }} />
                     <TextField
@@ -701,7 +41,7 @@ function renderEstimateCells(row, section, disabled, onChange) {
                         size="small"
                         disabled={disabled}
                         value={row[section]?.[`estimate${type}Amount`] || ''}
-                        onChange={e => onChange(section, `estimate${type}Amount`, e.target.value)}
+                        onChange={callbacks[`estimate${type}Amount`]}
                         sx={{
                             width: '100%',
                             '& .MuiOutlinedInput-root': {
@@ -730,168 +70,304 @@ function renderEstimateCells(row, section, disabled, onChange) {
                 </Box>
             </TableCell>
         );
-    })
+    });
 }
+
 
 function useRowCallbacks(rowIndex, onFieldChange, onToggleActive) {
   // 顶层字段或嵌套字段都走同一个入口
     const change = useCallback(
-        (section, key, val) => onFieldChange(rowIndex, section, key, val),
-        [rowIndex, onFieldChange]
+      (section, key, val) => onFieldChange(rowIndex, section, key, val),
+      [rowIndex, onFieldChange]
     );
     const toggleMain = useCallback(
-        section => onToggleActive(rowIndex, section),
-        [rowIndex, onToggleActive]
+      section => onToggleActive(rowIndex, section),
+      [rowIndex, onToggleActive]
     );
     return { change, toggleMain };
 }
 
 const DataRow = React.memo(function DataRow({ row, index, onFieldChange, onToggleActive }) {
+    console.log('DataRow rendered:', index, row.id);
     const { change, toggleMain } = useRowCallbacks(index, onFieldChange, onToggleActive);
-
+    // 为每个独立字段创建单独的回调
     const toggleArol = useCallback(e => change('arol', null, e.target.checked), [change]);
     const toggleTest = useCallback(e => change('test', null, e.target.checked), [change]);
+    // PAK 相关回调
+    const togglePout = useCallback(e => change('pak', 'pout', e.target.checked), [change]);
+    const togglePack = useCallback(e => change('pak', 'pack', e.target.checked), [change]);
+    // WTR 相关回调
+    const toggleWtrCtrc = useCallback(e => change('wtr', 'ctrc', e.target.checked), [change]);
+    const toggleDemo = useCallback(e => change('wtr', 'demo', e.target.checked), [change]);
+    const toggleItel = useCallback(e => change('wtr', 'itel', e.target.checked), [change]);
+    const toggleEq = useCallback(e => change('wtr', 'eq', e.target.checked), [change]);
+    const togglePick = useCallback(e => change('wtr', 'pick', e.target.checked), [change]);
+    // STR 相关回调
+    const toggleStrCtrc = useCallback(e => change('str', 'ctrc', e.target.checked), [change]);
+    // 金额字段回调
+    const changePayment = useCallback(e => change('payment', null, e.target.value), [change]);
+    // Estimate 金额回调
+    const changePakSendAmount = useCallback(e => change('pak', 'estimateSendAmount', e.target.value), [change]);
+    const changePakReviewAmount = useCallback(e => change('pak', 'estimateReviewAmount', e.target.value), [change]);
+    const changePakAgreeAmount = useCallback(e => change('pak', 'estimateAgreeAmount', e.target.value), [change]);
+    
+    const changeWtrSendAmount = useCallback(e => change('wtr', 'estimateSendAmount', e.target.value), [change]);
+    const changeWtrReviewAmount = useCallback(e => change('wtr', 'estimateReviewAmount', e.target.value), [change]);
+    const changeWtrAgreeAmount = useCallback(e => change('wtr', 'estimateAgreeAmount', e.target.value), [change]);
+    
+    const changeStrSendAmount = useCallback(e => change('str', 'estimateSendAmount', e.target.value), [change]);
+    const changeStrReviewAmount = useCallback(e => change('str', 'estimateReviewAmount', e.target.value), [change]);
+    const changeStrAgreeAmount = useCallback(e => change('str', 'estimateAgreeAmount', e.target.value), [change]);
+    const pakCallbacks = {
+      estimateSend: useCallback(e => change('pak', 'estimateSend', e.target.checked), [change]),
+      estimateReview: useCallback(e => change('pak', 'estimateReview', e.target.checked), [change]),
+      estimateAgree: useCallback(e => change('pak', 'estimateAgree', e.target.checked), [change]),
+      estimateSendAmount: changePakSendAmount,
+      estimateReviewAmount: changePakReviewAmount,
+      estimateAgreeAmount: changePakAgreeAmount
+    };
+    const wtrCallbacks = {
+      estimateSend: useCallback(e => change('wtr', 'estimateSend', e.target.checked), [change]),
+      estimateReview: useCallback(e => change('wtr', 'estimateReview', e.target.checked), [change]),
+      estimateAgree: useCallback(e => change('wtr', 'estimateAgree', e.target.checked), [change]),
+      estimateSendAmount: changeWtrSendAmount,
+      estimateReviewAmount: changeWtrReviewAmount,
+      estimateAgreeAmount: changeWtrAgreeAmount
+    };
+    const strCallbacks = {
+      estimateSend: useCallback(e => change('str', 'estimateSend', e.target.checked), [change]),
+      estimateReview: useCallback(e => change('str', 'estimateReview', e.target.checked), [change]),
+      estimateAgree: useCallback(e => change('str', 'estimateAgree', e.target.checked), [change]),
+      estimateSendAmount: changeStrSendAmount,
+      estimateReviewAmount: changeStrReviewAmount,
+      estimateAgreeAmount: changeStrAgreeAmount
+    };
+
     return (
-        <TableRow>
+        <>
             <EditableCell rowIndex={index} field="location"  value={row.location}  onChange={change} />
             <EditableCell rowIndex={index} field="year"      value={row.year}      onChange={change} />
             <EditableCell rowIndex={index} field="insurance" value={row.insurance} onChange={change} />
-            <TableCell><Checkbox checked={row.arol} onChange={toggleArol} /></TableCell>
-            <TableCell><Checkbox checked={row.test} onChange={toggleTest} /></TableCell>
-            <ToggleBox
+            {/* 独立刷新的 checkbox */}
+            <EditableCheckbox value={row.arol} onChange={toggleArol} />
+            <EditableCheckbox value={row.test} onChange={toggleTest} />
+            <ToggleBox                  // PAK 主开关 + 日期
                 section="pak"
                 rowIndex={index}
                 data={row.pak}
                 onToggleActive={toggleMain} 
                 onDateChange={change}
             />
-            {EXTRA_FIELDS.slice(0, 2).map(key => (   // 'pout', 'pack'
-                <TableCell key={key}>
-                <Checkbox
-                    disabled={!row.pak.active}
-                    checked={row.pak[key] || false}
-                    onChange={e =>
-                    change('pak', key, e.target.checked)
-                    }
-                />
-                </TableCell>
-            ))}
-            {renderEstimateCells(row, 'pak', !row.pak.active, change)}
-
-            <ToggleBox                   // ① WTR 主开关 + 日期
+            <EditableCheckbox 
+                value={row.pak?.pout} 
+                onChange={togglePout} 
+                disabled={!row.pak?.active} 
+            />
+            <EditableCheckbox 
+                value={row.pak?.pack} 
+                onChange={togglePack} 
+                disabled={!row.pak?.active} 
+            />
+            {/*renderEstimateCells(row, 'pak', !row.pak.active, change)*/}
+            {renderEstimateCellsWithCallbacks(row, 'pak', !row.pak?.active, pakCallbacks)}
+            <ToggleBox                   // WTR 主开关 + 日期
                 section="wtr"
                 rowIndex={index}
                 data={row.wtr}
                 onToggleActive={toggleMain} 
                 onDateChange={change}
             />
-            {EXTRA_FIELDS.slice(2, 7).map(key => (   // 'ctrc', 'demo', 'itel', 'eq', 'pick'
-                <TableCell key={key}>
-                <Checkbox
-                    disabled={!row.wtr.active}
-                    checked={row.wtr[key] || false}
-                    onChange={e =>
-                    change('wtr', key, e.target.checked)
-                    }
-                />
-                </TableCell>
-            ))}
-            {renderEstimateCells(row, 'wtr', !row.wtr.active, change)}
-
-            <ToggleBox                   // ① STR 主开关 + 日期
+            {/* WTR 相关独立 checkbox */}
+            <EditableCheckbox value={row.wtr?.ctrc} onChange={toggleWtrCtrc} disabled={!row.wtr?.active} />
+            <EditableCheckbox value={row.wtr?.demo} onChange={toggleDemo} disabled={!row.wtr?.active} />
+            <EditableCheckbox value={row.wtr?.itel} onChange={toggleItel} disabled={!row.wtr?.active} />
+            <EditableCheckbox value={row.wtr?.eq} onChange={toggleEq} disabled={!row.wtr?.active} />
+            <EditableCheckbox value={row.wtr?.pick} onChange={togglePick} disabled={!row.wtr?.active} />
+            {/*renderEstimateCells(row, 'wtr', !row.wtr.active, change)*/}
+            {renderEstimateCellsWithCallbacks(row, 'wtr', !row.wtr?.active, wtrCallbacks)}
+            <ToggleBox                   // STR 主开关 + 日期
                 section="str"
                 rowIndex={index}
                 data={row.str}
                 onToggleActive={toggleMain} 
                 onDateChange={change}
             />
-            {EXTRA_FIELDS.slice(7, 8).map(key => (   // 'ctrc'
-                <TableCell key={key}>
-                <Checkbox
-                    disabled={!row.str.active}
-                    checked={row.str[key] || false}
-                    onChange={e =>
-                    change('str', key, e.target.checked)
-                    }
-                />
-                </TableCell>
-            ))}
-            {renderEstimateCells(row, 'str', !row.str.active, change)} 
-            <TableCell >
-                <TextField
-                    type="number"
-                    size="small"
-                    value={row.payment || ''}
-                    onChange={(e) => change('payment', null, e.target.value)}
-                    sx={{
-                        width: '100%',
-                        '& .MuiInputBase-input': {
-                            paddingLeft: '2px',
-                            paddingRight: '2px',
-                            paddingTop: '4px',
-                            paddingBottom: '4px',
-                            fontSize: '0.85rem'
-                        },
-                        '& .MuiOutlinedInput-root': {
-                            paddingRight: 0
-                        },
-                        '& input[type=number]': {
-                            MozAppearance: 'textfield',        // Firefox
-                        },
-                        '& input[type=number]::-webkit-outer-spin-button': {
-                            WebkitAppearance: 'none',          // Chrome, Safari
-                            margin: 0
-                        },
-                        '& input[type=number]::-webkit-inner-spin-button': {
-                            WebkitAppearance: 'none',
-                            margin: 0
-                        },
-                    }}
-                />
-            </TableCell>
+             <EditableCheckbox value={row.str?.ctrc} onChange={toggleStrCtrc} disabled={!row.str?.active} />
+            {/*renderEstimateCells(row, 'str', !row.str.active, change)*/} 
+            {renderEstimateCellsWithCallbacks(row, 'str', !row.str?.active, strCallbacks)}
+            {/* Payment 字段 - 独立刷新 */}
+            <EditableNumberField value={row.payment} onChange={changePayment} />
             <EditableCell
                 rowIndex={index}
                 field="comments"
                 value={row.comments}
                 onChange={change}
             />
-        </TableRow>
+         </> 
     );
 });
 
 export default function ProjectTableEditor() {
-    const [rows, setRows] = useState(initialData);
-    const [feedback, setFeedback] = useState({});
+  const pendingRef = useRef({});   // 待发送池
+  const { progress, api } = useTasks();   // 真实数据
+  const [feedback, setFeedback] = useState({});
+  
 
-    const handleChange = useCallback((rowIndex, section, key, value) => {
-        setRows(prev =>
-            prev.map((r,i) =>
-                i !== rowIndex
-                ? r
-                : key == null
-                    ? { ...r, [section]: value }                             
-                    : { ...r, [section]: { ...r[section], [key]: value } }   
-            )
+  /* 页面挂载时拉一次进度表 */
+  useEffect(() => { api.loadProgress() }, [api]);
+
+  const rows = useMemo(() => {
+    if (!progress) {
+      console.log('无 progress 数据');
+      return [];
+    }
+    if (Array.isArray(progress)) {
+      return progress;
+    }
+    if (typeof progress === 'object' && progress !== null) {
+      return Object.entries(progress).map(([id, r]) => ({ id, ...r }));
+    }
+    console.error('progress 数据格式无效:', progress);
+    return [];
+  }, [progress]);
+
+
+
+  // 用 useDebounce 做定时冲刷
+  const flushPatches = useDebounce(() => {
+    const all = pendingRef.current;
+    pendingRef.current = {};                     // 先清空，防抖窗口重开
+    // 把收集到的每个 row 的合并 patch 发给服务器
+    Object.entries(all).forEach(([id, patch]) => {
+      api.saveProgress(id, patch);               // 仍是最小 patch
+    });
+  }, 1500);
+
+  const queuePatch = useCallback((id, newPatch) => {
+    // ❶ 累积：lodash.merge 能递归合并，保持最小 patch 形态
+    pendingRef.current[id] = merge(
+      {},                         // 不改原对象
+      pendingRef.current[id] || {},
+      newPatch
+    );
+    // ❷ 每次修改都启动 / 重置防抖计时器
+    flushPatches();
+  }, [flushPatches]);
+  
+  /*
+  const handleChange = useCallback((rowIndex, section, key, value) => {
+    setRows(prev => {
+      
+      const next = prev.map((r, i) =>
+        i !== rowIndex
+          ? r
+          : key == null
+          ? { ...r, [section]: value }                             
+          : { ...r, [section]: { ...r[section], [key]: value } }   
+      );
+      
+      const row = next[rowIndex];
+      const patch = key == null
+      ? { [section]: value }
+      : { [section]: { [key]: value } };
+        
+      queuePatch(row.id, patch);
+      
+      const next       = [...prev];          // ① 浅拷贝数组
+      const oldRow     = prev[rowIndex];     // 原行引用
+      const newSection = key == null
+        ? value                               // section = 纯值（location / year / insurance）
+        : { ...oldRow[section], [key]: value }; // 修改 section 内部字段
+
+      const updatedRow = { ...oldRow, [section]: newSection };  // ② 克隆行并改值
+      next[rowIndex]   = updatedRow;          // ③ 就地替换
+
+      // ⚡ 生成最小 patch 并入池
+      const patch = key == null
+        ? { [section]: value }
+        : { [section]: { [key]: value } };
+
+      queuePatch(updatedRow.id, patch);       // 不丢字段
+      return next;
+    });
+  }, [queuePatch]);
+  */
+
+  const handleChange = useCallback((rowIndex, section, key, value) => {
+    const row = rows[rowIndex];
+    if (!row) return;
+    const patch = key == null
+      ? { [section]: value }
+      : { [section]: { [key]: value } };
+
+    api.mergeProgress(row.id, patch);   // 本地立即合并
+    queuePatch(row.id, patch);        // 进入节流池，稍后 PUT
+  }, [rows, api, queuePatch]);
+
+  const handleToggleActive = useCallback((rowIndex, section) => {
+    const row = rows[rowIndex];
+    if (!row) return;
+    const active = !row[section].active;
+    const patch  = { [section]: { active } };
+    
+    api.mergeProgress(row.id, patch);
+    queuePatch(row.id, patch);
+  }, [rows, api, queuePatch]);
+
+
+   /*
+  const handleToggleActive = useCallback((rowIndex, section) => {
+    setRows(prev => {
+     
+      const next = prev.map((r, i) =>
+        i!==rowIndex
+          ? r
+          : { ...r, [section]: { ...r[section], active: !r[section].active } }
         );
-    }, []);
+      const row = next[rowIndex];
+      queuePatch(row.id, { [section]: { active: next[rowIndex][section].active } });
+      */
 
-    const handleToggleActive = useCallback((rowIndex, section) => {
-        setRows(prev => prev.map((r,i)=>
-            i!==rowIndex
-            ? r
-            : { ...r, [section]: { ...r[section], active: !r[section].active } }
-        ));
-        const id = `${rowIndex}-${section}`;
-        setFeedback(p => ({ ...p, [id]: true }));
-        setTimeout(() => setFeedback(p => ({ ...p, [id]: false })), 800);
-    }, []);
+      /* 小绿勾/× 的 800 ms 视觉反馈 
+      const id = `${rowIndex}-${section}`;
+      setFeedback(p => ({ ...p, [id]: true }));
+      setTimeout(() => setFeedback(p => ({ ...p, [id]: false })), 800);
+      
+      const next     = [...prev];
+      const oldRow   = prev[rowIndex];
+      const oldSect  = oldRow[section];
+      const active   = !oldSect.active;       // 取反
+  
+      const updatedRow = {
+        ...oldRow,
+        [section]: { ...oldSect, active }     // 只克隆这一层
+      };
+      next[rowIndex] = updatedRow;
+  
+      queuePatch(updatedRow.id, { [section]: { active } });
+
+      return next;
+    });
+
+
+    }, [queuePatch]);
+    */
 
     return (
-        <Box p={2}>
-            <Typography variant="h5" gutterBottom>
-                项目编辑器
-            </Typography>
-            <TableContainer component={Paper}>
+        <Box 
+          sx={{
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            height: '100%',
+            gap: 1,              // ← theme.spacing(1) ≈ 8 px 间距
+            padding: 2,              // 添加内边距
+            position: 'relative',
+            margin: 0,
+          }}
+        >
+          <Typography variant="h5" gutterBottom>项目编辑器</Typography>
+            {/*< TableContainer component={Paper}>
                 <Table 
                     size="small" 
                     sx={{
@@ -941,7 +417,7 @@ export default function ProjectTableEditor() {
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                        {rows.map((row, index) => (
+                        {(rows ?? []).map((row, index) => (
                             <DataRow
                                 key={index}
                                 row={row}
@@ -952,7 +428,80 @@ export default function ProjectTableEditor() {
                         ))}
                     </TableBody>
                 </Table>
-            </TableContainer>
+            </TableContainer>*/}
+          
+          <Box 
+            sx={{ 
+              flex: 1, 
+              width: '100%',
+              position: 'relative',  // 确保相对定位
+              minHeight: 0          // 防止 flex 子元素溢出
+            }}
+          >
+
+          <TableVirtuoso
+            style={{ minHeight: 800, width: '100%' }}   // 滚动区域
+            data={rows}                              // 列表数据
+            components={{                            // ⬅ 维持 MUI Table 皮肤
+              Scroller: React.forwardRef((props, ref) => ( <div {...props} ref={ref} style={{ ...props.style, overflowY: 'auto' }} />)),
+              Table: (props) => (<Table {...props} size="small" sx={{
+                  borderCollapse:'collapse',
+                  '& td, & th': { px:0.15, pb:0.15, pt:0, border:'1px solid #000' }
+              }}/>),
+              TableHead: React.forwardRef((props, ref) => <thead {...props} ref={ref} />),
+              TableBody: React.forwardRef((props, ref) => <tbody {...props} ref={ref} />),
+            }}
+            fixedHeaderContent={() => (              // 👈 渲染表头（你的两行）
+              <>
+                <TableRow>
+                  <TableCell rowSpan={2} >LOCATION</TableCell>
+                  <TableCell rowSpan={2} >YEAR</TableCell>
+                  <TableCell rowSpan={2} >INSURANCE</TableCell>
+                  <TableCell rowSpan={2} >AROL</TableCell>
+                  <TableCell rowSpan={2} >TEST</TableCell>
+                  <TableCell rowSpan={2}>PAK</TableCell>
+                  <TableCell rowSpan={2} >POUT</TableCell>
+                  <TableCell rowSpan={2} >PACK</TableCell>
+                  <TableCell colSpan={3} >PAK ESTIMATE</TableCell>
+                  <TableCell rowSpan={2} >WTR</TableCell>
+                  <TableCell rowSpan={2} >CTRC</TableCell>
+                  <TableCell rowSpan={2} >DEMO</TableCell>
+                  <TableCell rowSpan={2} >ITEL</TableCell>
+                  <TableCell rowSpan={2} >EQ</TableCell>
+                  <TableCell rowSpan={2} >PICK</TableCell>
+                  <TableCell colSpan={3} >WTR ESTIMATE</TableCell>
+                  <TableCell rowSpan={2} >STR</TableCell>
+                  <TableCell rowSpan={2} >CTRC</TableCell>
+                  <TableCell colSpan={3} >STR ESTIMATE</TableCell>
+                  <TableCell rowSpan={2} >PAYMENT</TableCell>
+                  <TableCell rowSpan={2} >COMMENTS</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell >SEND</TableCell>
+                  <TableCell >REVIEW</TableCell>
+                  <TableCell >AGREE</TableCell>
+                  <TableCell >SEND</TableCell>
+                  <TableCell >REVIEW</TableCell>
+                  <TableCell >AGREE</TableCell>
+                  <TableCell >SEND</TableCell>
+                  <TableCell >REVIEW</TableCell>
+                  <TableCell >AGREE</TableCell>
+                </TableRow>
+              </>
+            )}
+            itemContent={(index, row) => {           // 👈 渲染每一行
+              return (
+              <DataRow
+                key={row.id}
+                row={row}
+                index={index}
+                onFieldChange={handleChange}
+                onToggleActive={handleToggleActive}
+              />)
+            }}
+
+          /> 
+          </Box>
         </Box>
     );
 }

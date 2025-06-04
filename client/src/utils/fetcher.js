@@ -1,6 +1,5 @@
 // src/utils/fetcher.js
 import { enqueueSnackbar } from 'notistack';
-import { useLoading }     from '../contexts/LoadingContext';
 
 let loadingApi; // 延迟注入，避免循环依赖
 

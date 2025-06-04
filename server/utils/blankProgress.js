@@ -1,19 +1,55 @@
+// utils/blankProgress.js
 module.exports = () => ({
-  pak:  stageBlank(),
-  wtr:  stageBlank(),
-  str:  stageBlank(),
-  payment: 0,
-  comments: ''
+  pak : blankPak(),   
+  wtr : blankWtr(),   
+  str : blankStr(),   
+  payment : 0,
+  comments: '',
 });
 
-function stageBlank() {
+function blankPak () {
   return {
-    active: false,
-    startDate: '',
-    pout: false, pack: false, ctrc: false, demo: false,
-    itel: false, eq: false, pick: false,
-    estimateSend: false,  estimateSendAmount: '',
-    estimateReview: false, estimateReviewAmount: '',
-    estimateAgree: false,  estimateAgreeAmount: ''
+    active            : false,
+    startDate         : '',
+    pout              : false,
+    pack              : false,
+    estimateSend      : false,
+    estimateSendAmount: '',
+    estimateReview    : false,
+    estimateReviewAmount: '',
+    estimateAgree     : false,
+    estimateAgreeAmount : '',
+  };
+}
+
+function blankWtr () {
+  return {
+    active            : false,
+    startDate         : '',
+    ctrc              : false,
+    demo              : false,
+    itel              : false,
+    eq                : false,
+    pick              : false,
+    estimateSend      : false,
+    estimateSendAmount: '',
+    estimateReview    : false,
+    estimateReviewAmount: '',
+    estimateAgree     : false,
+    estimateAgreeAmount : '',
+  };
+}
+
+function blankStr () {
+  return {
+    active            : false,
+    startDate         : '',
+    ctrc              : false,
+    estimateSend      : false,
+    estimateSendAmount: '',
+    estimateReview    : false,
+    estimateReviewAmount: '',
+    estimateAgree     : false,
+    estimateAgreeAmount : '',
   };
 }

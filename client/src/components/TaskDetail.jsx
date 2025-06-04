@@ -1,7 +1,6 @@
 // src/components/TaskDetail.jsx
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-//import { useTasks } from '../context/TaskContext';
 import {
   Box,
   Grid,
@@ -14,27 +13,31 @@ import {
   DialogTitle,
   DialogActions,
 } from '@mui/material';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+//import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import CancelIcon from '@mui/icons-material/Cancel';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
+import { useSnackbar } from 'notistack';
 
 import Editor from './Editor';
 import TaskPane from './TaskPane';
-import { api } from '../api/tasks';
+//import { api } from '../api/tasks';
+import { useTasks } from '../contexts/TaskStore';
 
 export default function TaskDetail({ id, embedded = false, onClose }) {
   const navigate = useNavigate();
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [task, setTask] = useState(null);
   const [loading, setLoading] = useState(true);
+  const { api: taskApi } = useTasks();
+  const { enqueueSnackbar } = useSnackbar();
 
   useEffect(() => {
     setLoading(true);
     Promise.all([
-      api.getTask(id),
-      api.getTaskDescription(id),
+      taskApi.getTask(id),
+      taskApi.getTaskDescription(id),
     ])
     .then(([taskData, descData]) => {
       setTask({ ...taskData, description: descData.description });
@@ -65,7 +68,8 @@ export default function TaskDetail({ id, embedded = false, onClose }) {
   };
 
   const handleDelete = () => {
-    api.deleteTask(id)
+    /*
+    taskApi.remove(id)
     .then(() => {
       if (embedded && onClose) {
         onClose('reload'); // 关闭嵌入式详情
@@ -74,6 +78,21 @@ export default function TaskDetail({ id, embedded = false, onClose }) {
       }
     })
     .catch(err => console.error('删除失败', err));
+    */
+    const doDelete = async () => {       // ★ 真正的删除逻辑
+      try {
+        await taskApi.remove(id);
+        enqueueSnackbar('已删除', { variant: 'success' });
+      } catch (err) {
+        enqueueSnackbar('删除失败，已还原', { variant: 'error' });
+      }
+    };
+    
+    if (embedded) {
+      onClose?.(doDelete);               // ★ 1) 先关闭；2) 把 doDelete 交给 Home
+    } else {
+      doDelete().then(() => navigate('/'));
+    }
   };
 
 

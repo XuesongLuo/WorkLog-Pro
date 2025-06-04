@@ -1,5 +1,5 @@
 // src/pages/Home.jsx
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Typography, Box, Button, Stack, Grid, Container, Slide} from '@mui/material';
 import ViewListIcon from '@mui/icons-material/ViewList';
@@ -10,7 +10,7 @@ import TaskList from '../components/TaskList';
 import CalendarView from '../components/CalendarView';
 import TaskDetail from '../components/TaskDetail';
 import CreateOrEditTask from '../components/CreateOrEditTask';
-import { api } from '../api/tasks';
+//import { api } from '../api/tasks';
 import { useDebounce}  from '../hooks/useDebounce';
 import useTaskDetailState from '../hooks/useTaskDetailState';
 
@@ -44,36 +44,22 @@ const SlideContent = React.memo(
     prevProps.handleTaskClose === nextProps.handleTaskClose
 );
 
+const useNormalizedEvents = (tasks) => useMemo(() => {
+  return tasks.map(t => ({
+    ...t,
+    start: t.start instanceof Date ? t.start : new Date(t.start),
+    end  : t.end   instanceof Date ? t.end   : new Date(t.end),
+    title: `${t.address ?? ''}, ${t.city ?? ''}, ${t.zipcode ?? ''}`,
+  }));
+}, [tasks]);
+
 export default function Home() {
   //const [tasks, setTasks] = useState([]);
   const { tasks, api } = useTasks(); 
+  const events = useNormalizedEvents(tasks);
   const [lang, setLang] = useState('zh');
   const [viewMode, setViewMode] = useState('calendar'); // 'calendar' | 'list'
   const navigate = useNavigate();
-
-
-  // 确保 start 和 end 是 Date 对象（react-big-calendar 要求），否则如点击 "+more" 时会报错
-  /*
-  const normalizeTaskDates = (tasks) =>
-  tasks.map(task => ({
-    ...task,
-    start: new Date(task.start),
-    end: new Date(task.end),
-    title: `${task.address ?? ''}, ${task.city ?? ''}, ${task.zipcode ?? ''}`, 
-  }));
-
-  const fetchTasks = () => {
-    api.getTasks()
-      .then(data => setTasks(normalizeTaskDates(data)))
-      .catch(err => console.error('获取任务失败:', err));
-  };
-  */
-  const normalizeTaskDates = (tasks) => tasks.map(t => ({
-    ...t,
-    start: new Date(t.start),
-    end:   new Date(t.end),
-    title: `${t.address ?? ''}, ${t.city ?? ''}, ${t.zipcode ?? ''}`,
-  }));
 
   const {
     selectedTask,
@@ -84,8 +70,6 @@ export default function Home() {
     handleTaskClose
   //} = useTaskDetailState(fetchTasks);
   } = useTaskDetailState(() => api.load());
-
-  const debouncedTaskClose = useDebounce(handleTaskClose, 100);   // 包装防抖版本的 handleTaskClose
 
   // 使用 useMemo 优化计算
   const gridStyles = useMemo(() => ({
@@ -118,14 +102,29 @@ export default function Home() {
     overflow: 'hidden',
   }), [showDetail]);
 
+  const [afterClose, setAfterClose] = useState(null);
+  const debouncedTaskClose = useDebounce(handleTaskClose, 100);   // 包装防抖版本的 handleTaskClose
+
+  const ANIM_MS = 550;                // 与 DelayedUnmount 的 0.5 s 一致
+  const handleSlideClose = (payload) => {
+    /* ① 编辑：直接切换，不收起面板 */
+    if (payload && typeof payload === 'object' && payload.mode === 'edit') {
+      openTaskEdit(payload.id, payload.task);          // 来自 useTaskDetailState
+      return;                         // 提前退出
+    }
+    /* ② 其它情况：先收起面板 */
+    debouncedTaskClose();
+    /* ②-a 保存 → 刷新列表 */
+    if (payload === 'reload') {
+      setTimeout(() => api.load(), ANIM_MS);
+    }
+    /* ②-b 删除 → 真删 */
+    if (typeof payload === 'function') {
+      setTimeout(payload, ANIM_MS);
+    }
+  };
+
   // 从后端加载任务列表
-  /*
-  useEffect(() => {
-    api.getTasks()
-      .then(data => setTasks(normalizeTaskDates(data)))
-      .catch(err => console.error('获取任务失败:', err));
-  }, []);
-  */
   useEffect(() => {         // 组件挂载 → 拉一次任务
     api.load();
   }, [api]);
@@ -183,9 +182,9 @@ export default function Home() {
                 {viewMode === 'calendar' ? '项目--日历' : '项目--列表'}
               </Typography>
               <Stack direction="row" spacing={2}>
-                <Button variant="outlined" onClick={debouncedTaskClose}>
+                {/*<Button variant="outlined" onClick={debouncedTaskClose}>
                   返回首页
-                </Button>
+                </Button>*/}
                 <Button variant="contained" color="secondary" onClick={openTaskCreate}>
                   新增任务
                 </Button>
@@ -201,7 +200,8 @@ export default function Home() {
             {viewMode === 'calendar' ? (
               <CalendarView
                 //events={tasks}
-                events={normalizeTaskDates(tasks)}
+                //events={normalizeTaskDates(tasks)}
+                events={events}
                 style={{ height: '100%', width: '100%' }}
                 onSelectEvent={(event) => openTaskDetail(event.id)}
               />
@@ -215,12 +215,22 @@ export default function Home() {
           </Grid>
           {/* 右侧面板：详情 / 新建 / 编辑 */}
           <Grid sx={rightPanelStyles}>
-            <Slide direction="left" in={!!selectedTask} mountOnEnter unmountOnExit>
+            <Slide 
+              direction="left" 
+              in={!!selectedTask} 
+              mountOnEnter 
+              unmountOnExit
+              onExited={() => {              // 动画完全收起 → 执行回调
+                afterClose?.();
+                setAfterClose(null);
+              }}
+            >
               <div>
                 <DelayedUnmount show={!!selectedTask}>
                   <SlideContent
                     selectedTask={selectedTask}
-                    handleTaskClose={debouncedTaskClose}
+                    //handleTaskClose={debouncedTaskClose}
+                    handleTaskClose={handleSlideClose}
                   />
                 </DelayedUnmount>
               </div>

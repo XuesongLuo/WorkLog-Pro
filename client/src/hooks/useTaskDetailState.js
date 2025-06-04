@@ -16,8 +16,9 @@ export default function useTaskDetailState(onReload) {
   };
 
   // 打开任务编辑
-  const openTaskEdit = (id) => {
-    setSelectedTask({ id, mode: 'edit' });
+  //const openTaskEdit = (id) => {
+    //setSelectedTask({ id, mode: 'edit' });
+  const openTaskEdit = (id, task) => { setSelectedTask(task ? { ...task, id, mode: 'edit' } : { id, mode: 'edit' });
     setShowDetail(true);
   };
 

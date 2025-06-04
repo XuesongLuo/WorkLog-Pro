@@ -7,11 +7,29 @@ const makeBlankProgress = require('../utils/blankProgress');
 
 const PROJECTS_FILE = path.join(__dirname, '../data/projects.json');
 const DESCRIPTIONS_FILE = path.join(__dirname, '../data/descriptions.json');
- const PROGRESS_FILE = path.join(__dirname, '../data/progress.json');
+const PROGRESS_FILE = path.join(__dirname, '../data/progress.json');
 
 // 工具函数
-const readJSON = (file, fallback = {}) => fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, 'utf-8')) : fallback;
-const writeJSON = (file, data) => fs.writeFileSync(file, JSON.stringify(data, null, 2), 'utf-8');
+//const readJSON = (file, fallback = {}) => fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, 'utf-8')) : fallback;
+
+const readJSON = (file, fallback = {}) => {
+  if (!fs.existsSync(file)) return fallback;
+  try {
+  // 读出来可能是 '' / 半截内容
+    const txt = fs.readFileSync(file, 'utf-8').trim();
+    return txt ? JSON.parse(txt) : fallback;
+  } catch (e) {
+    console.error('[readJSON] 解析失败 → 使用 fallback', file, e.message);
+    return fallback;          // 不让整个接口 500
+  }
+};
+//const writeJSON = (file, data) => fs.writeFileSync(file, JSON.stringify(data, null, 2), 'utf-8');
+function writeJSON(file, data) {
+  const tmp = file + '.tmp';
+  fs.writeFileSync(tmp, JSON.stringify(data, null, 2), 'utf-8');
+  fs.renameSync(tmp, file);
+}
+
 //const getNextId = (tasks) => (tasks.length ? Math.max(...tasks.map(t => t.id)) + 1 : 1);
 // 自动生成唯一 ID：yyyyMMdd-时间戳
 const generateIdFromStart = (start) => {
@@ -62,15 +80,6 @@ router.post('/', (req, res) => {
 
   res.status(201).json(newTask);
 });
-/*
-router.post('/', (req, res) => {
-  const tasks = readJSON(PROJECTS_FILE);
-  const newTask = { ...req.body, id: getNextId(tasks) };
-  tasks.push(newTask);
-  writeJSON(PROJECTS_FILE, tasks);
-  res.status(201).json(newTask);
-});
-*/
 
 // PUT /api/tasks/:id/description - 更新描述内容
 router.put('/:id/description', (req, res) => {
@@ -101,6 +110,10 @@ router.delete('/:id', (req, res) => {
   const descriptions = readJSON(DESCRIPTIONS_FILE, {});
   delete descriptions[req.params.id];
   writeJSON(DESCRIPTIONS_FILE, descriptions);
+
+  const progress = readJSON(PROGRESS_FILE, {});
+  delete progress[req.params.id];
+  writeJSON(PROGRESS_FILE, progress);
   
   res.status(204).end(); // 无返回内容
 });

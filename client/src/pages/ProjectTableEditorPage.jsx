@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Box } from '@mui/material';
 import TopAppBar from '../components/TopAppBar';
 import ProjectTableEditor from '../components/ProjectTableEditor';
@@ -7,12 +7,14 @@ import ProjectTableEditor from '../components/ProjectTableEditor';
 export default function EditPage() {
   const navigate = useNavigate();
   return (
-    <Box sx={{ width: '100vw', minHeight: '100vh' }}>
+    <Box sx={{ width: '100vw', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       <TopAppBar 
         showHomeButton         
         onHomeClick={() => navigate('/')}
       />
-      <ProjectTableEditor />
+      <Box sx={{ flex: 1, overflow: 'hidden'}}>  {/* 添加容器 */}
+        <ProjectTableEditor />
+      </Box>
     </Box>
   );
 }

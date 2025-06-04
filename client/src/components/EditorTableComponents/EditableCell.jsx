@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { TableCell, Popover, TextField } from '@mui/material';
 
 // 公共样式：与表格保持一致
@@ -9,6 +9,7 @@ const cellStyles = {
   wordBreak: 'break-word',
   padding: '4px',
   fontSize: '0.875rem',
+  backgroundColor: 'lightblue', // 调试用
 };
 
 /**
@@ -34,14 +35,32 @@ function EditableCell({ field, value, onChange }) {
    * 打开编辑器
    */
   const openEditor = (e) => {
+    console.log('openEditor called for field:', field, 'event:', e);
     setDraft(value ?? '');       // 每次打开时取最新值
-    setAnchorEl(e.currentTarget);
+    const target = e.currentTarget;
+    //setAnchorEl(e.currentTarget);
+    if (target && document.contains(target)) {
+      setAnchorEl(target);
+      setTimeout(() => {
+        if (document.contains(target)) {
+          setAnchorEl(target);
+        } else {
+          console.warn('Event target no longer in DOM');
+          setAnchorEl(null);
+        }
+      }, 0);
+    } else {
+      console.warn('Cell ref not available');
+    }
   };
 
   /**
    * 关闭 Popover
    */
-  const closeEditor = useCallback(() => setAnchorEl(null), []);
+  const closeEditor = useCallback(() => {
+    console.log('closeEditor called');
+    setAnchorEl(null);
+  }, []);
 
   /**
    * 提交修改
@@ -49,11 +68,22 @@ function EditableCell({ field, value, onChange }) {
    * 不需要 rowIndex，因为 DataRow 已经在闭包里注入。
    */
   const commit = useCallback(() => {
+    console.log('commit called:', { draft, value });
     closeEditor();
     if (draft !== value) {
       onChange(field, null, draft); // ✅ section = field, key = null
     }
   }, [closeEditor, draft, value, field, onChange]);
+
+  useEffect(() => {
+    /*
+    console.log('EditableCell state:', { field, anchorEl, open: Boolean(anchorEl) });
+    if (anchorEl && !document.contains(anchorEl)) {
+      console.warn('anchorEl is invalid, resetting');
+      setAnchorEl(null);
+    }
+    */
+  }, [anchorEl, field]);
 
   const open = Boolean(anchorEl);
   const baseWidth = anchorEl?.getBoundingClientRect().width ?? 100;
@@ -84,7 +114,9 @@ function EditableCell({ field, value, onChange }) {
           inputRef={inputRef}
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
-          onBlur={commit}
+          onBlur={() => {
+            if (open) commit()
+          }}
           onKeyDown={(e) => e.key === 'Enter' && commit()}
           variant="standard"
           autoFocus
