@@ -19,7 +19,15 @@ function taskReducer(state, action) {
 function progressReducer(state, action) {
   switch (action.type) {
     case 'set':    return action.payload;                               // 替换整表
-    case 'patch':  return state.map(r => r.id === action.id ? merge({}, r, action.data) : r);   // 行内合并
+    case 'patch':
+      const index = state.findIndex(r => r.id === action.id);
+      if (index === -1) return state; // 未找到行，保持不变
+      const updatedRow = merge({}, state[index], action.data);
+      return [
+        ...state.slice(0, index),
+        updatedRow,
+        ...state.slice(index + 1)
+      ];
     default:       return state;
   }
 }
@@ -114,7 +122,7 @@ export function TaskProvider({ children }) {
   // ② 行级保存
   const saveProgress = useCallback(async (id, data) => {
     try {
-      progressDispatch({ type: 'patch', id, data });            // Optimistic UI
+      // progressDispatch({ type: 'patch', id, data });            // Optimistic UI
       await fetcher(`/api/progress/${id}`, {
         method : 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -124,6 +132,7 @@ export function TaskProvider({ children }) {
     } catch (error) {
       console.error('Failed to save progress for id:', id, error);
       // 可以考虑回滚或显示错误消息
+      progressDispatch({ type: 'patch', id, data: {} }); // 清除失败的更新
     }
   }, []);
 

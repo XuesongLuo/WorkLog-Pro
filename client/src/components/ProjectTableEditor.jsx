@@ -74,70 +74,71 @@ function renderEstimateCellsWithCallbacks(row, section, disabled, callbacks) {
 }
 
 
-function useRowCallbacks(rowIndex, onFieldChange, onToggleActive) {
+function useRowCallbacks(rowIndex, onFieldChange, onToggleActive, rowId) {
   // 顶层字段或嵌套字段都走同一个入口
     const change = useCallback(
       (section, key, val) => onFieldChange(rowIndex, section, key, val),
-      [rowIndex, onFieldChange]
+      [rowIndex, onFieldChange, rowId]
     );
     const toggleMain = useCallback(
       section => onToggleActive(rowIndex, section),
-      [rowIndex, onToggleActive]
+      [rowIndex, onToggleActive, rowId]
     );
     return { change, toggleMain };
 }
 
 const DataRow = React.memo(function DataRow({ row, index, onFieldChange, onToggleActive }) {
     console.log('DataRow rendered:', index, row.id);
+    //console.log('DataRow props changed:', { row, index });
     const { change, toggleMain } = useRowCallbacks(index, onFieldChange, onToggleActive);
     // 为每个独立字段创建单独的回调
-    const toggleArol = useCallback(e => change('arol', null, e.target.checked), [change]);
-    const toggleTest = useCallback(e => change('test', null, e.target.checked), [change]);
+    const toggleArol = useCallback(e => change('arol', null, e.target.checked), [change, row.id]);
+    const toggleTest = useCallback(e => change('test', null, e.target.checked), [change, row.id]);
     // PAK 相关回调
-    const togglePout = useCallback(e => change('pak', 'pout', e.target.checked), [change]);
-    const togglePack = useCallback(e => change('pak', 'pack', e.target.checked), [change]);
+    const togglePout = useCallback(e => change('pak', 'pout', e.target.checked), [change, row.id]);
+    const togglePack = useCallback(e => change('pak', 'pack', e.target.checked), [change, row.id]);
     // WTR 相关回调
-    const toggleWtrCtrc = useCallback(e => change('wtr', 'ctrc', e.target.checked), [change]);
-    const toggleDemo = useCallback(e => change('wtr', 'demo', e.target.checked), [change]);
-    const toggleItel = useCallback(e => change('wtr', 'itel', e.target.checked), [change]);
-    const toggleEq = useCallback(e => change('wtr', 'eq', e.target.checked), [change]);
-    const togglePick = useCallback(e => change('wtr', 'pick', e.target.checked), [change]);
+    const toggleWtrCtrc = useCallback(e => change('wtr', 'ctrc', e.target.checked), [change, row.id]);
+    const toggleDemo = useCallback(e => change('wtr', 'demo', e.target.checked), [change, row.id]);
+    const toggleItel = useCallback(e => change('wtr', 'itel', e.target.checked), [change, row.id]);
+    const toggleEq = useCallback(e => change('wtr', 'eq', e.target.checked), [change, row.id]);
+    const togglePick = useCallback(e => change('wtr', 'pick', e.target.checked), [change, row.id]);
     // STR 相关回调
-    const toggleStrCtrc = useCallback(e => change('str', 'ctrc', e.target.checked), [change]);
+    const toggleStrCtrc = useCallback(e => change('str', 'ctrc', e.target.checked), [change, row.id]);
     // 金额字段回调
-    const changePayment = useCallback(e => change('payment', null, e.target.value), [change]);
+    const changePayment = useCallback(e => change('payment', null, e.target.value), [change, row.id]);
     // Estimate 金额回调
-    const changePakSendAmount = useCallback(e => change('pak', 'estimateSendAmount', e.target.value), [change]);
-    const changePakReviewAmount = useCallback(e => change('pak', 'estimateReviewAmount', e.target.value), [change]);
-    const changePakAgreeAmount = useCallback(e => change('pak', 'estimateAgreeAmount', e.target.value), [change]);
+    const changePakSendAmount = useCallback(e => change('pak', 'estimateSendAmount', e.target.value), [change, row.id]);
+    const changePakReviewAmount = useCallback(e => change('pak', 'estimateReviewAmount', e.target.value), [change, row.id]);
+    const changePakAgreeAmount = useCallback(e => change('pak', 'estimateAgreeAmount', e.target.value), [change, row.id]);
     
-    const changeWtrSendAmount = useCallback(e => change('wtr', 'estimateSendAmount', e.target.value), [change]);
-    const changeWtrReviewAmount = useCallback(e => change('wtr', 'estimateReviewAmount', e.target.value), [change]);
-    const changeWtrAgreeAmount = useCallback(e => change('wtr', 'estimateAgreeAmount', e.target.value), [change]);
+    const changeWtrSendAmount = useCallback(e => change('wtr', 'estimateSendAmount', e.target.value), [change, row.id]);
+    const changeWtrReviewAmount = useCallback(e => change('wtr', 'estimateReviewAmount', e.target.value), [change, row.id]);
+    const changeWtrAgreeAmount = useCallback(e => change('wtr', 'estimateAgreeAmount', e.target.value), [change, row.id]);
     
-    const changeStrSendAmount = useCallback(e => change('str', 'estimateSendAmount', e.target.value), [change]);
-    const changeStrReviewAmount = useCallback(e => change('str', 'estimateReviewAmount', e.target.value), [change]);
-    const changeStrAgreeAmount = useCallback(e => change('str', 'estimateAgreeAmount', e.target.value), [change]);
+    const changeStrSendAmount = useCallback(e => change('str', 'estimateSendAmount', e.target.value), [change, row.id]);
+    const changeStrReviewAmount = useCallback(e => change('str', 'estimateReviewAmount', e.target.value), [change, row.id]);
+    const changeStrAgreeAmount = useCallback(e => change('str', 'estimateAgreeAmount', e.target.value), [change, row.id]);
     const pakCallbacks = {
-      estimateSend: useCallback(e => change('pak', 'estimateSend', e.target.checked), [change]),
-      estimateReview: useCallback(e => change('pak', 'estimateReview', e.target.checked), [change]),
-      estimateAgree: useCallback(e => change('pak', 'estimateAgree', e.target.checked), [change]),
+      estimateSend: useCallback(e => change('pak', 'estimateSend', e.target.checked), [change, row.id]),
+      estimateReview: useCallback(e => change('pak', 'estimateReview', e.target.checked), [change, row.id]),
+      estimateAgree: useCallback(e => change('pak', 'estimateAgree', e.target.checked), [change, row.id]),
       estimateSendAmount: changePakSendAmount,
       estimateReviewAmount: changePakReviewAmount,
       estimateAgreeAmount: changePakAgreeAmount
     };
     const wtrCallbacks = {
-      estimateSend: useCallback(e => change('wtr', 'estimateSend', e.target.checked), [change]),
-      estimateReview: useCallback(e => change('wtr', 'estimateReview', e.target.checked), [change]),
-      estimateAgree: useCallback(e => change('wtr', 'estimateAgree', e.target.checked), [change]),
+      estimateSend: useCallback(e => change('wtr', 'estimateSend', e.target.checked), [change, row.id]),
+      estimateReview: useCallback(e => change('wtr', 'estimateReview', e.target.checked), [change, row.id]),
+      estimateAgree: useCallback(e => change('wtr', 'estimateAgree', e.target.checked), [change, row.id]),
       estimateSendAmount: changeWtrSendAmount,
       estimateReviewAmount: changeWtrReviewAmount,
       estimateAgreeAmount: changeWtrAgreeAmount
     };
     const strCallbacks = {
-      estimateSend: useCallback(e => change('str', 'estimateSend', e.target.checked), [change]),
-      estimateReview: useCallback(e => change('str', 'estimateReview', e.target.checked), [change]),
-      estimateAgree: useCallback(e => change('str', 'estimateAgree', e.target.checked), [change]),
+      estimateSend: useCallback(e => change('str', 'estimateSend', e.target.checked), [change, row.id]),
+      estimateReview: useCallback(e => change('str', 'estimateReview', e.target.checked), [change, row.id]),
+      estimateAgree: useCallback(e => change('str', 'estimateAgree', e.target.checked), [change, row.id]),
       estimateSendAmount: changeStrSendAmount,
       estimateReviewAmount: changeStrReviewAmount,
       estimateAgreeAmount: changeStrAgreeAmount
@@ -225,7 +226,10 @@ export default function ProjectTableEditor() {
       return progress;
     }
     if (typeof progress === 'object' && progress !== null) {
-      return Object.entries(progress).map(([id, r]) => ({ id, ...r }));
+      return Object.entries(progress).map(([id, r]) => {
+        return r.id === id ? r : { ...r, id };
+      //({ id, ...r }));
+      });
     }
     console.error('progress 数据格式无效:', progress);
     return [];
@@ -293,26 +297,26 @@ export default function ProjectTableEditor() {
   }, [queuePatch]);
   */
 
-  const handleChange = useCallback((rowIndex, section, key, value) => {
-    const row = rows[rowIndex];
-    if (!row) return;
+  const handleChange = useCallback((rowIndex, section, key, value, rowId) => {
+    if (!rowId) return;
     const patch = key == null
       ? { [section]: value }
       : { [section]: { [key]: value } };
 
-    api.mergeProgress(row.id, patch);   // 本地立即合并
-    queuePatch(row.id, patch);        // 进入节流池，稍后 PUT
-  }, [rows, api, queuePatch]);
+    // 仅本地合并，不立即触发重渲染
+    api.mergeProgress(rowId, patch);   // 本地立即合并
+    queuePatch(rowId, patch);        // 进入防抖队列，稍后保存
+  }, [api, queuePatch]);
 
-  const handleToggleActive = useCallback((rowIndex, section) => {
-    const row = rows[rowIndex];
-    if (!row) return;
-    const active = !row[section].active;
-    const patch  = { [section]: { active } };
+  const handleToggleActive = useCallback((rowIndex, section, rowId) => {
+    if (!rowId) return;
+    //const active = !row[section].active;
+    //const patch  = { [section]: { active } };
+    const patch = { [section]: { active: true } };
     
-    api.mergeProgress(row.id, patch);
-    queuePatch(row.id, patch);
-  }, [rows, api, queuePatch]);
+    api.mergeProgress(rowId, patch);
+    queuePatch(rowId, patch);
+  }, [api, queuePatch, progress]);
 
 
    /*
@@ -442,8 +446,21 @@ export default function ProjectTableEditor() {
           <TableVirtuoso
             style={{ minHeight: 800, width: '100%' }}   // 滚动区域
             data={rows}                              // 列表数据
+            initialTopMostItemIndex={0}
+            //itemKey={index => (rows[index] ? rows[index].id : index)}
+            //itemSize={48}  
             components={{                            // ⬅ 维持 MUI Table 皮肤
-              Scroller: React.forwardRef((props, ref) => ( <div {...props} ref={ref} style={{ ...props.style, overflowY: 'auto' }} />)),
+              //Scroller: React.forwardRef((props, ref) => ( <div {...props} ref={ref} style={{ ...props.style, overflowY: 'auto' }} />)),
+              /*
+              Scroller: React.forwardRef(({ itemKey, ...rest }, ref) => (
+                // 把 Virtuoso 自己的专用 prop “解构出来并忽略”
+                <div
+                  ref={ref}
+                  {...rest}
+                  style={{ ...rest.style, overflowY: 'auto' }}
+                />
+              )),
+              */
               Table: (props) => (<Table {...props} size="small" sx={{
                   borderCollapse:'collapse',
                   '& td, & th': { px:0.15, pb:0.15, pt:0, border:'1px solid #000' }
@@ -495,8 +512,8 @@ export default function ProjectTableEditor() {
                 key={row.id}
                 row={row}
                 index={index}
-                onFieldChange={handleChange}
-                onToggleActive={handleToggleActive}
+                onFieldChange={(section, key, value) => handleChange(index, section, key, value, row.id)}
+                onToggleActive={(section) => handleToggleActive(index, section, row.id)}
               />)
             }}
 
