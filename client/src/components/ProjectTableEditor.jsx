@@ -29,7 +29,7 @@ export default function ProjectTableEditor() {
     return [];
   }, [progress]);
 
-  // Debounced function to flush pending patches to server
+  // ① flush – 文本类字段 0.5 s 后批量保存
   const flushPatches = useDebounce(() => {
     const allPatches = pendingRef.current;
     pendingRef.current = {};  // reset the patch pool
@@ -37,8 +37,9 @@ export default function ProjectTableEditor() {
     Object.entries(allPatches).forEach(([id, patch]) => {
       api.saveProgress(id, patch);
     });
-  }, 1500);
+  }, 500);
 
+  /*
   // Helper to queue a patch and trigger debounce
   const queuePatch = useCallback((id, newPatch) => {
     // Merge newPatch into pendingRef (deep merge to accumulate nested fields)
@@ -58,6 +59,34 @@ export default function ProjectTableEditor() {
     api.mergeProgress(rowId, patch);    // optimistic UI update (local merge)
     queuePatch(rowId, patch);           // add to pending patches (debounced save)
   }, [api, queuePatch]);
+  */
+
+  /** ---------------------------------------------------------
++ * ② 通用提交助手  
++ *    immediate = true → 立刻保存（checkbox / toggle / select）  
++ *    immediate = false → 进入防抖池（文本 / textarea / 数字输入）
++ * ---------------------------------------------------------*/
+const applyPatch = useCallback((rowId, patch, immediate = false) => {
+    api.mergeProgress(rowId, patch);               // 乐观更新
+    if (immediate) {
+        api.saveProgress(rowId, patch);              // ⏩ 立即 PUT
+    } else {
+        pendingRef.current[rowId] = pendingRef.current[rowId]
+            ? { ...pendingRef.current[rowId], ...patch }
+            : patch;
+        flushPatches();                              // 交给 debounce
+    }
+}, [api, flushPatches]);
+
+// ③ 供各 Cell 调用的统一入口
+const handleChange = useCallback((rowId, section, key, value, immediate = false) => {
+    if (!rowId) return;
+    const patch = key == null
+        ? { [section]: value }
+        : { [section]: { [key]: value } };
+    applyPatch(rowId, patch, immediate);
+}, [applyPatch],
+);
 
   // Toggle "active" field handler for stages (pak/wtr/str)
   const handleToggleActive = useCallback((rowId, section) => {
@@ -66,9 +95,10 @@ export default function ProjectTableEditor() {
     if (!rowObj) return;
     const newActive = !rowObj[section]?.active;
     const patch = { [section]: { active: newActive } };
-    api.mergeProgress(rowId, patch);   // update active flag locally
-    queuePatch(rowId, patch);          // queue patch to save active flag
-  }, [api, queuePatch, progress]);
+    //api.mergeProgress(rowId, patch);   // update active flag locally
+    //queuePatch(rowId, patch);          // queue patch to save active flag
+    applyPatch(rowId, patch, /* immediate */ true);
+  }, [applyPatch, progress]);
 
   // Load initial data on mount
   useEffect(() => {
@@ -90,10 +120,18 @@ export default function ProjectTableEditor() {
       accessorKey: 'location',
       // Use custom text editor cell (click to edit, saves on blur)
       Cell: ({ row }) => (
+        /*
         <EditableCell 
           field="location" 
           value={row.original.location} 
           onChange={(field, _key, val) => handleChange(row.original.id, field, null, val)}
+        />
+        */
+        // 文本 – 走防抖 
+        <EditableCell
+            field="location"
+            value={row.original.location}
+            onChange={(field, _key, val) => handleChange(row.original.id, field, null, val)}
         />
       ),
     },
@@ -126,7 +164,7 @@ export default function ProjectTableEditor() {
       Cell: ({ row }) => (
         <EditableCheckbox 
           value={row.original.arol || false}
-          onChange={(e) => handleChange(row.original.id, 'arol', null, e.target.checked)}
+          onChange={(e) => handleChange(row.original.id, 'arol', null, e.target.checked, true)}
         />
       ),
     },
@@ -136,7 +174,7 @@ export default function ProjectTableEditor() {
       Cell: ({ row }) => (
         <EditableCheckbox 
           value={row.original.test || false}
-          onChange={(e) => handleChange(row.original.id, 'test', null, e.target.checked)}
+          onChange={(e) => handleChange(row.original.id, 'test', null, e.target.checked, true)}
         />
       ),
     },
@@ -163,7 +201,7 @@ export default function ProjectTableEditor() {
         <EditableCheckbox 
           value={row.original.pak?.pout || false}
           disabled={!row.original.pak?.active}
-          onChange={(e) => handleChange(row.original.id, 'pak', 'pout', e.target.checked)}
+          onChange={(e) => handleChange(row.original.id, 'pak', 'pout', e.target.checked, true)}
         />
       ),
     },
@@ -175,7 +213,7 @@ export default function ProjectTableEditor() {
         <EditableCheckbox 
           value={row.original.pak?.pack || false}
           disabled={!row.original.pak?.active}
-          onChange={(e) => handleChange(row.original.id, 'pak', 'pack', e.target.checked)}
+          onChange={(e) => handleChange(row.original.id, 'pak', 'pack', e.target.checked, true)}
         />
       ),
     },
@@ -278,7 +316,7 @@ export default function ProjectTableEditor() {
         <EditableCheckbox 
           value={row.original.wtr?.ctrc || false}
           disabled={!row.original.wtr?.active}
-          onChange={(e) => handleChange(row.original.id, 'wtr', 'ctrc', e.target.checked)}
+          onChange={(e) => handleChange(row.original.id, 'wtr', 'ctrc', e.target.checked, true)}
         />
       ),
     },
@@ -290,7 +328,7 @@ export default function ProjectTableEditor() {
         <EditableCheckbox 
           value={row.original.wtr?.demo || false}
           disabled={!row.original.wtr?.active}
-          onChange={(e) => handleChange(row.original.id, 'wtr', 'demo', e.target.checked)}
+          onChange={(e) => handleChange(row.original.id, 'wtr', 'demo', e.target.checked, true)}
         />
       ),
     },
@@ -302,7 +340,7 @@ export default function ProjectTableEditor() {
         <EditableCheckbox 
           value={row.original.wtr?.itel || false}
           disabled={!row.original.wtr?.active}
-          onChange={(e) => handleChange(row.original.id, 'wtr', 'itel', e.target.checked)}
+          onChange={(e) => handleChange(row.original.id, 'wtr', 'itel', e.target.checked, true)}
         />
       ),
     },
@@ -314,7 +352,7 @@ export default function ProjectTableEditor() {
         <EditableCheckbox 
           value={row.original.wtr?.eq || false}
           disabled={!row.original.wtr?.active}
-          onChange={(e) => handleChange(row.original.id, 'wtr', 'eq', e.target.checked)}
+          onChange={(e) => handleChange(row.original.id, 'wtr', 'eq', e.target.checked, true)}
         />
       ),
     },
@@ -326,7 +364,7 @@ export default function ProjectTableEditor() {
         <EditableCheckbox 
           value={row.original.wtr?.pick || false}
           disabled={!row.original.wtr?.active}
-          onChange={(e) => handleChange(row.original.id, 'wtr', 'pick', e.target.checked)}
+          onChange={(e) => handleChange(row.original.id, 'wtr', 'pick', e.target.checked, true)}
         />
       ),
     },
@@ -425,7 +463,7 @@ export default function ProjectTableEditor() {
         <EditableCheckbox 
           value={row.original.str?.ctrc || false}
           disabled={!row.original.str?.active}
-          onChange={(e) => handleChange(row.original.id, 'str', 'ctrc', e.target.checked)}
+          onChange={(e) => handleChange(row.original.id, 'str', 'ctrc', e.target.checked, true)}
         />
       ),
     },

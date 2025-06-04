@@ -131,7 +131,7 @@ export function TaskProvider({ children }) {
       return;
     }
     try {
-      progressDispatch({ type: 'patch', id, data });            // Optimistic UI
+      //progressDispatch({ type: 'patch', id, data });            // Optimistic UI
       await fetcher(`/api/progress/${id}`, {
         method : 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -140,7 +140,7 @@ export function TaskProvider({ children }) {
       console.log('Progress saved successfully for id:', id);
     } catch (error) {
       console.error('Failed to save progress for id:', id, error);
-      // 可以考虑回滚或显示错误消息
+      // 回滚（保持原逻辑）
       progressDispatch({ type: 'patch', id, data: state.find(r => r.id === id) || {} }); // 清除失败的更新
       throw error;
     }
