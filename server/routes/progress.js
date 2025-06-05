@@ -37,10 +37,10 @@ function deepMerge(oldObj, patchObj) {
 
 // GET /api/progress          → 表格一次性加载
 router.get('/', (req, res) => {
-    const byId = readJSON(PROGRESS_FILE, {});              // { id1:{…}, id2:{…} }
-    const list = Object.entries(byId).map(([id, body]) => ({ id, ...body }));
-    res.json(list);
-  });
+  const byId = readJSON(PROGRESS_FILE, {});              // { id1:{…}, id2:{…} }
+  //const list = Object.entries(byId).map(([id, body]) => ({ id, ...body }));
+  res.json(byId);
+});
     
 // PUT /api/progress/:id      → 行级保存
 router.put('/:id', (req, res) => {

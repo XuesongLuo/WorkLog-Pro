@@ -1,7 +1,7 @@
 // src/components/ProjectTableEditor.jsx
 import React, { useEffect, useRef, useCallback, useMemo } from 'react';
 import { MaterialReactTable } from 'material-react-table';  // TanStack Table + MUI wrapper
-import { useDebounce } from '../hooks/useDebounce';
+//import { useDebounce } from '../hooks/useDebounce';
 import { useTasks } from '../contexts/TaskStore';
 // Import custom cell components (note: may need slight refactoring, see below)
 import EditableCell from './EditorTableComponents/EditableCell';
@@ -11,7 +11,7 @@ import ToggleBox from './EditorTableComponents/ToggleBox';
 
 export default function ProjectTableEditor() {
   const { progress, api } = useTasks();
-  const pendingRef = useRef({});  // pending patches pool for debounce
+  //const pendingRef = useRef({});  // pending patches pool for debounce
   
   // Convert progress data to array of rows (ensure each row has an `id` field)
   const rows = useMemo(() => {
@@ -30,6 +30,7 @@ export default function ProjectTableEditor() {
   }, [progress]);
 
   // ① flush – 文本类字段 0.5 s 后批量保存
+  /*
   const flushPatches = useDebounce(() => {
     const allPatches = pendingRef.current;
     pendingRef.current = {};  // reset the patch pool
@@ -38,27 +39,6 @@ export default function ProjectTableEditor() {
       api.saveProgress(id, patch);
     });
   }, 500);
-
-  /*
-  // Helper to queue a patch and trigger debounce
-  const queuePatch = useCallback((id, newPatch) => {
-    // Merge newPatch into pendingRef (deep merge to accumulate nested fields)
-    pendingRef.current[id] = pendingRef.current[id]
-      ? { ...pendingRef.current[id], ...newPatch }
-      : newPatch;
-    // Reset debounce timer
-    flushPatches();
-  }, [flushPatches]);
-
-  // Field change handler – updates local state optimistically and queues patch
-  const handleChange = useCallback((rowId, section, key, value) => {
-    if (!rowId) return;
-    const patch = key == null 
-      ? { [section]: value } 
-      : { [section]: { [key]: value } };
-    api.mergeProgress(rowId, patch);    // optimistic UI update (local merge)
-    queuePatch(rowId, patch);           // add to pending patches (debounced save)
-  }, [api, queuePatch]);
   */
 
   /** ---------------------------------------------------------
@@ -66,6 +46,7 @@ export default function ProjectTableEditor() {
 + *    immediate = true → 立刻保存（checkbox / toggle / select）  
 + *    immediate = false → 进入防抖池（文本 / textarea / 数字输入）
 + * ---------------------------------------------------------*/
+/*
 const applyPatch = useCallback((rowId, patch, immediate = false) => {
     api.mergeProgress(rowId, patch);               // 乐观更新
     if (immediate) {
@@ -77,28 +58,33 @@ const applyPatch = useCallback((rowId, patch, immediate = false) => {
         flushPatches();                              // 交给 debounce
     }
 }, [api, flushPatches]);
+*/
 
 // ③ 供各 Cell 调用的统一入口
-const handleChange = useCallback((rowId, section, key, value, immediate = false) => {
+const handleChange = useCallback((rowId, section, key, value) => {
     if (!rowId) return;
     const patch = key == null
         ? { [section]: value }
         : { [section]: { [key]: value } };
-    applyPatch(rowId, patch, immediate);
-}, [applyPatch],
-);
+    //applyPatch(rowId, patch);
+    api.mergeProgress(rowId, patch);
+    api.saveProgress(rowId, patch);
+}, [api]);
 
   // Toggle "active" field handler for stages (pak/wtr/str)
   const handleToggleActive = useCallback((rowId, section) => {
     if (!rowId) return;
-    const rowObj = progress.find(r => r.id === rowId);
+    //const rowObj = progress.find(r => r.id === rowId);
+    const rowObj = progress[rowId];
     if (!rowObj) return;
     const newActive = !rowObj[section]?.active;
     const patch = { [section]: { active: newActive } };
     //api.mergeProgress(rowId, patch);   // update active flag locally
     //queuePatch(rowId, patch);          // queue patch to save active flag
-    applyPatch(rowId, patch, /* immediate */ true);
-  }, [applyPatch, progress]);
+    //applyPatch(rowId, patch, /* immediate */ true);
+    api.mergeProgress(rowId, patch);
+    api.saveProgress(rowId, patch);
+  }, [api, progress]);
 
   // Load initial data on mount
   useEffect(() => {
@@ -106,11 +92,13 @@ const handleChange = useCallback((rowId, section, key, value, immediate = false)
   }, [api]);
 
   // Flush any remaining patches on unmount (to avoid losing unsaved changes)
+  /*
   useEffect(() => {
     return () => {
       flushPatches.flush();
     };
   }, [flushPatches]);
+  */
 
   // Define table columns with custom cell renderers
   const columns = useMemo(() => [
@@ -164,7 +152,7 @@ const handleChange = useCallback((rowId, section, key, value, immediate = false)
       Cell: ({ row }) => (
         <EditableCheckbox 
           value={row.original.arol || false}
-          onChange={(e) => handleChange(row.original.id, 'arol', null, e.target.checked, true)}
+          onChange={(e) => handleChange(row.original.id, 'arol', null, e.target.checked)}
         />
       ),
     },
@@ -174,7 +162,7 @@ const handleChange = useCallback((rowId, section, key, value, immediate = false)
       Cell: ({ row }) => (
         <EditableCheckbox 
           value={row.original.test || false}
-          onChange={(e) => handleChange(row.original.id, 'test', null, e.target.checked, true)}
+          onChange={(e) => handleChange(row.original.id, 'test', null, e.target.checked)}
         />
       ),
     },
@@ -201,7 +189,7 @@ const handleChange = useCallback((rowId, section, key, value, immediate = false)
         <EditableCheckbox 
           value={row.original.pak?.pout || false}
           disabled={!row.original.pak?.active}
-          onChange={(e) => handleChange(row.original.id, 'pak', 'pout', e.target.checked, true)}
+          onChange={(e) => handleChange(row.original.id, 'pak', 'pout', e.target.checked)}
         />
       ),
     },
@@ -213,7 +201,7 @@ const handleChange = useCallback((rowId, section, key, value, immediate = false)
         <EditableCheckbox 
           value={row.original.pak?.pack || false}
           disabled={!row.original.pak?.active}
-          onChange={(e) => handleChange(row.original.id, 'pak', 'pack', e.target.checked, true)}
+          onChange={(e) => handleChange(row.original.id, 'pak', 'pack', e.target.checked)}
         />
       ),
     },
@@ -316,7 +304,7 @@ const handleChange = useCallback((rowId, section, key, value, immediate = false)
         <EditableCheckbox 
           value={row.original.wtr?.ctrc || false}
           disabled={!row.original.wtr?.active}
-          onChange={(e) => handleChange(row.original.id, 'wtr', 'ctrc', e.target.checked, true)}
+          onChange={(e) => handleChange(row.original.id, 'wtr', 'ctrc', e.target.checked)}
         />
       ),
     },
@@ -328,7 +316,7 @@ const handleChange = useCallback((rowId, section, key, value, immediate = false)
         <EditableCheckbox 
           value={row.original.wtr?.demo || false}
           disabled={!row.original.wtr?.active}
-          onChange={(e) => handleChange(row.original.id, 'wtr', 'demo', e.target.checked, true)}
+          onChange={(e) => handleChange(row.original.id, 'wtr', 'demo', e.target.checked)}
         />
       ),
     },
@@ -340,7 +328,7 @@ const handleChange = useCallback((rowId, section, key, value, immediate = false)
         <EditableCheckbox 
           value={row.original.wtr?.itel || false}
           disabled={!row.original.wtr?.active}
-          onChange={(e) => handleChange(row.original.id, 'wtr', 'itel', e.target.checked, true)}
+          onChange={(e) => handleChange(row.original.id, 'wtr', 'itel', e.target.checked)}
         />
       ),
     },
@@ -352,7 +340,7 @@ const handleChange = useCallback((rowId, section, key, value, immediate = false)
         <EditableCheckbox 
           value={row.original.wtr?.eq || false}
           disabled={!row.original.wtr?.active}
-          onChange={(e) => handleChange(row.original.id, 'wtr', 'eq', e.target.checked, true)}
+          onChange={(e) => handleChange(row.original.id, 'wtr', 'eq', e.target.checked)}
         />
       ),
     },
@@ -364,7 +352,7 @@ const handleChange = useCallback((rowId, section, key, value, immediate = false)
         <EditableCheckbox 
           value={row.original.wtr?.pick || false}
           disabled={!row.original.wtr?.active}
-          onChange={(e) => handleChange(row.original.id, 'wtr', 'pick', e.target.checked, true)}
+          onChange={(e) => handleChange(row.original.id, 'wtr', 'pick', e.target.checked)}
         />
       ),
     },
@@ -463,7 +451,7 @@ const handleChange = useCallback((rowId, section, key, value, immediate = false)
         <EditableCheckbox 
           value={row.original.str?.ctrc || false}
           disabled={!row.original.str?.active}
-          onChange={(e) => handleChange(row.original.id, 'str', 'ctrc', e.target.checked, true)}
+          onChange={(e) => handleChange(row.original.id, 'str', 'ctrc', e.target.checked)}
         />
       ),
     },

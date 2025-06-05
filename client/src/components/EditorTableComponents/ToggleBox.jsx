@@ -14,17 +14,6 @@ const ToggleBox = React.memo(function ToggleBox({section, data, onToggleActive, 
   );
 
   return (
-    /*
-    <TableCell
-      sx={{
-        backgroundColor: '#f8bcbc',
-        minHeight: 60,
-        minWidth: 110,
-        verticalAlign: 'top',
-        position: 'relative',
-        p: 0
-      }}
-    >*/
       <Box
         sx={{
           position: 'absolute',
@@ -50,33 +39,20 @@ const ToggleBox = React.memo(function ToggleBox({section, data, onToggleActive, 
             '& .MuiSvgIcon-root': { fontSize: '1.2rem' }
           }}
         />
-         {/*
-        <TextField
-          type="date"
-          size="small"
-          value={startDate || ''}
-          onChange={changeDate}
-          disabled={!active}
-          fullWidth
-          sx={{
-            '& .MuiInputBase-input': { p: '4px', fontSize: '0.85rem' },
-            '& .MuiOutlinedInput-root': { pr: 0 }
-          }}
-        />
-        */}
+       
         <EditableDate
           value={startDate}
           onChange={changeDate}
           disabled={!active}
         />
       </Box>
-    //</TableCell>
   );
 }, 
 // 自定义比较函数：只有当 active 状态改变时才重新渲染整个组件
 // 日期字段变化不会触发整个 ToggleBox 重渲染
 (prevProps, nextProps) => {
   return prevProps.data.active === nextProps.data.active &&
+         prevProps.data.startDate === nextProps.data.startDate &&
          prevProps.section === nextProps.section;
 });
 //(a, b) => a.data === b.data);     // 只有 pak/wtr/str 对象引用变才重绘

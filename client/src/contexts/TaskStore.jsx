@@ -19,8 +19,9 @@ function taskReducer(state, action) {
 function progressReducer(state, action) {
   switch (action.type) {
     case 'set':    return action.payload;                               // 替换整表
-    case 'patch':
+    case 'patch': 
       //console.log('Patch action:', { id: action.id, data: action.data });
+      /*
       const index = state.findIndex(r => r.id === action.id);
       if (index === -1) return state; // 未找到行，保持不变
       const updatedRow = merge({}, state[index], action.data);
@@ -28,15 +29,20 @@ function progressReducer(state, action) {
         ...state.slice(0, index),
         updatedRow,
         ...state.slice(index + 1)
-      ];
-    default:       return state;
+      ]
+      */
+      if (!state[action.id]) return state;
+      console.log("progressReducer patch: ", action.id, action.data)
+      const updatedRow = merge({}, state[action.id], action.data);
+      return { ...state, [action.id]: updatedRow };
+    default: return state;
   }
 }
 
 export function TaskProvider({ children }) {
 
   /* ---------- Project Progress reducer ---------- */
-  const [progressRows, progressDispatch] = useReducer(progressReducer, []);
+  const [progressRows, progressDispatch] = useReducer(progressReducer, {});
 
   //const [tasks, dispatch] = useReducer(reducer, []);
   const [tasks, taskDispatch] = useReducer(taskReducer, []);
@@ -104,11 +110,13 @@ export function TaskProvider({ children }) {
   // 读取全部进度 – ProjectTableEditor 首次挂载调用
   const loadProgress = useCallback(async () => {
     try {
-      const raw = await fetcher('/api/progress');           // ① raw 可能是对象
+      const map = await fetcher('/api/progress');           // ① raw 是键值对对象
+      /*
       const array = Array.isArray(raw)
         ? raw
         : Object.entries(raw).map(([id, row]) => ({ id, ...row }));
-      progressDispatch({ type: 'set', payload: array });    // ② 一律转成数组后再塞
+      */
+      progressDispatch({ type: 'set', payload: map });    // 键值对对象直接传递
     } catch (error) {
       console.error('Failed to load progress:', error);
     }
