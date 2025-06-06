@@ -1,24 +1,33 @@
-// src/components/EditorTableComponents/EditableCell.jsx
+// src/components/EditorTableComponents/EditableTextfield.jsx
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Box, TextField } from '@mui/material';
 
 function EditableCell({ field, value, onChange, disabled = false }) {
   const [draft, setDraft] = useState(value ?? '');
+  const [isEditing, setIsEditing] = useState(false);
   const inputRef = useRef(null);
 
   // 当 props.value 改变时，同步更新本地 draft（若非正在编辑或可根据需要调整条件）
   useEffect(() => {
-    setDraft(value ?? '');
-  }, [value]);
-
-  // 失焦时提交修改
-  const handleBlur = useCallback(() => {
-    if (!disabled && draft !== value) {
-      // 调用上传回调，签名与现有 DataRow 的 change 函数一致
-      onChange(field, null, draft); 
+    if (!isEditing) {
+      setDraft(value ?? '');
     }
-    // 可在此重置 draft 或保持现有值，视需求决定
+  }, [value, isEditing]);
+
+  const handleFocus = useCallback(() => {
+    setIsEditing(true);
+  }, []);
+
+  const handleBlur = useCallback(() => {
+    setIsEditing(false);
+    if (!disabled && draft !== value) {
+      onChange(field, null, draft);
+    }
   }, [field, value, draft, disabled, onChange]);
+
+  const handleChange = useCallback((e) => {
+    setDraft(e.target.value);
+  }, []);
 
   return (
     <Box 
@@ -36,9 +45,9 @@ function EditableCell({ field, value, onChange, disabled = false }) {
         maxRows={10}
         value={draft}
         disabled={disabled}
-        onChange={(e) => setDraft(e.target.value)}
+        onFocus={handleFocus}
+        onChange={handleChange}
         onBlur={handleBlur}
-        // 删除 onKeyDown 中对 Enter/Esc 的处理，保留默认行为
         sx={{
           '& .MuiInputBase-input': {
             fontSize: '0.875rem',

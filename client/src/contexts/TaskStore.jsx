@@ -19,22 +19,25 @@ function taskReducer(state, action) {
 function progressReducer(state, action) {
   switch (action.type) {
     case 'set':    return action.payload;                               // 替换整表
-    case 'patch': 
-      //console.log('Patch action:', { id: action.id, data: action.data });
-      /*
-      const index = state.findIndex(r => r.id === action.id);
-      if (index === -1) return state; // 未找到行，保持不变
-      const updatedRow = merge({}, state[index], action.data);
-      return [
-        ...state.slice(0, index),
-        updatedRow,
-        ...state.slice(index + 1)
-      ]
-      */
-      if (!state[action.id]) return state;
-      console.log("progressReducer patch: ", action.id, action.data)
-      const updatedRow = merge({}, state[action.id], action.data);
+    case 'patch': {
+      const prevRow = state[action.id];
+      if (!prevRow) return state;
+      // 使用浅比较优化
+      const updatedRow = merge({}, prevRow, action.data);
+
+       // 快速比较关键字段而不是整个对象序列化
+       const hasChanged = Object.keys(action.data).some(key => {
+        if (typeof action.data[key] === 'object' && action.data[key] !== null) {
+          return Object.keys(action.data[key]).some(subKey => 
+            prevRow[key]?.[subKey] !== action.data[key][subKey]
+          );
+        }
+        return prevRow[key] !== action.data[key];
+      });
+      if (!hasChanged) return state;
+
       return { ...state, [action.id]: updatedRow };
+    }
     default: return state;
   }
 }
@@ -43,9 +46,8 @@ export function TaskProvider({ children }) {
 
   /* ---------- Project Progress reducer ---------- */
   const [progressRows, progressDispatch] = useReducer(progressReducer, {});
-
-  //const [tasks, dispatch] = useReducer(reducer, []);
   const [tasks, taskDispatch] = useReducer(taskReducer, []);
+  const taskMap = useMemo(() => Object.fromEntries(tasks.map(t => [t.id, t])), [tasks]);
 
   /* 公共 API（用 fetcher 自动带 loading + 报错） */
   const load = useCallback(async () => {
@@ -107,15 +109,18 @@ export function TaskProvider({ children }) {
   }), []);
 
 
+  const patchTask = useCallback((id, data) => fetcher(`/api/tasks/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  }), []);
+
+
   // 读取全部进度 – ProjectTableEditor 首次挂载调用
   const loadProgress = useCallback(async () => {
     try {
-      const map = await fetcher('/api/progress');           // ① raw 是键值对对象
-      /*
-      const array = Array.isArray(raw)
-        ? raw
-        : Object.entries(raw).map(([id, row]) => ({ id, ...row }));
-      */
+      const arr = await fetcher('/api/progress');           // ① raw 是键值对对象
+      const map = Object.fromEntries(arr.map(row => [row.id, row]));
       progressDispatch({ type: 'set', payload: map });    // 键值对对象直接传递
     } catch (error) {
       console.error('Failed to load progress:', error);
@@ -124,12 +129,12 @@ export function TaskProvider({ children }) {
 
   /** ① 本地乐观合并（不打网络）——给前端即时反馈用 */
   const mergeProgress = useCallback((id, data) => {
-    console.log('Merging progress for id:', id, 'data:', data);
     progressDispatch({ type: 'patch', id, data });
   }, []);
 
   // ② 行级保存
   const saveProgress = useCallback(async (id, data) => {
+
     if (!id || typeof id !== 'string') {
       console.error('Invalid ID provided to saveProgress');
       return;
@@ -145,7 +150,6 @@ export function TaskProvider({ children }) {
         headers: { 'Content-Type': 'application/json' },
         body   : JSON.stringify(data),
       });
-      console.log('Progress saved successfully for id:', id);
     } catch (error) {
       console.error('Failed to save progress for id:', id, error);
       // 回滚（保持原逻辑）
@@ -153,6 +157,27 @@ export function TaskProvider({ children }) {
       throw error;
     }
   }, []);
+
+  const saveCell = useCallback((rowId, patch) => {
+    console.log("saveCell: ", rowId, patch )
+    const section = Object.keys(patch)[0];
+    const value = patch[section];
+    // 基础字段
+    if (["location", "year", "insurance"].includes(section)) {
+      // 写回 tasks
+      console.log("if:", rowId, { [section]: value } )
+      return patchTask(rowId, { [section]: value });
+    } else {
+      // 其他写入 progress
+      /*
+      const patch = key == null
+        ? { [section]: value }
+        : { [section]: { [key]: value } };
+        */
+      mergeProgress(rowId, patch);
+      return saveProgress(rowId, patch);
+    }
+  }, [patchTask, mergeProgress, saveProgress]);
 
 
   const api = useMemo(() => ({ 
@@ -165,13 +190,19 @@ export function TaskProvider({ children }) {
     updateDesc, 
     loadProgress, 
     mergeProgress, 
-    saveProgress 
+    saveProgress,
+    saveCell
   }), [
-    load, getTask, getTaskDescription, create, remove, update, updateDesc, loadProgress, mergeProgress, saveProgress
+    load, getTask, getTaskDescription, create, remove, update, updateDesc, loadProgress, mergeProgress, saveProgress, saveCell
   ]);
 
   return (
-    <TaskCtx.Provider value={{ tasks, progress: progressRows, api }}>
+    <TaskCtx.Provider value={{ 
+      tasks,       // 数组，for 渲染
+      taskMap,     // map，for 查找
+      progress: progressRows,
+      api
+    }}>
       {children}
     </TaskCtx.Provider>
   );

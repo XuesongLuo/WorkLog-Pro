@@ -4,18 +4,29 @@ import { Box, TextField } from '@mui/material';
 
 function EditableNumberCell({ value, onChange, disabled = false }) {
   const [draft, setDraft] = useState(value ?? '');
+  const [isEditing, setIsEditing] = useState(false);
   const inputRef = useRef(null);
 
   useEffect(() => {
-    setDraft(value ?? '');
-  }, [value]);
+    if (!isEditing) {
+      setDraft(value ?? '');
+    }
+  }, [value, isEditing]);
+
+  const handleFocus = useCallback(() => {
+    setIsEditing(true);
+  }, []);
 
   const handleBlur = useCallback(() => {
+    setIsEditing(false);
     if (!disabled && draft !== value) {
-      // 提交数值变更，将字符串转换为数字或按需要处理
       onChange(draft);
     }
   }, [value, draft, disabled, onChange]);
+
+  const handleChange = useCallback((e) => {
+    setDraft(e.target.value);
+  }, []);
 
   return (
     <Box 
@@ -29,7 +40,8 @@ function EditableNumberCell({ value, onChange, disabled = false }) {
         fullWidth
         value={draft}
         disabled={disabled}
-        onChange={(e) => setDraft(e.target.value)}
+        onChange={handleChange}
+        onFocus={handleFocus}
         onBlur={handleBlur}
         inputProps={{ style: { textAlign: 'center' } }}  // 数字居中显示
         sx={{

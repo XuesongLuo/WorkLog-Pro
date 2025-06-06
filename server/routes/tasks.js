@@ -40,11 +40,13 @@ const generateIdFromStart = (start) => {
   return `${yyyy}${mm}${dd}-${Date.now()}`;
 };
 
+
 // GET /api/tasks - 获取所有任务
 router.get('/', (req, res) => {
   const tasks = readJSON(PROJECTS_FILE, []);
   res.json(tasks);
 });
+
 
 // GET /api/tasks/:id/description  - 获取单个任务详细内容
 router.get('/:id/description', (req, res) => {
@@ -54,6 +56,7 @@ router.get('/:id/description', (req, res) => {
   res.json({ description: desc });
 });
 
+
 // GET /api/tasks/:id - 获取单个任务
 router.get('/:id', (req, res) => {
   const tasks = readJSON(PROJECTS_FILE, []);
@@ -61,6 +64,7 @@ router.get('/:id', (req, res) => {
   if (!task) return res.status(404).json({ error: '任务未找到' });
   res.json(task);
 });
+
 
 // POST /api/tasks - 创建任务
 router.post('/', (req, res) => {
@@ -81,6 +85,7 @@ router.post('/', (req, res) => {
   res.status(201).json(newTask);
 });
 
+
 // PUT /api/tasks/:id/description - 更新描述内容
 router.put('/:id/description', (req, res) => {
   const descriptions = readJSON(DESCRIPTIONS_FILE, {});
@@ -88,6 +93,7 @@ router.put('/:id/description', (req, res) => {
   writeJSON(DESCRIPTIONS_FILE, descriptions);
   res.json({ id: req.params.id, description: req.body.description });
 });
+
 
 // PUT /api/tasks/:id - 更新任务
 router.put('/:id', (req, res) => {
@@ -98,6 +104,19 @@ router.put('/:id', (req, res) => {
   writeJSON(PROJECTS_FILE, tasks);
   res.json(tasks[idx]);
 });
+
+
+// PATCH /api/tasks/:id - 部分字段更新  -- 针对 Year Insurance
+router.patch('/:id', (req, res) => {
+  const tasks = readJSON(PROJECTS_FILE, []);
+  const idx = tasks.findIndex(t => String(t.id) === req.params.id);
+  if (idx === -1) return res.status(404).json({ error: '任务未找到' });
+  // 只更新传入的字段
+  tasks[idx] = { ...tasks[idx], ...req.body };
+  writeJSON(PROJECTS_FILE, tasks);
+  res.json(tasks[idx]);
+});
+
 
 // DELETE /api/tasks/:id - 删除任务
 router.delete('/:id', (req, res) => {

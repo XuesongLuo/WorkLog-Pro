@@ -1,183 +1,113 @@
 // src/components/ProjectTableEditor.jsx
-import React, { useEffect, useRef, useCallback, useMemo } from 'react';
-import { MaterialReactTable } from 'material-react-table';  // TanStack Table + MUI wrapper
-//import { useDebounce } from '../hooks/useDebounce';
+import React, { useEffect, useCallback, useMemo } from 'react';
+import { MaterialReactTable } from 'material-react-table';
 import { useTasks } from '../contexts/TaskStore';
-// Import custom cell components (note: may need slight refactoring, see below)
-import EditableCell from './EditorTableComponents/EditableCell';
-import EditableCheckbox from './EditorTableComponents/EditableCheckbox';
-import EditableNumberCell  from './EditorTableComponents/EditableNumberCell';
-import ToggleBox from './EditorTableComponents/ToggleBox';
+import {
+  PakToggleCell,
+  PakPoutCell,
+  PakPackCell,
+  WtrToggleCell,
+  WtrCtrcCell,
+  WtrDemoCell,
+  WtrItelCell,
+  WtrEqCell,
+  WtrPickCell,
+  StrToggleCell,
+  StrCtrcCell,
+  EstimateCell,
+  LocationCell,
+  YearCell,
+  InsuranceCell,
+  ArolCell,
+  TestCell,
+  PaymentCell,
+  CommentsCell
+} from './EditorTableComponents/EditTableCells';
+
 
 export default function ProjectTableEditor() {
   const { progress, api } = useTasks();
-  //const pendingRef = useRef({});  // pending patches pool for debounce
   
-  // Convert progress data to array of rows (ensure each row has an `id` field)
+  // 优化后的 rows 创建
   const rows = useMemo(() => {
     if (!progress) return [];
-    if (Array.isArray(progress)) {
-      return progress;
-    }
-    if (typeof progress === 'object' && progress !== null) {
-      // Convert object map to array
-      return Object.entries(progress).map(([id, record]) =>
-        record.id ? record : { ...record, id }
-      );
-    }
-    console.error('Invalid progress data format:', progress);
-    return [];
+    console.log(222)
+    return Object.entries(progress).map(([id, record]) => ({
+      id,
+      ...record
+    }));
   }, [progress]);
 
-  // ① flush – 文本类字段 0.5 s 后批量保存
-  /*
-  const flushPatches = useDebounce(() => {
-    const allPatches = pendingRef.current;
-    pendingRef.current = {};  // reset the patch pool
-    // Send each accumulated patch to the server
-    Object.entries(allPatches).forEach(([id, patch]) => {
-      api.saveProgress(id, patch);
-    });
-  }, 500);
-  */
-
-  /** ---------------------------------------------------------
-+ * ② 通用提交助手  
-+ *    immediate = true → 立刻保存（checkbox / toggle / select）  
-+ *    immediate = false → 进入防抖池（文本 / textarea / 数字输入）
-+ * ---------------------------------------------------------*/
-/*
-const applyPatch = useCallback((rowId, patch, immediate = false) => {
-    api.mergeProgress(rowId, patch);               // 乐观更新
-    if (immediate) {
-        api.saveProgress(rowId, patch);              // ⏩ 立即 PUT
-    } else {
-        pendingRef.current[rowId] = pendingRef.current[rowId]
-            ? { ...pendingRef.current[rowId], ...patch }
-            : patch;
-        flushPatches();                              // 交给 debounce
-    }
-}, [api, flushPatches]);
-*/
-
-// ③ 供各 Cell 调用的统一入口
-const handleChange = useCallback((rowId, section, key, value) => {
+  // 稳定的回调函数
+  const handleChange = useCallback((rowId, section, key, value) => {
     if (!rowId) return;
     const patch = key == null
-        ? { [section]: value }
-        : { [section]: { [key]: value } };
-    //applyPatch(rowId, patch);
+      ? { [section]: value }
+      : { [section]: { [key]: value } };
     api.mergeProgress(rowId, patch);
-    api.saveProgress(rowId, patch);
-}, [api]);
+    api.saveCell(rowId, patch);
+    console.log("api.saveCell: ", rowId, patch)
+  }, [api]);
 
-  // Toggle "active" field handler for stages (pak/wtr/str)
   const handleToggleActive = useCallback((rowId, section) => {
     if (!rowId) return;
-    //const rowObj = progress.find(r => r.id === rowId);
     const rowObj = progress[rowId];
     if (!rowObj) return;
     const newActive = !rowObj[section]?.active;
     const patch = { [section]: { active: newActive } };
-    //api.mergeProgress(rowId, patch);   // update active flag locally
-    //queuePatch(rowId, patch);          // queue patch to save active flag
-    //applyPatch(rowId, patch, /* immediate */ true);
     api.mergeProgress(rowId, patch);
-    api.saveProgress(rowId, patch);
+    api.saveCell(rowId, patch);
   }, [api, progress]);
 
-  // Load initial data on mount
-  useEffect(() => {
-    api.loadProgress();
-  }, [api]);
-
-  // Flush any remaining patches on unmount (to avoid losing unsaved changes)
-  /*
-  useEffect(() => {
-    return () => {
-      flushPatches.flush();
-    };
-  }, [flushPatches]);
-  */
-
-  // Define table columns with custom cell renderers
+  // 优化后的列定义
   const columns = useMemo(() => [
-    // Top-level text fields
     {
-      header: 'LOCATION',
-      accessorKey: 'location',
-      // Use custom text editor cell (click to edit, saves on blur)
-      Cell: ({ row }) => (
-        /*
-        <EditableCell 
-          field="location" 
-          value={row.original.location} 
-          onChange={(field, _key, val) => handleChange(row.original.id, field, null, val)}
-        />
-        */
-        // 文本 – 走防抖 
-        <EditableCell
-            field="location"
-            value={row.original.location}
-            onChange={(field, _key, val) => handleChange(row.original.id, field, null, val)}
-        />
-      ),
+        header: 'LOCATION',
+        accessorKey: 'location',
+        Cell: ({ row }) => <LocationCell row={row} onChange={handleChange} />,
     },
+    {
+        header: '1',
+        id: 'basic_info',
+        columns: [
+
     {
       header: 'YEAR',
       accessorKey: 'year',
-      Cell: ({ row }) => (
-        <EditableCell 
-          field="year" 
-          value={row.original.year} 
-          onChange={(field, _key, val) => handleChange(row.original.id, field, null, val)}
-        />
-      ),
+      Cell: ({ row }) => <YearCell row={row} onChange={handleChange} />,
     },
     {
       header: 'INSURANCE',
       accessorKey: 'insurance',
-      Cell: ({ row }) => (
-        <EditableCell 
-          field="insurance" 
-          value={row.original.insurance} 
-          onChange={(field, _key, val) => handleChange(row.original.id, field, null, val)}
-        />
-      ),
+      Cell: ({ row }) => <InsuranceCell row={row} onChange={handleChange} />,
     },
-    // Standalone boolean fields
     {
       header: 'AROL',
       accessorKey: 'arol',
-      Cell: ({ row }) => (
-        <EditableCheckbox 
-          value={row.original.arol || false}
-          onChange={(e) => handleChange(row.original.id, 'arol', null, e.target.checked)}
-        />
-      ),
+      Cell: ({ row }) => <ArolCell row={row} onChange={handleChange} />,
     },
     {
       header: 'TEST',
       accessorKey: 'test',
-      Cell: ({ row }) => (
-        <EditableCheckbox 
-          value={row.original.test || false}
-          onChange={(e) => handleChange(row.original.id, 'test', null, e.target.checked)}
-        />
-      ),
+      Cell: ({ row }) => <TestCell row={row} onChange={handleChange} />,
     },
-    // PAK section (toggle + subfields + estimates group)
+    ]
+    },
+
+    // PAK 部分
+
     {
-      header: 'PAK',  // main toggle with date
-      accessorKey: 'pak', 
-      // minWidth ~110px as in original, to fit checkbox + date
-      size: 110,
+        header: '2',
+        id: 'pak_info',
+        columns: [
+    {
+      header: 'PAK',
+      accessorKey: 'pak',
       Cell: ({ row }) => (
-        <ToggleBox 
-          section="pak"
-          data={row.original.pak || {}} 
-          onToggleActive={(sect) => handleToggleActive(row.original.id, sect)}
-          onDateChange={(sect, key, val) => handleChange(row.original.id, sect, key, val)}
+        <PakToggleCell 
+          row={row} 
+          onToggleActive={handleToggleActive}
+          onDateChange={handleChange}
         />
       ),
     },
@@ -185,372 +115,249 @@ const handleChange = useCallback((rowId, section, key, value) => {
       header: 'POUT',
       accessorKey: 'pak.pout',
       id: 'pak_pout',
-      Cell: ({ row }) => (
-        <EditableCheckbox 
-          value={row.original.pak?.pout || false}
-          disabled={!row.original.pak?.active}
-          onChange={(e) => handleChange(row.original.id, 'pak', 'pout', e.target.checked)}
-        />
-      ),
+      Cell: ({ row }) => <PakPoutCell row={row} onChange={handleChange} />,
     },
     {
       header: 'PACK',
       accessorKey: 'pak.pack',
       id: 'pak_pack',
-      Cell: ({ row }) => (
-        <EditableCheckbox 
-          value={row.original.pak?.pack || false}
-          disabled={!row.original.pak?.active}
-          onChange={(e) => handleChange(row.original.id, 'pak', 'pack', e.target.checked)}
-        />
-      ),
+      Cell: ({ row }) => <PakPackCell row={row} onChange={handleChange} />,
     },
-    // PAK ESTIMATE grouped columns (Send, Review, Agree)
+    ]
+    },
+    
+    // PAK ESTIMATE 分组
     {
-      header: 'PAK ESTIMATE',
+      header: 'ESTIMATE',
       id: 'pak_estimate',
       columns: [
         {
           header: 'SEND',
           id: 'pak_est_send',
-          // Each "estimate" cell contains a checkbox + number input
           Cell: ({ row }) => (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 60, minHeight: 60 }}>
-              <input 
-                type="checkbox" 
-                checked={row.original.pak?.estimateSend || false}
-                disabled={!row.original.pak?.active}
-                onChange={(e) => handleChange(row.original.id, 'pak', 'estimateSend', e.target.checked)}
-                style={{ marginBottom: '4px' }}
-              />
-              <input 
-                type="number" 
-                value={row.original.pak?.estimateSendAmount ?? ''} 
-                disabled={!row.original.pak?.active}
-                onChange={(e) => handleChange(row.original.id, 'pak', 'estimateSendAmount', e.target.value)}
-                style={{ width: '3.5rem', textAlign: 'center' }}
-                onBlur={(e) => { /* optional: handle blur same as change to ensure save on focus loss */ }}
-              />
-            </div>
+            <EstimateCell 
+              row={row} 
+              section="pak" 
+              type="Send" 
+              onChange={handleChange} 
+            />
           ),
         },
         {
           header: 'REVIEW',
           id: 'pak_est_review',
           Cell: ({ row }) => (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 60, minHeight: 60 }}>
-              <input 
-                type="checkbox" 
-                checked={row.original.pak?.estimateReview || false}
-                disabled={!row.original.pak?.active}
-                onChange={(e) => handleChange(row.original.id, 'pak', 'estimateReview', e.target.checked)}
-                style={{ marginBottom: '4px' }}
-              />
-              <input 
-                type="number" 
-                value={row.original.pak?.estimateReviewAmount ?? ''} 
-                disabled={!row.original.pak?.active}
-                onChange={(e) => handleChange(row.original.id, 'pak', 'estimateReviewAmount', e.target.value)}
-                style={{ width: '3.5rem', textAlign: 'center' }}
-                onBlur={(e) => {/* onBlur same as change, if needed */}}
-              />
-            </div>
+            <EstimateCell 
+              row={row} 
+              section="pak" 
+              type="Review" 
+              onChange={handleChange} 
+            />
           ),
         },
         {
           header: 'AGREE',
           id: 'pak_est_agree',
           Cell: ({ row }) => (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 60, minHeight: 60 }}>
-              <input 
-                type="checkbox" 
-                checked={row.original.pak?.estimateAgree || false}
-                disabled={!row.original.pak?.active}
-                onChange={(e) => handleChange(row.original.id, 'pak', 'estimateAgree', e.target.checked)}
-                style={{ marginBottom: '4px' }}
-              />
-              <input 
-                type="number" 
-                value={row.original.pak?.estimateAgreeAmount ?? ''} 
-                disabled={!row.original.pak?.active}
-                onChange={(e) => handleChange(row.original.id, 'pak', 'estimateAgreeAmount', e.target.value)}
-                style={{ width: '3.5rem', textAlign: 'center' }}
-                onBlur={(e) => {/* onBlur logic if needed */}}
-              />
-            </div>
+            <EstimateCell 
+              row={row} 
+              section="pak" 
+              type="Agree" 
+              onChange={handleChange} 
+            />
           ),
         },
       ],
     },
-    // WTR section
+    
+    // WTR 部分
+    {
+        header: '3',
+        id: 'wtr_info',
+        columns: [
     {
       header: 'WTR',
       accessorKey: 'wtr',
-      size: 110,
       Cell: ({ row }) => (
-        <ToggleBox 
-          section="wtr"
-          data={row.original.wtr || {}} 
-          onToggleActive={(sect) => handleToggleActive(row.original.id, sect)}
-          onDateChange={(sect, key, val) => handleChange(row.original.id, sect, key, val)}
+        <WtrToggleCell 
+          row={row} 
+          onToggleActive={handleToggleActive}
+          onDateChange={handleChange}
         />
       ),
     },
-    { 
-      header: 'CTRC', 
+    {
+      header: 'CTRC',
       accessorKey: 'wtr.ctrc',
       id: 'wtr_ctrc',
-      Cell: ({ row }) => (
-        <EditableCheckbox 
-          value={row.original.wtr?.ctrc || false}
-          disabled={!row.original.wtr?.active}
-          onChange={(e) => handleChange(row.original.id, 'wtr', 'ctrc', e.target.checked)}
-        />
-      ),
+      Cell: ({ row }) => <WtrCtrcCell row={row} onChange={handleChange} />,
     },
-    { 
-      header: 'DEMO', 
+    {
+      header: 'DEMO',
       accessorKey: 'wtr.demo',
       id: 'wtr_demo',
-      Cell: ({ row }) => (
-        <EditableCheckbox 
-          value={row.original.wtr?.demo || false}
-          disabled={!row.original.wtr?.active}
-          onChange={(e) => handleChange(row.original.id, 'wtr', 'demo', e.target.checked)}
-        />
-      ),
+      Cell: ({ row }) => <WtrDemoCell row={row} onChange={handleChange} />,
     },
-    { 
-      header: 'ITEL', 
+    {
+      header: 'ITEL',
       accessorKey: 'wtr.itel',
       id: 'wtr_itel',
-      Cell: ({ row }) => (
-        <EditableCheckbox 
-          value={row.original.wtr?.itel || false}
-          disabled={!row.original.wtr?.active}
-          onChange={(e) => handleChange(row.original.id, 'wtr', 'itel', e.target.checked)}
-        />
-      ),
+      Cell: ({ row }) => <WtrItelCell row={row} onChange={handleChange} />,
     },
-    { 
-      header: 'EQ', 
+    {
+      header: 'EQ',
       accessorKey: 'wtr.eq',
       id: 'wtr_eq',
-      Cell: ({ row }) => (
-        <EditableCheckbox 
-          value={row.original.wtr?.eq || false}
-          disabled={!row.original.wtr?.active}
-          onChange={(e) => handleChange(row.original.id, 'wtr', 'eq', e.target.checked)}
-        />
-      ),
+      Cell: ({ row }) => <WtrEqCell row={row} onChange={handleChange} />,
     },
-    { 
-      header: 'PICK', 
+    {
+      header: 'PICK',
       accessorKey: 'wtr.pick',
       id: 'wtr_pick',
-      Cell: ({ row }) => (
-        <EditableCheckbox 
-          value={row.original.wtr?.pick || false}
-          disabled={!row.original.wtr?.active}
-          onChange={(e) => handleChange(row.original.id, 'wtr', 'pick', e.target.checked)}
-        />
-      ),
+      Cell: ({ row }) => <WtrPickCell row={row} onChange={handleChange} />,
     },
-    // WTR ESTIMATE grouped
+    ]
+    },
+        
+    // WTR ESTIMATE 分组
     {
-      header: 'WTR ESTIMATE',
+      header: 'ESTIMATE',
       id: 'wtr_estimate',
       columns: [
         {
           header: 'SEND',
           id: 'wtr_est_send',
           Cell: ({ row }) => (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 60, minHeight: 60 }}>
-              <input 
-                type="checkbox" 
-                checked={row.original.wtr?.estimateSend || false}
-                disabled={!row.original.wtr?.active}
-                onChange={(e) => handleChange(row.original.id, 'wtr', 'estimateSend', e.target.checked)}
-                style={{ marginBottom: '4px' }}
-              />
-              <input 
-                type="number" 
-                value={row.original.wtr?.estimateSendAmount ?? ''} 
-                disabled={!row.original.wtr?.active}
-                onChange={(e) => handleChange(row.original.id, 'wtr', 'estimateSendAmount', e.target.value)}
-                style={{ width: '3.5rem', textAlign: 'center' }}
-              />
-            </div>
+            <EstimateCell 
+              row={row} 
+              section="wtr" 
+              type="Send" 
+              onChange={handleChange} 
+            />
           ),
         },
         {
           header: 'REVIEW',
           id: 'wtr_est_review',
           Cell: ({ row }) => (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 60, minHeight: 60 }}>
-              <input 
-                type="checkbox" 
-                checked={row.original.wtr?.estimateReview || false}
-                disabled={!row.original.wtr?.active}
-                onChange={(e) => handleChange(row.original.id, 'wtr', 'estimateReview', e.target.checked)}
-                style={{ marginBottom: '4px' }}
-              />
-              <input 
-                type="number" 
-                value={row.original.wtr?.estimateReviewAmount ?? ''} 
-                disabled={!row.original.wtr?.active}
-                onChange={(e) => handleChange(row.original.id, 'wtr', 'estimateReviewAmount', e.target.value)}
-                style={{ width: '3.5rem', textAlign: 'center' }}
-              />
-            </div>
+            <EstimateCell 
+              row={row} 
+              section="wtr" 
+              type="Review" 
+              onChange={handleChange} 
+            />
           ),
         },
         {
           header: 'AGREE',
           id: 'wtr_est_agree',
           Cell: ({ row }) => (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 60, minHeight: 60 }}>
-              <input 
-                type="checkbox" 
-                checked={row.original.wtr?.estimateAgree || false}
-                disabled={!row.original.wtr?.active}
-                onChange={(e) => handleChange(row.original.id, 'wtr', 'estimateAgree', e.target.checked)}
-                style={{ marginBottom: '4px' }}
-              />
-              <input 
-                type="number" 
-                value={row.original.wtr?.estimateAgreeAmount ?? ''} 
-                disabled={!row.original.wtr?.active}
-                onChange={(e) => handleChange(row.original.id, 'wtr', 'estimateAgreeAmount', e.target.value)}
-                style={{ width: '3.5rem', textAlign: 'center' }}
-              />
-            </div>
+            <EstimateCell 
+              row={row} 
+              section="wtr" 
+              type="Agree" 
+              onChange={handleChange} 
+            />
           ),
         },
       ],
     },
-    // STR section
+    
+    // STR 部分
+    {
+        header: '4',
+        id: 'str_info',
+        columns: [
     {
       header: 'STR',
       accessorKey: 'str',
-      size: 110,
       Cell: ({ row }) => (
-        <ToggleBox 
-          section="str"
-          data={row.original.str || {}}
-          onToggleActive={(sect) => handleToggleActive(row.original.id, sect)}
-          onDateChange={(sect, key, val) => handleChange(row.original.id, sect, key, val)}
+        <StrToggleCell 
+          row={row} 
+          onToggleActive={handleToggleActive}
+          onDateChange={handleChange}
         />
       ),
     },
-    { 
-      header: 'CTRC', 
+    {
+      header: 'CTRC',
       accessorKey: 'str.ctrc',
       id: 'str_ctrc',
-      Cell: ({ row }) => (
-        <EditableCheckbox 
-          value={row.original.str?.ctrc || false}
-          disabled={!row.original.str?.active}
-          onChange={(e) => handleChange(row.original.id, 'str', 'ctrc', e.target.checked)}
-        />
-      ),
+      Cell: ({ row }) => <StrCtrcCell row={row} onChange={handleChange} />,
     },
-    // STR ESTIMATE grouped
+    ]
+    },
+        
+    
+    // STR ESTIMATE 分组
     {
-      header: 'STR ESTIMATE',
+      header: 'ESTIMATE',
       id: 'str_estimate',
       columns: [
         {
           header: 'SEND',
           id: 'str_est_send',
           Cell: ({ row }) => (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 60, minHeight: 60 }}>
-              <input 
-                type="checkbox" 
-                checked={row.original.str?.estimateSend || false}
-                disabled={!row.original.str?.active}
-                onChange={(e) => handleChange(row.original.id, 'str', 'estimateSend', e.target.checked)}
-                style={{ marginBottom: '4px' }}
-              />
-              <input 
-                type="number" 
-                value={row.original.str?.estimateSendAmount ?? ''} 
-                disabled={!row.original.str?.active}
-                onChange={(e) => handleChange(row.original.id, 'str', 'estimateSendAmount', e.target.value)}
-                style={{ width: '3.5rem', textAlign: 'center' }}
-              />
-            </div>
+            <EstimateCell 
+              row={row} 
+              section="str" 
+              type="Send" 
+              onChange={handleChange} 
+            />
           ),
         },
         {
           header: 'REVIEW',
           id: 'str_est_review',
           Cell: ({ row }) => (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 60, minHeight: 60 }}>
-              <input 
-                type="checkbox" 
-                checked={row.original.str?.estimateReview || false}
-                disabled={!row.original.str?.active}
-                onChange={(e) => handleChange(row.original.id, 'str', 'estimateReview', e.target.checked)}
-                style={{ marginBottom: '4px' }}
-              />
-              <input 
-                type="number" 
-                value={row.original.str?.estimateReviewAmount ?? ''} 
-                disabled={!row.original.str?.active}
-                onChange={(e) => handleChange(row.original.id, 'str', 'estimateReviewAmount', e.target.value)}
-                style={{ width: '3.5rem', textAlign: 'center' }}
-              />
-            </div>
+            <EstimateCell 
+              row={row} 
+              section="str" 
+              type="Review" 
+              onChange={handleChange} 
+            />
           ),
         },
         {
           header: 'AGREE',
           id: 'str_est_agree',
           Cell: ({ row }) => (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 60, minHeight: 60 }}>
-              <input 
-                type="checkbox" 
-                checked={row.original.str?.estimateAgree || false}
-                disabled={!row.original.str?.active}
-                onChange={(e) => handleChange(row.original.id, 'str', 'estimateAgree', e.target.checked)}
-                style={{ marginBottom: '4px' }}
-              />
-              <input 
-                type="number" 
-                value={row.original.str?.estimateAgreeAmount ?? ''} 
-                disabled={!row.original.str?.active}
-                onChange={(e) => handleChange(row.original.id, 'str', 'estimateAgreeAmount', e.target.value)}
-                style={{ width: '3.5rem', textAlign: 'center' }}
-              />
-            </div>
+            <EstimateCell 
+              row={row} 
+              section="str" 
+              type="Agree" 
+              onChange={handleChange} 
+            />
           ),
         },
       ],
     },
-    // Payment and Comments
+    
+    // 其他字段
+    {
+        header: '5',
+        id: 'other_info',
+        columns: [
     {
       header: 'PAYMENT',
       accessorKey: 'payment',
-      Cell: ({ row }) => (
-        <EditableNumberCell 
-          value={row.original.payment} 
-          onChange={(val) => handleChange(id, 'payment', null, val)} 
-        />
-      ),
+      Cell: ({ row }) => <PaymentCell row={row} onChange={handleChange} />,
     },
     {
       header: 'COMMENTS',
       accessorKey: 'comments',
-      Cell: ({ row }) => (
-        <EditableCell 
-          field="comments" 
-          value={row.original.comments} 
-          onChange={(field, _key, val) => handleChange(row.original.id, field, null, val)}
-        />
-      ),
+      Cell: ({ row }) => <CommentsCell row={row} onChange={handleChange} />,
     },
+    ]
+    },
+   
   ], [handleChange, handleToggleActive]);
+
+
+  useEffect(() => {
+    console.log('111')
+    api.loadProgress();
+  }, [api]);
 
   return (
     <MaterialReactTable 
@@ -559,13 +366,55 @@ const handleChange = useCallback((rowId, section, key, value) => {
       enableRowVirtualization={true}
       enablePagination={false}
       enableSorting={false}
-      // Fill parent container height and allow scrolling
-      muiTablePaperProps={{ sx: { height: '100%', display: 'flex', flexDirection: 'column' } }}
-      muiTableContainerProps={{ sx: { flex: 1, height: '100%' } }}
-      muiTableHeadCellProps={{ align: 'center' }}
-      muiTableBodyCellProps={{ align: 'center' }}
-      // Optionally, tweak virtualization options (e.g., overscan) if needed:
-      // rowVirtualizerOptions={{ overscan: 5 }}
+      getRowId={(row) => row.id}
+      muiTablePaperProps={{ 
+        sx: { 
+            height: '100%', 
+            p: 0, 
+            display: 'flex', 
+            flexDirection: 'column' 
+        } 
+      }}
+      muiTableContainerProps={{ 
+        sx: { 
+            flex: 1, 
+            height: '100%', 
+            p: 0,
+            '& .MuiTable-root': {
+                tableLayout: 'fixed', // Ensure uniform column widths
+                width: '100%'         // Stretch table to container width
+            }
+        } 
+      }}
+      muiTableHeadCellProps={{ 
+        align: 'center',
+        sx: {
+            verticalAlign: 'middle',
+            p: "2px",
+            fontWeight: 700,
+            fontSize: 16,
+            border: '1px solid #1976d2',
+            background: '#f8fafd',
+            boxSizing: 'border-box',
+            minWidth: '60px', // Minimum width to accommodate content
+            //maxWidth: '150px', // Prevent overly wide columns
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap'
+        }
+      }}
+      muiTableBodyCellProps={{ 
+        align: 'center',
+        sx: {
+          p: '2px', // Match header padding
+          minWidth: '60px', // Match header minWidth
+          minHeight: '80px',
+          height: 'auto',
+          boxSizing: 'border-box',
+          whiteSpace: 'normal', // 允许表头文本换行
+        }
+      }}
+      
     />
   );
 }

@@ -3,6 +3,7 @@ const router = express.Router();
 const fs = require('fs');
 const path = require('path');
 
+const PROJECTS_FILE = path.join(__dirname, '../data/projects.json');
 const PROGRESS_FILE = path.join(__dirname, '../data/progress.json');
 
 // 工具函数
@@ -37,9 +38,26 @@ function deepMerge(oldObj, patchObj) {
 
 // GET /api/progress          → 表格一次性加载
 router.get('/', (req, res) => {
-  const byId = readJSON(PROGRESS_FILE, {});              // { id1:{…}, id2:{…} }
-  //const list = Object.entries(byId).map(([id, body]) => ({ id, ...body }));
-  res.json(byId);
+  const projectArray = readJSON(PROJECTS_FILE, {});      // 任务主表（数组）
+  const progressMap = readJSON(PROGRESS_FILE, {});       // 进度 map
+  //const progressArray = Object.entries(progressMap).map(([id, body]) => ({ id, ...body }));
+  const progressArray = Object.entries(progressMap).map(([id, progressBody]) => {
+    // 找到对应任务
+    const project = projectArray.find(proj => proj.id === id) || {};
+    // 拼接地址字符串
+    const location = [project.address, project.city, project.zipcode].filter(Boolean).join(', ');
+    // 组装返回对象
+    return {
+      id,
+      ...progressBody,
+      location,          // 只读展示用
+      year: project.year,
+      insurance: project.insurance,
+      // 可添加更多字段
+    };
+  });
+
+  res.json(progressArray);
 });
     
 // PUT /api/progress/:id      → 行级保存

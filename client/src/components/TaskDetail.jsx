@@ -30,25 +30,36 @@ export default function TaskDetail({ id, embedded = false, onClose }) {
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [task, setTask] = useState(null);
   const [loading, setLoading] = useState(true);
-  const { api: taskApi } = useTasks();
+  const { taskMap, api: taskApi } = useTasks();
   const { enqueueSnackbar } = useSnackbar();
 
   useEffect(() => {
-    setLoading(true);
-    Promise.all([
-      taskApi.getTask(id),
-      taskApi.getTaskDescription(id),
-    ])
-    .then(([taskData, descData]) => {
-      setTask({ ...taskData, description: descData.description });
+    // 先看缓存（taskMap），再决定是否要远程加载
+    const cachedTask = taskMap[id];
+    if (cachedTask) {
+      setTask({ ...cachedTask });
       setLoading(false);
-    })
-    .catch(err => {
-      console.error('获取任务失败', err);
-      setLoading(false);
-      if (embedded && onClose) onClose();
-    });
-  }, [id]);
+      // 可选：补充 description 字段，如果 description 单独存
+      taskApi.getTaskDescription(id).then(descData => {
+        setTask(prev => ({ ...prev, description: descData.description }));
+      });
+    } else {
+      setLoading(true);
+      Promise.all([
+        taskApi.getTask(id),
+        taskApi.getTaskDescription(id),
+      ])
+      .then(([taskData, descData]) => {
+        setTask({ ...taskData, description: descData.description });
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error('获取任务失败', err);
+        setLoading(false);
+        if (embedded && onClose) onClose();
+      });
+    }
+  }, [id, taskMap, taskApi]);
 
   const handleEditClick = () => {
     if (!task) return;

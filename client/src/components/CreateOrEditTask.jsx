@@ -29,10 +29,10 @@ import { LocalizationProvider } from '@mui/x-date-pickers';
 import { DatePicker }      from '@mui/x-date-pickers';
 import { AdapterDateFns }      from '@mui/x-date-pickers/AdapterDateFns';
 import { useSnackbar } from 'notistack';
-//import { api } from '../api/tasks';
 import { useTasks } from '../contexts/TaskStore';
 
 import React, { lazy, Suspense } from 'react';
+
 const LazyEditor = lazy(() => 
   import('./Editor').then(module => ({
     default: React.memo(module.default)
@@ -70,14 +70,15 @@ export default function CreateOrEditTask({ id: propId, task: propTask, embedded 
   });
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [editorReady, setEditorReady] = useState(false);
-  const { api: taskApi } = useTasks();
+  const { taskMap, api: taskApi } = useTasks();
   const { enqueueSnackbar } = useSnackbar();
   const [saving, setSaving] = useState(false);
+
 
   useEffect(() => {
     if (!isEdit || !id) return;
   
-    const cachedTask = propTask ?? taskFromRoute;
+    const cachedTask = propTask ?? taskFromRoute ?? taskMap[id];
   
     if (cachedTask) {
       const parsedTask = {
@@ -179,6 +180,7 @@ export default function CreateOrEditTask({ id: propId, task: propTask, embedded 
       let taskId = id;
 
       if (isEdit) {
+        console.log(id, mainData)
         await Promise.all([
           taskApi.update(id, mainData),
           taskApi.updateDesc(id, description),
