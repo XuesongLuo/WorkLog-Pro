@@ -41,6 +41,7 @@ export default function TaskDetail({ id, embedded = false, onClose }) {
       setLoading(false);
       // 可选：补充 description 字段，如果 description 单独存
       taskApi.getTaskDescription(id).then(descData => {
+        let c = id+'new'
         setTask(prev => ({ ...prev, description: descData.description }));
       });
     } else {
@@ -105,6 +106,11 @@ export default function TaskDetail({ id, embedded = false, onClose }) {
       doDelete().then(() => navigate('/'));
     }
   };
+
+  function hashDesc(desc) {
+    if (!desc) return 'empty';
+    return `${desc.length}-${desc.slice(0, 16)}-${desc.slice(-16)}`;
+  }
 
 
   if (loading) {
@@ -210,7 +216,7 @@ export default function TaskDetail({ id, embedded = false, onClose }) {
         <strong>详细描述：</strong>
         </Typography>
         <Box sx={{ mt: 2 }}>
-          <Editor value={task.description} readOnly hideToolbar />
+          <Editor key={id + '-' + hashDesc(task.description)} value={task.description} readOnly hideToolbar />
         </Box>
 
       {!embedded && (

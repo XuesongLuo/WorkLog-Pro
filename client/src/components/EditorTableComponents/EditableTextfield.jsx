@@ -30,12 +30,20 @@ function EditableCell({ field, value, onChange, disabled = false }) {
   }, []);
 
   return (
-    <Box 
+    <Box
       onClick={() => { 
         // 若需要点击单元格时聚焦输入框：
         if (!disabled) inputRef.current?.focus();
       }} 
-      sx={{ p: 0.5 }}  /* 可选：减少内边距，使输入框更贴合单元格 */
+      sx={{ 
+        p: 0,
+        m: 0,
+        display: 'flex',
+        alignItems: 'center',     // ★ 垂直居中
+        justifyContent: 'center', // ★ 水平居中（如果需要）
+        width: "100%", 
+        height: "100%"
+      }}  
     >
       <TextField
         inputRef={inputRef}
@@ -52,7 +60,13 @@ function EditableCell({ field, value, onChange, disabled = false }) {
           '& .MuiInputBase-input': {
             fontSize: '0.875rem',
             textAlign: 'center',
-            p: '4px'
+            p: 0
+          },
+          '& .MuiInput-underline:before': {
+            borderBottom: 'none !important', // 常规状态无下划线
+          },
+          '& .MuiInput-underline:hover:before': {
+            borderBottom: '1px solid #1976d2 !important', // hover时有下划线，可换你想要的颜色
           },
           // 根据需要可调整 TextField 外观，使其与单元格融合
         }}

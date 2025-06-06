@@ -184,13 +184,13 @@ export default function Editor({ value = '', onChange, readOnly = false, hideToo
             editable: () => !readOnly, // 只读模式判断
         },
     })
-
+    /*
     useEffect(() => {
         if (editor && value !== undefined) {
             editor.commands.setContent(value || '')
         }
     }, [editor, value])
-
+    */
     // 点击页面空白区域自动收起色板或表格选择器，或者关闭右键菜单
     useEffect(() => {
         const handleClickOutside = (event) => { 

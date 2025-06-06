@@ -6,11 +6,11 @@
       "pout": true,
       "pack": true,
       "estimateSend": true,
-      "estimateSendAmount": "",
+      "estimateSendAmount": "1200",
       "estimateReview": true,
-      "estimateReviewAmount": "",
+      "estimateReviewAmount": "0",
       "estimateAgree": true,
-      "estimateAgreeAmount": ""
+      "estimateAgreeAmount": "0"
     },
     "wtr": {
       "active": true,
@@ -21,22 +21,22 @@
       "eq": true,
       "pick": false,
       "estimateSend": false,
-      "estimateSendAmount": "",
+      "estimateSendAmount": "0",
       "estimateReview": false,
-      "estimateReviewAmount": "",
+      "estimateReviewAmount": "0",
       "estimateAgree": false,
-      "estimateAgreeAmount": ""
+      "estimateAgreeAmount": "0"
     },
     "str": {
-      "active": false,
-      "startDate": "",
+      "active": true,
+      "startDate": "2025-06-03",
       "ctrc": false,
       "estimateSend": false,
-      "estimateSendAmount": "",
+      "estimateSendAmount": "0",
       "estimateReview": false,
-      "estimateReviewAmount": "",
+      "estimateReviewAmount": "0",
       "estimateAgree": false,
-      "estimateAgreeAmount": ""
+      "estimateAgreeAmount": "0"
     },
     "payment": 0,
     "comments": "",
@@ -50,11 +50,11 @@
       "pout": true,
       "pack": true,
       "estimateSend": false,
-      "estimateSendAmount": "",
+      "estimateSendAmount": "0",
       "estimateReview": false,
-      "estimateReviewAmount": "",
+      "estimateReviewAmount": "0",
       "estimateAgree": false,
-      "estimateAgreeAmount": ""
+      "estimateAgreeAmount": "1000.56"
     },
     "wtr": {
       "active": true,
@@ -65,22 +65,22 @@
       "eq": false,
       "pick": false,
       "estimateSend": false,
-      "estimateSendAmount": "",
+      "estimateSendAmount": "0",
       "estimateReview": false,
-      "estimateReviewAmount": "",
+      "estimateReviewAmount": "0",
       "estimateAgree": false,
-      "estimateAgreeAmount": ""
+      "estimateAgreeAmount": "0"
     },
     "str": {
-      "active": false,
-      "startDate": "",
+      "active": true,
+      "startDate": "2025-06-12",
       "ctrc": false,
       "estimateSend": false,
-      "estimateSendAmount": "",
+      "estimateSendAmount": "0",
       "estimateReview": false,
-      "estimateReviewAmount": "",
+      "estimateReviewAmount": "0",
       "estimateAgree": false,
-      "estimateAgreeAmount": ""
+      "estimateAgreeAmount": "0"
     },
     "payment": 0,
     "comments": "",
@@ -94,37 +94,37 @@
       "pout": false,
       "pack": true,
       "estimateSend": false,
-      "estimateSendAmount": "",
+      "estimateSendAmount": "0",
       "estimateReview": false,
-      "estimateReviewAmount": "",
+      "estimateReviewAmount": "0",
       "estimateAgree": false,
-      "estimateAgreeAmount": ""
+      "estimateAgreeAmount": "0"
     },
     "wtr": {
-      "active": false,
-      "startDate": "",
+      "active": true,
+      "startDate": "2025-06-29",
       "ctrc": false,
       "demo": false,
       "itel": false,
       "eq": false,
       "pick": false,
       "estimateSend": false,
-      "estimateSendAmount": "",
+      "estimateSendAmount": "0",
       "estimateReview": false,
-      "estimateReviewAmount": "",
+      "estimateReviewAmount": "0",
       "estimateAgree": false,
-      "estimateAgreeAmount": ""
+      "estimateAgreeAmount": "0"
     },
     "str": {
-      "active": false,
-      "startDate": "",
+      "active": true,
+      "startDate": "2025-06-28",
       "ctrc": false,
       "estimateSend": false,
-      "estimateSendAmount": "",
+      "estimateSendAmount": "0",
       "estimateReview": false,
-      "estimateReviewAmount": "",
+      "estimateReviewAmount": "0",
       "estimateAgree": false,
-      "estimateAgreeAmount": ""
+      "estimateAgreeAmount": "0"
     },
     "payment": 0,
     "comments": "",

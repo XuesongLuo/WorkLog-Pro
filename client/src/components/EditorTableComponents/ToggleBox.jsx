@@ -1,6 +1,6 @@
 // src/components/EditorTableComponents/ToggleBox.jsx
 import React from 'react';
-import { TableCell, Box, Checkbox, TextField } from '@mui/material';
+import { Box, Checkbox } from '@mui/material';
 import EditableDate from './EditableDate';
 
 const ToggleBox = React.memo(function ToggleBox({section, data, onToggleActive, onDateChange}) {
@@ -19,14 +19,14 @@ const ToggleBox = React.memo(function ToggleBox({section, data, onToggleActive, 
   return (
       <Box
         sx={{
-          position: 'absolute',
-          inset: 0,
+          position: 'relative',
+          width: '100%',
+          height: '100%',
           display: 'flex',
           flexDirection: 'column',
+          justifyContent: 'flex-end',
           alignItems: 'center',
-          justifyContent: 'center',
-          px: 0.5,
-          py: 0.5,
+          p: 0,
           boxSizing: 'border-box'
         }}
       >
@@ -36,18 +36,20 @@ const ToggleBox = React.memo(function ToggleBox({section, data, onToggleActive, 
           onChange={toggle}
           sx={{
             position: 'absolute',
-            top: 2,
-            left: 2,
+            top: 5,
+            left: 5,
             p: 0,
+            m: 0,
             '& .MuiSvgIcon-root': { fontSize: '1.2rem' }
           }}
         />
-       
-        <EditableDate
-          value={startDate}
-          onChange={changeDate}
-          disabled={!active}
-        />
+        <Box sx={{ width: '100%', display: 'flex', justifyContent: 'center', mb: 1 }}>
+          <EditableDate
+            value={startDate}
+            onChange={changeDate}
+            disabled={!active}
+          />
+        </Box>
       </Box>
   );
 }, 
@@ -58,6 +60,5 @@ const ToggleBox = React.memo(function ToggleBox({section, data, onToggleActive, 
          prevProps.data.startDate === nextProps.data.startDate &&
          prevProps.section === nextProps.section;
 });
-//(a, b) => a.data === b.data);     // 只有 pak/wtr/str 对象引用变才重绘
 
 export default ToggleBox;

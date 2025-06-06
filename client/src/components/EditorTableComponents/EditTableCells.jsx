@@ -1,6 +1,6 @@
 // src/components/EditorTableComponents/EditTableCells.jsx
 import React from 'react';
-import EditableCell from './EditableTextfield';
+import EditableTextfield from './EditableTextfield';
 import EditableCheckbox from './EditableCheckbox';
 import EditableNumberCell from './EditableNumberCell';
 import ToggleBox from './ToggleBox';
@@ -52,22 +52,18 @@ const EstimateCell = React.memo(({ row, section, type, onChange }) => {
   const sectionData = row.original[section] || {};
   const checkboxField = `estimate${type}`;
   const amountField = `estimate${type}Amount`;
-  
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 60, minHeight: 60 }}>
-      <input 
-        type="checkbox" 
-        checked={sectionData[checkboxField] || false}
-        disabled={!sectionData.active}  // 关键：依赖对应 section 的 active 状态
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+      <EditableCheckbox
+        value={sectionData[checkboxField] || false}
+        disabled={!sectionData.active}
         onChange={(e) => onChange(row.original.id, section, checkboxField, e.target.checked)}
-        style={{ marginBottom: '4px' }}
+        sx={{ marginBottom: '4px' }} // MUI风格
       />
-      <input 
-        type="number" 
+      <EditableNumberCell 
         value={sectionData[amountField] ?? ''} 
-        disabled={!sectionData.active}  // 关键：依赖对应 section 的 active 状态
-        onChange={(e) => onChange(row.original.id, section, amountField, e.target.value)}
-        style={{ width: '3.5rem', textAlign: 'center' }}
+        disabled={!sectionData.active}
+        onChange={(val) => onChange(row.original.id, section, amountField, val)} 
       />
     </div>
   );
@@ -194,7 +190,7 @@ const StrCtrcCell = React.memo(({ row, onChange }) => (
 // 4. 基础单元格组件（不依赖 active 状态）
 const LocationCell = React.memo(({ row, /*onChange*/ }) => (
   /*
-  <EditableCell
+  <EditableTextfield
     field="location"
     value={row.original.location}
     onChange={(field, _key, val) => onChange(row.original.id, field, null, val)}
@@ -206,7 +202,7 @@ const LocationCell = React.memo(({ row, /*onChange*/ }) => (
 });
 
 const YearCell = React.memo(({ row, onChange }) => (
-  <EditableCell 
+  <EditableTextfield 
     field="year" 
     value={row.original.year} 
     onChange={(field, _key, val) => onChange(row.original.id, field, null, val)}
@@ -216,7 +212,7 @@ const YearCell = React.memo(({ row, onChange }) => (
 });
 
 const InsuranceCell = React.memo(({ row, onChange }) => (
-  <EditableCell 
+  <EditableTextfield 
     field="insurance" 
     value={row.original.insurance} 
     onChange={(field, _key, val) => onChange(row.original.id, field, null, val)}
@@ -253,7 +249,7 @@ const PaymentCell = React.memo(({ row, onChange }) => (
 });
 
 const CommentsCell = React.memo(({ row, onChange }) => (
-  <EditableCell 
+  <EditableTextfield 
     field="comments" 
     value={row.original.comments} 
     onChange={(field, _key, val) => onChange(row.original.id, field, null, val)}

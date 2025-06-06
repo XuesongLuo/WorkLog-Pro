@@ -1,6 +1,7 @@
 // src/components/ProjectTableEditor.jsx
-import React, { useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { MaterialReactTable } from 'material-react-table';
+import { Box } from '@mui/material';
 import { useTasks } from '../contexts/TaskStore';
 import {
   PakToggleCell,
@@ -25,13 +26,31 @@ import {
 } from './EditorTableComponents/EditTableCells';
 
 
+function useContainerWidth() {
+    const ref = useRef(null);
+    const [width, setWidth] = useState(1200);
+  
+    useEffect(() => {
+      function updateWidth() {
+        if (ref.current) setWidth(ref.current.offsetWidth);
+        else setWidth(window.innerWidth);
+      }
+      updateWidth();
+      window.addEventListener('resize', updateWidth);
+      return () => window.removeEventListener('resize', updateWidth);
+    }, []);
+    
+    return [ref, width];
+  }
+
+
 export default function ProjectTableEditor() {
   const { progress, api } = useTasks();
+  const [containerRef, containerWidth] = useContainerWidth();
   
   // 优化后的 rows 创建
   const rows = useMemo(() => {
     if (!progress) return [];
-    console.log(222)
     return Object.entries(progress).map(([id, record]) => ({
       id,
       ...record
@@ -63,358 +82,420 @@ export default function ProjectTableEditor() {
   const columns = useMemo(() => [
     {
         header: 'LOCATION',
+        baseWidth: 110,
         accessorKey: 'location',
         Cell: ({ row }) => <LocationCell row={row} onChange={handleChange} />,
     },
     {
-        header: '1',
-        id: 'basic_info',
-        columns: [
-
-    {
-      header: 'YEAR',
-      accessorKey: 'year',
-      Cell: ({ row }) => <YearCell row={row} onChange={handleChange} />,
+        header: 'YEAR',
+        baseWidth: 60,
+        accessorKey: 'year',
+        Cell: ({ row }) => <YearCell row={row} onChange={handleChange} />,
     },
     {
-      header: 'INSURANCE',
-      accessorKey: 'insurance',
-      Cell: ({ row }) => <InsuranceCell row={row} onChange={handleChange} />,
+        header: 'INSURANCE',
+        baseWidth: 80,
+        accessorKey: 'insurance',
+        Cell: ({ row }) => <InsuranceCell row={row} onChange={handleChange} />,
     },
     {
-      header: 'AROL',
-      accessorKey: 'arol',
-      Cell: ({ row }) => <ArolCell row={row} onChange={handleChange} />,
+        header: 'AROL',
+        baseWidth: 50,
+        accessorKey: 'arol',
+        Cell: ({ row }) => <ArolCell row={row} onChange={handleChange} />,
     },
     {
-      header: 'TEST',
-      accessorKey: 'test',
-      Cell: ({ row }) => <TestCell row={row} onChange={handleChange} />,
-    },
-    ]
+        header: 'TEST',
+        accessorKey: 'test',
+        baseWidth: 50,
+        Cell: ({ row }) => <TestCell row={row} onChange={handleChange} />,
     },
 
     // PAK 部分
-
     {
-        header: '2',
-        id: 'pak_info',
-        columns: [
-    {
-      header: 'PAK',
-      accessorKey: 'pak',
-      Cell: ({ row }) => (
-        <PakToggleCell 
-          row={row} 
-          onToggleActive={handleToggleActive}
-          onDateChange={handleChange}
-        />
-      ),
+        header: 'PAK',
+        baseWidth: 80,
+        accessorKey: 'pak',
+        Cell: ({ row }) => (
+          <PakToggleCell 
+            row={row} 
+            onToggleActive={handleToggleActive}
+            onDateChange={handleChange}
+          />
+        ),
     },
     {
-      header: 'POUT',
-      accessorKey: 'pak.pout',
-      id: 'pak_pout',
-      Cell: ({ row }) => <PakPoutCell row={row} onChange={handleChange} />,
+        header: 'POUT',
+        baseWidth: 50,
+        accessorKey: 'pak.pout',
+        id: 'pak_pout',
+        Cell: ({ row }) => <PakPoutCell row={row} onChange={handleChange} />,
     },
     {
-      header: 'PACK',
-      accessorKey: 'pak.pack',
-      id: 'pak_pack',
-      Cell: ({ row }) => <PakPackCell row={row} onChange={handleChange} />,
-    },
-    ]
+        header: 'PACK',
+        baseWidth: 50,
+        accessorKey: 'pak.pack',
+        id: 'pak_pack',
+        Cell: ({ row }) => <PakPackCell row={row} onChange={handleChange} />,
     },
     
     // PAK ESTIMATE 分组
     {
-      header: 'ESTIMATE',
-      id: 'pak_estimate',
-      columns: [
-        {
-          header: 'SEND',
-          id: 'pak_est_send',
-          Cell: ({ row }) => (
-            <EstimateCell 
-              row={row} 
-              section="pak" 
-              type="Send" 
-              onChange={handleChange} 
-            />
+        header: (
+            <>
+              ESTIMATE<br/>SEND
+            </>
           ),
-        },
-        {
-          header: 'REVIEW',
-          id: 'pak_est_review',
-          Cell: ({ row }) => (
-            <EstimateCell 
-              row={row} 
-              section="pak" 
-              type="Review" 
-              onChange={handleChange} 
-            />
-          ),
-        },
-        {
-          header: 'AGREE',
-          id: 'pak_est_agree',
-          Cell: ({ row }) => (
-            <EstimateCell 
-              row={row} 
-              section="pak" 
-              type="Agree" 
-              onChange={handleChange} 
-            />
-          ),
-        },
-      ],
+        baseWidth: 75,
+        id: 'pak_est_send',
+        Cell: ({ row }) => (
+          <EstimateCell 
+            row={row} 
+            section="pak" 
+            type="Send" 
+            onChange={handleChange} 
+          />
+        ),
     },
-    
+    {
+        header:(
+            <>
+              ESTIMATE<br/>REVIEW
+            </>
+          ),
+        baseWidth: 75,
+        id: 'pak_est_review',
+        Cell: ({ row }) => (
+          <EstimateCell 
+            row={row} 
+            section="pak" 
+            type="Review" 
+            onChange={handleChange} 
+          />
+        ),
+    },
+    {
+        header: (
+            <>
+              ESTIMATE<br/>AGREE
+            </>
+          ),
+        baseWidth: 75,
+        id: 'pak_est_agree',
+        Cell: ({ row }) => (
+          <EstimateCell 
+            row={row} 
+            section="pak" 
+            type="Agree" 
+            onChange={handleChange} 
+          />
+        ),
+    },
+
     // WTR 部分
     {
-        header: '3',
-        id: 'wtr_info',
-        columns: [
-    {
-      header: 'WTR',
-      accessorKey: 'wtr',
-      Cell: ({ row }) => (
-        <WtrToggleCell 
-          row={row} 
-          onToggleActive={handleToggleActive}
-          onDateChange={handleChange}
-        />
-      ),
+        header: 'WTR',
+        accessorKey: 'wtr',
+        baseWidth: 80,
+        Cell: ({ row }) => (
+          <WtrToggleCell 
+            row={row} 
+            onToggleActive={handleToggleActive}
+            onDateChange={handleChange}
+          />
+        ),
     },
     {
-      header: 'CTRC',
-      accessorKey: 'wtr.ctrc',
-      id: 'wtr_ctrc',
-      Cell: ({ row }) => <WtrCtrcCell row={row} onChange={handleChange} />,
+        header: 'CTRC',
+        baseWidth: 50,
+        accessorKey: 'wtr.ctrc',
+        id: 'wtr_ctrc',
+        Cell: ({ row }) => <WtrCtrcCell row={row} onChange={handleChange} />,
     },
     {
-      header: 'DEMO',
-      accessorKey: 'wtr.demo',
-      id: 'wtr_demo',
-      Cell: ({ row }) => <WtrDemoCell row={row} onChange={handleChange} />,
+        header: 'DEMO',
+        baseWidth: 50,
+        accessorKey: 'wtr.demo',
+        id: 'wtr_demo',
+        Cell: ({ row }) => <WtrDemoCell row={row} onChange={handleChange} />,
     },
     {
-      header: 'ITEL',
-      accessorKey: 'wtr.itel',
-      id: 'wtr_itel',
-      Cell: ({ row }) => <WtrItelCell row={row} onChange={handleChange} />,
+        header: 'ITEL',
+        baseWidth: 50,
+        accessorKey: 'wtr.itel',
+        id: 'wtr_itel',
+        Cell: ({ row }) => <WtrItelCell row={row} onChange={handleChange} />,
     },
     {
-      header: 'EQ',
-      accessorKey: 'wtr.eq',
-      id: 'wtr_eq',
-      Cell: ({ row }) => <WtrEqCell row={row} onChange={handleChange} />,
+        header: 'EQ',
+        baseWidth: 50,
+        accessorKey: 'wtr.eq',
+        id: 'wtr_eq',
+        Cell: ({ row }) => <WtrEqCell row={row} onChange={handleChange} />,
     },
     {
-      header: 'PICK',
-      accessorKey: 'wtr.pick',
-      id: 'wtr_pick',
-      Cell: ({ row }) => <WtrPickCell row={row} onChange={handleChange} />,
-    },
-    ]
+        header: 'PICK',
+        baseWidth: 50,
+        accessorKey: 'wtr.pick',
+        id: 'wtr_pick',
+        Cell: ({ row }) => <WtrPickCell row={row} onChange={handleChange} />,
     },
         
     // WTR ESTIMATE 分组
     {
-      header: 'ESTIMATE',
-      id: 'wtr_estimate',
-      columns: [
-        {
-          header: 'SEND',
-          id: 'wtr_est_send',
-          Cell: ({ row }) => (
-            <EstimateCell 
-              row={row} 
-              section="wtr" 
-              type="Send" 
-              onChange={handleChange} 
-            />
+        header: (
+            <>
+              ESTIMATE<br/>SEND
+            </>
           ),
-        },
-        {
-          header: 'REVIEW',
-          id: 'wtr_est_review',
-          Cell: ({ row }) => (
-            <EstimateCell 
-              row={row} 
-              section="wtr" 
-              type="Review" 
-              onChange={handleChange} 
-            />
+        baseWidth: 75,
+        id: 'wtr_est_send',
+        Cell: ({ row }) => (
+          <EstimateCell 
+            row={row} 
+            section="wtr" 
+            type="Send" 
+            onChange={handleChange} 
+          />
+        ),
+    },
+    {
+        header: (
+            <>
+              ESTIMATE<br/>REVIEW
+            </>
           ),
-        },
-        {
-          header: 'AGREE',
-          id: 'wtr_est_agree',
-          Cell: ({ row }) => (
-            <EstimateCell 
-              row={row} 
-              section="wtr" 
-              type="Agree" 
-              onChange={handleChange} 
-            />
+        baseWidth: 75,
+        id: 'wtr_est_review',
+        Cell: ({ row }) => (
+          <EstimateCell 
+            row={row} 
+            section="wtr" 
+            type="Review" 
+            onChange={handleChange} 
+          />
+        ),
+    },
+    {
+        header: (
+            <>
+              ESTIMATE<br/>AGREE
+            </>
           ),
-        },
-      ],
+        baseWidth: 75,
+        id: 'wtr_est_agree',
+        Cell: ({ row }) => (
+          <EstimateCell 
+            row={row} 
+            section="wtr" 
+            type="Agree" 
+            onChange={handleChange} 
+          />
+        ),
     },
     
     // STR 部分
     {
-        header: '4',
-        id: 'str_info',
-        columns: [
-    {
-      header: 'STR',
-      accessorKey: 'str',
-      Cell: ({ row }) => (
-        <StrToggleCell 
-          row={row} 
-          onToggleActive={handleToggleActive}
-          onDateChange={handleChange}
-        />
-      ),
+        header: 'STR',
+        baseWidth: 80,
+        accessorKey: 'str',
+        Cell: ({ row }) => (
+          <StrToggleCell 
+            row={row} 
+            onToggleActive={handleToggleActive}
+            onDateChange={handleChange}
+          />
+        ),
     },
     {
-      header: 'CTRC',
-      accessorKey: 'str.ctrc',
-      id: 'str_ctrc',
-      Cell: ({ row }) => <StrCtrcCell row={row} onChange={handleChange} />,
-    },
-    ]
+        header: 'CTRC',
+        baseWidth: 50,
+        accessorKey: 'str.ctrc',
+        id: 'str_ctrc',
+        Cell: ({ row }) => <StrCtrcCell row={row} onChange={handleChange} />,
     },
         
-    
     // STR ESTIMATE 分组
     {
-      header: 'ESTIMATE',
-      id: 'str_estimate',
-      columns: [
-        {
-          header: 'SEND',
-          id: 'str_est_send',
-          Cell: ({ row }) => (
-            <EstimateCell 
-              row={row} 
-              section="str" 
-              type="Send" 
-              onChange={handleChange} 
-            />
+        header: (
+            <>
+              ESTIMATE<br/>SEND
+            </>
           ),
-        },
-        {
-          header: 'REVIEW',
-          id: 'str_est_review',
-          Cell: ({ row }) => (
-            <EstimateCell 
-              row={row} 
-              section="str" 
-              type="Review" 
-              onChange={handleChange} 
-            />
+        baseWidth: 75,
+        id: 'str_est_send',
+        Cell: ({ row }) => (
+          <EstimateCell 
+            row={row} 
+            section="str" 
+            type="Send" 
+            onChange={handleChange} 
+          />
+        ),
+    },
+    {
+        header: (
+            <>
+              ESTIMATE<br/>REVIEW
+            </>
           ),
-        },
-        {
-          header: 'AGREE',
-          id: 'str_est_agree',
-          Cell: ({ row }) => (
-            <EstimateCell 
-              row={row} 
-              section="str" 
-              type="Agree" 
-              onChange={handleChange} 
-            />
+        baseWidth: 75,
+        id: 'str_est_review',
+        Cell: ({ row }) => (
+          <EstimateCell 
+            row={row} 
+            section="str" 
+            type="Review" 
+            onChange={handleChange} 
+          />
+        ),
+    },
+    {
+        header: (
+            <>
+              ESTIMATE<br/>AGREE
+            </>
           ),
-        },
-      ],
+        baseWidth: 75,
+        id: 'str_est_agree',
+        Cell: ({ row }) => (
+          <EstimateCell 
+            row={row} 
+            section="str" 
+            type="Agree" 
+            onChange={handleChange} 
+          />
+        ),
     },
     
     // 其他字段
     {
-        header: '5',
-        id: 'other_info',
-        columns: [
-    {
-      header: 'PAYMENT',
-      accessorKey: 'payment',
-      Cell: ({ row }) => <PaymentCell row={row} onChange={handleChange} />,
+        header: 'PAYMENT',
+        baseWidth: 75,
+        accessorKey: 'payment',
+        Cell: ({ row }) => <PaymentCell row={row} onChange={handleChange} />,
     },
     {
-      header: 'COMMENTS',
-      accessorKey: 'comments',
-      Cell: ({ row }) => <CommentsCell row={row} onChange={handleChange} />,
-    },
-    ]
+        header: 'COMM.',
+        baseWidth: 100,
+        accessorKey: 'comments',
+        Cell: ({ row }) => <CommentsCell row={row} onChange={handleChange} />,
     },
    
   ], [handleChange, handleToggleActive]);
 
+  const dynamicColumns = useMemo(() => {
+    const totalBase = columns.reduce((sum, col) => sum + (col.baseWidth || 60), 0);
+    const w = containerWidth - 4;
+    let used = 0;
+    // 1. 先分配前n-1列
+    const newCols = columns.map((col, idx) => {
+      const ratio = (col.baseWidth || 60) / totalBase;
+      let size = Math.round(w * ratio);
+      if (col.accessorKey === 'pak' || col.accessorKey === 'wtr' || col.accessorKey === 'str') {
+        size = Math.max(95, size);
+      }
+      // 只对前n-1列累加
+      if (idx < columns.length - 1) {
+        used += size;
+        return {
+          ...col,
+          size,
+          minSize: Math.max(40, size - 20),
+          maxSize: size + 40,
+        };
+      }
+      // 2. 最后一列：用剩下的所有宽度
+      const lastColSize = w - used;
+      return {
+        ...col,
+        size: lastColSize,
+        minSize: Math.max(40, lastColSize - 20),
+        maxSize: lastColSize + 40,
+      };
+    });
+    return newCols;
+  }, [columns, containerWidth]);
 
   useEffect(() => {
-    console.log('111')
     api.loadProgress();
   }, [api]);
 
   return (
-    <MaterialReactTable 
-      columns={columns}
-      data={rows}
-      enableRowVirtualization={true}
-      enablePagination={false}
-      enableSorting={false}
-      getRowId={(row) => row.id}
-      muiTablePaperProps={{ 
-        sx: { 
-            height: '100%', 
-            p: 0, 
-            display: 'flex', 
-            flexDirection: 'column' 
-        } 
-      }}
-      muiTableContainerProps={{ 
-        sx: { 
-            flex: 1, 
-            height: '100%', 
-            p: 0,
-            '& .MuiTable-root': {
-                tableLayout: 'fixed', // Ensure uniform column widths
-                width: '100%'         // Stretch table to container width
-            }
-        } 
-      }}
-      muiTableHeadCellProps={{ 
-        align: 'center',
+    <Box 
+        ref={containerRef} 
+        sx={{ 
+            maxWidth: '100vw', 
+            overflowX: 'hidden', 
+            p:0, 
+            mx: 'auto', 
+            my: 0,
+        }}
+    >
+      <MaterialReactTable 
+        enableColumnActions={false}
+        columns={dynamicColumns}
+        data={rows}
+        enableRowVirtualization={true}
+        enablePagination={false}
+        enableSorting={false}
+        enableColumnResizing={true}              // ★ 开启列宽手动调整
+        columnResizeMode="onChange"   
+        getRowId={(row) => row.id}
+        muiTablePaperProps={{
         sx: {
-            verticalAlign: 'middle',
-            p: "2px",
-            fontWeight: 700,
-            fontSize: 16,
-            border: '1px solid #1976d2',
-            background: '#f8fafd',
-            boxSizing: 'border-box',
-            minWidth: '60px', // Minimum width to accommodate content
-            //maxWidth: '150px', // Prevent overly wide columns
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap'
+          height: '100%',
+          p: 0,
+          my: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          boxShadow: 'none',
+          border: 'none',
+          boxSizing: 'border-box',
         }
       }}
-      muiTableBodyCellProps={{ 
+      muiTableContainerProps={{
+        sx: {
+            flex: 1,
+            height: '100%',
+            p: 0,
+            '& .MuiTable-root': {
+                tableLayout: 'fixed',
+                width: '100%',
+            },
+            overflowX: 'auto',
+        }
+      }}
+      muiTableHeadCellProps={{
         align: 'center',
         sx: {
-          p: '2px', // Match header padding
-          minWidth: '60px', // Match header minWidth
-          minHeight: '80px',
-          height: 'auto',
+          verticalAlign: 'middle',
+          p: "2px",
+          fontWeight: 700,
+          fontSize: 13,   // 更小
+          background: '#f8fafd',
           boxSizing: 'border-box',
-          whiteSpace: 'normal', // 允许表头文本换行
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'normal',
+          border: '0.2px solid #e0e0e0',
+        }
+      }}
+      muiTableBodyCellProps={{
+        align: 'center',
+        sx: {
+          p: 0,        // 更小padding
+          minHeight: '80px',  // 行高压缩
+          fontSize: 12,
+          boxSizing: 'border-box',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'normal',
+          border: '0.2px solid #e0e0e0',
         }
       }}
       
     />
+    </Box>
   );
 }

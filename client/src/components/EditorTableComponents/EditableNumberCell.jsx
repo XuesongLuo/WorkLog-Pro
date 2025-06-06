@@ -31,7 +31,15 @@ function EditableNumberCell({ value, onChange, disabled = false }) {
   return (
     <Box 
       onClick={() => { if (!disabled) inputRef.current?.focus(); }}
-      sx={{ p: 0.5 }}
+      sx={{ 
+        p: 0,
+        m: 0,
+        display: 'flex',
+        alignItems: 'center',     // ★ 垂直居中
+        justifyContent: 'center', // ★ 水平居中（如果需要）
+        width: "100%", 
+        height: "100%"
+      }}  
     >
       <TextField 
         inputRef={inputRef}
@@ -47,12 +55,22 @@ function EditableNumberCell({ value, onChange, disabled = false }) {
         sx={{
           '& .MuiInputBase-input': {
             fontSize: '0.875rem',
-            padding: '4px'
+            textAlign: 'center',
+            paddingLeft: "4px",
+            paddingRight: "4px",
+            paddingTop: "12px",
+            paddingBottom: 0
           },
           // 移除默认的数字上下箭头（spin buttons）
           '& input[type=number]': { MozAppearance: 'textfield' },
-          '& input[type=number]::-webkit-outer-spin-button': { WebkitAppearance: 'none', margin: 0 },
-          '& input[type=number]::-webkit-inner-spin-button': { WebkitAppearance: 'none', margin: 0 }
+          '& input[type=number]::-webkit-outer-spin-button': { WebkitAppearance: 'none', margin: 0},
+          '& input[type=number]::-webkit-inner-spin-button': { WebkitAppearance: 'none', margin: 0},
+          '& .MuiInput-underline:before': {
+            borderBottom: 'none !important', // 常规状态无下划线
+          },
+          '& .MuiInput-underline:hover:before': {
+            borderBottom: '1px solid #1976d2 !important', // hover时有下划线，可换你想要的颜色
+          },
         }}
       />
     </Box>

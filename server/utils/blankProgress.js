@@ -14,11 +14,11 @@ function blankPak () {
     pout              : false,
     pack              : false,
     estimateSend      : false,
-    estimateSendAmount: '',
+    estimateSendAmount: '0',
     estimateReview    : false,
-    estimateReviewAmount: '',
+    estimateReviewAmount: '0',
     estimateAgree     : false,
-    estimateAgreeAmount : '',
+    estimateAgreeAmount : '0',
   };
 }
 
@@ -32,11 +32,11 @@ function blankWtr () {
     eq                : false,
     pick              : false,
     estimateSend      : false,
-    estimateSendAmount: '',
+    estimateSendAmount: '0',
     estimateReview    : false,
-    estimateReviewAmount: '',
+    estimateReviewAmount: '0',
     estimateAgree     : false,
-    estimateAgreeAmount : '',
+    estimateAgreeAmount : '0',
   };
 }
 
@@ -46,10 +46,10 @@ function blankStr () {
     startDate         : '',
     ctrc              : false,
     estimateSend      : false,
-    estimateSendAmount: '',
+    estimateSendAmount: '0',
     estimateReview    : false,
-    estimateReviewAmount: '',
+    estimateReviewAmount: '0',
     estimateAgree     : false,
-    estimateAgreeAmount : '',
+    estimateAgreeAmount : '0',
   };
 }

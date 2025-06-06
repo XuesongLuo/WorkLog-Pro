@@ -13,6 +13,12 @@ const EditableCheckbox = React.memo(function EditableCheckbox({
         checked={value || false}
         disabled={disabled}
         onChange={onChange}
+        size="small"
+        sx={{
+          p: 0, // 更小的内边距
+          m: 0,   // 去除margin
+          '& .MuiSvgIcon-root': { fontSize: '1.2rem' }
+        }}
       />
     </Box>
   );

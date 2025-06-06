@@ -432,6 +432,7 @@ export default function CreateOrEditTask({ id: propId, task: propTask, embedded 
             {editorReady ? (
               <Suspense fallback={<Typography variant="body2">加载编辑器中...</Typography>}>
                 <LazyEditor
+                  key={id ?? 'new'}
                   value={form.description}
                   onChange={handleDescriptionChange}
                 />

@@ -16,12 +16,14 @@ const EditableDate = React.memo(function EditableDate({
       disabled={disabled}
       fullWidth
       sx={{
-        '& .MuiInputBase-input': { 
-          p: '2px', 
-          fontSize: '0.85rem' 
+        '& .MuiInputBase-input': {
+          p: '0px 2px',
+          fontSize: '0.78rem',
+          height: '1.7em',
+          textAlign: 'center',
         },
-        '& .MuiOutlinedInput-root': { 
-          pr: 0 
+        '& .MuiOutlinedInput-root': {
+          pr: 0,
         }
       }}
     />
