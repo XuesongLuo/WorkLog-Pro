@@ -13,7 +13,6 @@ import {
   DialogTitle,
   DialogActions,
 } from '@mui/material';
-//import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import CancelIcon from '@mui/icons-material/Cancel';
@@ -22,7 +21,6 @@ import { useSnackbar } from 'notistack';
 
 import Editor from './Editor';
 import TaskPane from './TaskPane';
-//import { api } from '../api/tasks';
 import { useTasks } from '../contexts/TaskStore';
 
 export default function TaskDetail({ id, embedded = false, onClose }) {
@@ -30,6 +28,7 @@ export default function TaskDetail({ id, embedded = false, onClose }) {
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [task, setTask] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [editorReady, setEditorReady] = useState(false);
   const { taskMap, api: taskApi } = useTasks();
   const { enqueueSnackbar } = useSnackbar();
 
@@ -39,6 +38,7 @@ export default function TaskDetail({ id, embedded = false, onClose }) {
     if (cachedTask) {
       setTask({ ...cachedTask });
       setLoading(false);
+      setTimeout(() => setEditorReady(true), 150);
       // 可选：补充 description 字段，如果 description 单独存
       taskApi.getTaskDescription(id).then(descData => {
         let c = id+'new'
@@ -53,6 +53,7 @@ export default function TaskDetail({ id, embedded = false, onClose }) {
       .then(([taskData, descData]) => {
         setTask({ ...taskData, description: descData.description });
         setLoading(false);
+        setTimeout(() => setEditorReady(true), 150);
       })
       .catch(err => {
         console.error('获取任务失败', err);
@@ -80,17 +81,6 @@ export default function TaskDetail({ id, embedded = false, onClose }) {
   };
 
   const handleDelete = () => {
-    /*
-    taskApi.remove(id)
-    .then(() => {
-      if (embedded && onClose) {
-        onClose('reload'); // 关闭嵌入式详情
-      } else {
-        navigate('/'); // 返回首页
-      }
-    })
-    .catch(err => console.error('删除失败', err));
-    */
     const doDelete = async () => {       // ★ 真正的删除逻辑
       try {
         await taskApi.remove(id);
@@ -124,10 +114,10 @@ export default function TaskDetail({ id, embedded = false, onClose }) {
       <Box sx={{ 
         display: 'flex', 
         flexDirection: 'column', 
-        height: embedded ? '100%' : 'auto',
-        minHeight: embedded ? '100%' : '80vh', 
+        height: 'auto',
+        //minHeight: embedded ? '100%' : '80vh', 
         width: embedded ? '100%' : '80%',
-        maxWidth: embedded ? 'none' : '1920px',
+        maxWidth: embedded ? 'none' : '100vw',
         minWidth: 0,
         justifyContent: embedded ? 'flex-start' : 'flex-start',  // 靠上对齐
         overflow: 'hidden',
@@ -194,15 +184,26 @@ export default function TaskDetail({ id, embedded = false, onClose }) {
           <Typography><strong>房屋年份：</strong>{task.year ?? '未填写'}</Typography>
         </Grid>
 
-        {/* 第二行：公司 项目申请人 项目负责人 项目类型 */}
+        {/* 第二行：保险公司 项目类型 */}
         <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 3', md: 'span 3', lg: 'span 6' } }}>
           <Typography><strong>保险公司：</strong>{task.insurance ?? '未填写'}</Typography>
         </Grid>
         <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 6', md: 'span 2', lg: 'span 6' }, textAlign: 'right' }}>
-          <Typography><strong>类型：</strong>{task.type}</Typography>
+          <Typography><strong>项目类型：</strong>{task.type}</Typography>
+        </Grid>
+
+         {/* 第三行：公司 项目申请人 项目负责人 项目类型 */}
+         <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 3', md: 'span 3', lg: 'span 4' } }}>
+          <Typography><strong>项目所属公司：</strong>{task.company ?? '未填写'}</Typography>
+        </Grid>
+        <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 3', md: 'span 2', lg: 'span 4' }, textAlign: 'center' }}>
+          <Typography><strong>项目推荐人：</strong>{task.applicant}</Typography>
+        </Grid>
+        <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 6', md: 'span 2', lg: 'span 4' }, textAlign: 'right' }}>
+          <Typography><strong>项目负责人：</strong>{task.manager}</Typography>
         </Grid>
       
-        {/* 第三行：开始日期 结束日期 */}
+        {/* 第四行：开始日期 结束日期 */}
         <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 6', md: 'span 6', lg: 'span 6' } }}>
           <Typography><strong>开始日期：</strong>{task.start ? new Date(task.start).toLocaleDateString() : '未填写'}</Typography>
         </Grid>
@@ -216,8 +217,19 @@ export default function TaskDetail({ id, embedded = false, onClose }) {
         <strong>详细描述：</strong>
         </Typography>
         <Box sx={{ mt: 2 }}>
-          <Editor key={id + '-' + hashDesc(task.description)} value={task.description} readOnly hideToolbar />
+          {(task && typeof task.description === 'string' && editorReady) ? (
+            <Editor 
+              key={id + '-' + hashDesc(task.description)} 
+              value={task.description} 
+              readOnly 
+              hideToolbar 
+              maxHeightOffset={embedded ? 40 : 100}
+            />
+          ) : (
+            <Typography variant="body2" sx={{ color: '#aaa' }}>加载详细描述...</Typography>
+          )}
         </Box>
+
 
       {!embedded && (
         <Stack direction="row" spacing={2} mt="auto" pt={1} justifyContent="center">

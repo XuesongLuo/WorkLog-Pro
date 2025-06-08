@@ -1,6 +1,6 @@
 // src/components/TaskPane.jsx
 import { forwardRef } from 'react';
-import { Box, Paper } from '@mui/material';
+import { Paper } from '@mui/material';
 
 /**
  * 统一的右侧面板外壳。
@@ -17,8 +17,6 @@ const TaskPane = forwardRef(function TaskPane({ children, embedded = true }, ref
           height: '100%',
           minWidth: 0, // 重要：防止flex项目超出其容器
           p: 0,    // 嵌套2=16px padding，独立页面0padding
-          //pl: 1,
-          //pr: 1,
           display: 'flex',
           alignItems: embedded ? 'stretch' : 'center',
           maxWidth: embedded ? 'none' : '1920px',

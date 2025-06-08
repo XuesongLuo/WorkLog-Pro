@@ -1,9 +1,8 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, forwardRef, useImperativeHandle } from 'react'
 import { useEditor, EditorContent } from '@tiptap/react'
 
 import StarterKit from '@tiptap/starter-kit'
 import Underline from '@tiptap/extension-underline'
-import TextStyle  from '@tiptap/extension-text-style'
 import Color from '@tiptap/extension-color'
 import Highlight from '@tiptap/extension-highlight'
 import Image from '@tiptap/extension-image'
@@ -13,17 +12,14 @@ import Table from '@tiptap/extension-table'
 import TableRow from '@tiptap/extension-table-row'
 import TableCell from '@tiptap/extension-table-cell'
 import TableHeader from '@tiptap/extension-table-header'
-import BulletList from '@tiptap/extension-bullet-list';
-import OrderedList from '@tiptap/extension-ordered-list';
-
-import { CustomTextStyle } from './EditorComponents/CustomTextStyle'
-//import { CustomHighlight } from './EditorComponents/CustomHighlight'
+import BulletList from '@tiptap/extension-bullet-list'
+import OrderedList from '@tiptap/extension-ordered-list'
 
 import { findParentNodeClosestToPos } from 'prosemirror-utils'
-import { DOMSerializer } from 'prosemirror-model';
+import { DOMSerializer } from 'prosemirror-model'
 
+import { CustomTextStyle } from './EditorComponents/CustomTextStyle'
 import './editor.css'
-
 
 // 表格选择器最大尺寸
 const MAX_ROWS = 8
@@ -44,7 +40,6 @@ const fontFamilies = [
 ]
 
 const fontSizes = ['12px', '14px', '16px', '18px', '20px', '24px', '28px', '32px']
-
 
 function generateClipboardHTML(container) {
     // 统一给所有表格和单元格添加行内style（Word只认行内）
@@ -90,50 +85,45 @@ function generateClipboardHTML(container) {
             </html>`
 }
 
-
 const CustomBulletList = BulletList.extend({
     addAttributes() {
-      return {
-        listStyleType: {
-          default: 'disc',
-          parseHTML: el => el.style.listStyleType || 'disc',
-          renderHTML: attrs => {
-            return { style: `list-style-type: ${attrs.listStyleType}` };
-          },
-        },
-      };
+        return {
+            listStyleType: {
+                default: 'disc',
+                parseHTML: el => el.style.listStyleType || 'disc',
+                renderHTML: attrs => {
+                    return { style: `list-style-type: ${attrs.listStyleType}` };
+                },
+            },
+        };
     },
-  });
+});
   
-  const CustomOrderedList = OrderedList.extend({
+const CustomOrderedList = OrderedList.extend({
     addAttributes() {
-      return {
-        listStyleType: {
-          default: 'decimal',
-          parseHTML: el => el.style.listStyleType || 'decimal',
-          renderHTML: attrs => {
-            return { style: `list-style-type: ${attrs.listStyleType}` };
-          },
-        },
-      };
+        return {
+            listStyleType: {
+                default: 'decimal',
+                parseHTML: el => el.style.listStyleType || 'decimal',
+                renderHTML: attrs => {
+                return { style: `list-style-type: ${attrs.listStyleType}` };
+                },
+            },
+        };
     },
-  });
+});
 
-export default function Editor({ value = '', onChange, readOnly = false, hideToolbar = false  }) {
-    // 添加字体状态
-    const [currentFontFamily, setCurrentFontFamily] = useState('Arial')
-
+const Editor = forwardRef(({ value = '', readOnly = false, hideToolbar = false, maxHeightOffset = 120 }, ref) => {
+    const [currentFontFamily, setCurrentFontFamily] = useState('Arial')        // 添加字体状态
     const [showTextColor, setShowTextColor] = useState(false)
     const [showBgColor, setShowBgColor] = useState(false)
     const [currentTextColor, setCurrentTextColor] = useState('')
     const [currentBgColor, setCurrentBgColor] = useState('')
     const [currentFontSize, setCurrentFontSize] = useState('16px')
-    
     const [currentBulletStyle, setCurrentBulletStyle] = useState('disc')       // 无序列表默认值
     const [currentOrderedStyle, setCurrentOrderedStyle] = useState('decimal')  // 有序列表默认值
     const [showBulletListStyles, setShowBulletListStyles] = useState(false);
     const [showOrderedListStyles, setShowOrderedListStyles] = useState(false);
-
     const [showTableSelector, setShowTableSelector] = useState(false)
     const [hoverRow, setHoverRow] = useState(0)
     const [hoverCol, setHoverCol] = useState(0)
@@ -141,9 +131,9 @@ export default function Editor({ value = '', onChange, readOnly = false, hideToo
     const [contextMenuPos, setContextMenuPos] = useState({ x: 0, y: 0 })
     const [canMergeCells, setCanMergeCells] = useState(false)        //  标记单元格是否可以合并
     const [canSplitCell, setCanSplitCell] = useState(false)       //  标记单元格是否可以拆分
-
     const [floatingPosition, setFloatingPosition] = useState({ top: 0, left: 0 });
 
+    const resizableRef = useRef();
     const toolbarRef = useRef(null)
     const fileInputRef = useRef(null)
 
@@ -172,11 +162,6 @@ export default function Editor({ value = '', onChange, readOnly = false, hideToo
             TableHeader,
         ],
         content: value || '',
-        onUpdate({ editor }) {
-            if (onChange && !readOnly) {
-                onChange(editor.getHTML());
-            }
-        },
         editorProps: {
             attributes: {
               class: 'custom-editor',
@@ -184,124 +169,14 @@ export default function Editor({ value = '', onChange, readOnly = false, hideToo
             editable: () => !readOnly, // 只读模式判断
         },
     })
-    /*
-    useEffect(() => {
-        if (editor && value !== undefined) {
-            editor.commands.setContent(value || '')
-        }
-    }, [editor, value])
-    */
-    // 点击页面空白区域自动收起色板或表格选择器，或者关闭右键菜单
-    useEffect(() => {
-        const handleClickOutside = (event) => { 
-            if (event.button === 0) {
-                if (toolbarRef.current && !toolbarRef.current.contains(event.target)) {
-                    setShowTextColor(false)
-                    setShowBgColor(false)
-                    setShowBulletListStyles(false)
-                    setShowOrderedListStyles(false)
-                    setShowTableSelector(false)
-                }
-                const contextMenu = document.querySelector('.context-menu')
-                if (contextMenu && !contextMenu.contains(event.target)) {
-                    setShowContextMenu(false)
-                }
-            }
-        }
-        document.addEventListener('mousedown', handleClickOutside)
-        return () => {
-            document.removeEventListener('mousedown', handleClickOutside)
-        }
-    }, [])
 
-
-    // 在 useEffect 中添加颜色状态监听
-    useEffect(() => {
-        if (!editor) return
-        
-        const updateColorStates = () => {
-            // 更新文字颜色状态
-            const textColor = editor.getAttributes('textStyle').color
-            if (textColor) {
-                setCurrentTextColor(textColor)
-            }
-            // 更新背景色状态
-            const highlight = editor.getAttributes('highlight')
-            if (highlight.color) {
-                setCurrentBgColor(highlight.color)
-            }
-            // 更新字体大小状态
-            const fontSize = editor.getAttributes('textStyle').fontSize
-            if (fontSize) {
-                setCurrentFontSize(fontSize)
-            }
-            // 更新字体状态
-            const fontFamily = editor.getAttributes('textStyle').fontFamily
-            if (fontFamily) {
-                setCurrentFontFamily(fontFamily)
-            }
-        }
-        editor.on('selectionUpdate', updateColorStates)
-        editor.on('transaction', updateColorStates)
-        return () => {
-            editor.off('selectionUpdate', updateColorStates)
-            editor.off('transaction', updateColorStates)
-        }
-    }, [editor])
-
-
-    // 单元格是否可以合并和拆分监听
-    useEffect(() => {
-        if (!editor) return
-        const updateCanMerge = () => {
-            const selection = editor.state.selection
-            const { from, to } = selection
-            const { doc } = editor.state
-      
-            // 判断能否合并
-            setCanMergeCells(from !== to)
-            // 判断能否拆分
-            const $from = doc.resolve(from)
-            // 找到最近的 tableCell 或 tableHeader
-            const cellNode = findParentNodeClosestToPos($from, node => node.type.name === 'tableCell' || node.type.name === 'tableHeader')
-
-            if (cellNode && (cellNode.node.attrs.colspan > 1 || cellNode.node.attrs.rowspan > 1)) {
-            setCanSplitCell(true)
-            } else {
-            setCanSplitCell(false)
-            }
-        }
-        editor.on('selectionUpdate', updateCanMerge)
-        return () => {
-            editor.off('selectionUpdate', updateCanMerge)
-        }
-    }, [editor])
-
-    // 监听selectionUpdate事件
-    useEffect(() => {
-        if (!editor) return
-        const updateListStyles = () => {
-            const { state } = editor
-            const { from } = state.selection
-            const $from = state.doc.resolve(from)
-    
-            const nodeTypes = $from.path.map(p => p?.type?.name).filter(Boolean)
-    
-            if (nodeTypes.includes('bulletList')) {
-                const bulletAttrs = editor.getAttributes('bulletList')
-                setCurrentBulletStyle(bulletAttrs.listStyleType || 'disc')
-            } else if (nodeTypes.includes('orderedList')) {
-                const orderedAttrs = editor.getAttributes('orderedList')
-                setCurrentOrderedStyle(orderedAttrs.listStyleType || 'decimal')
-            }
-        }
-    
-        editor.on('selectionUpdate', updateListStyles)
-        return () => {
-            editor.off('selectionUpdate', updateListStyles)
-        }
-    }, [editor])
-
+    // 让父组件可以通过 ref 调用 editor 的方法
+    useImperativeHandle(ref, () => ({
+        getHTML: () => editor?.getHTML?.(),
+        getJSON: () => editor?.getJSON?.(),
+        setContent: (val) => editor?.commands.setContent(val || ''),
+        // 还可以暴露更多方法
+    }), [editor]);
 
     const handleBulletListStyle = (style) => {
         const chain = editor.chain().focus();
@@ -325,7 +200,6 @@ export default function Editor({ value = '', onChange, readOnly = false, hideToo
         setCurrentOrderedStyle(style);
         setShowOrderedListStyles(false);
       };
-
 
     const handleUploadImage = (e) => {
         const file = e.target.files?.[0]
@@ -389,6 +263,148 @@ export default function Editor({ value = '', onChange, readOnly = false, hideToo
         setShowContextMenu(false)
     }
 
+    // 控制初次最大高度不超出屏幕（并且resize后保持合理上限，但不限制用户拖大）
+    useEffect(() => {
+        function adjustInitialHeight() {
+          const node = resizableRef.current;
+          if (!node) return;
+          const maxInit = Math.max(window.innerHeight - node.getBoundingClientRect().top - maxHeightOffset, 180);
+          console.log('box top', node.getBoundingClientRect().top)
+          if (!node.dataset.userResized) {
+                node.style.height = Math.min(maxInit, 400) + 'px';
+          }
+          node.style.maxHeight = maxInit + 'px';
+          if (node.offsetHeight > maxInit) node.style.height = maxInit + 'px';
+        }
+        //adjustInitialHeight();
+        const timer = setTimeout(adjustInitialHeight, 50);
+        window.addEventListener('resize', adjustInitialHeight);
+        return () => {
+            clearTimeout(timer);
+            window.removeEventListener('resize', adjustInitialHeight);
+        };
+      }, [maxHeightOffset]);
+
+    // 监听手动拖拽，标记用户已调整过高度，不再自动覆盖
+    useEffect(() => {
+        const node = resizableRef.current;
+        if (!node) return;
+        let oldHeight = node.offsetHeight;
+        const interval = setInterval(() => {
+        if (Math.abs(node.offsetHeight - oldHeight) > 5) {
+            node.dataset.userResized = '1';
+            oldHeight = node.offsetHeight;
+        }
+        }, 300);
+        return () => clearInterval(interval);
+    }, []);
+
+    // 点击页面空白区域自动收起色板或表格选择器，或者关闭右键菜单
+    useEffect(() => {
+        const handleClickOutside = (event) => { 
+            if (event.button === 0) {
+                if (toolbarRef.current && !toolbarRef.current.contains(event.target)) {
+                    setShowTextColor(false)
+                    setShowBgColor(false)
+                    setShowBulletListStyles(false)
+                    setShowOrderedListStyles(false)
+                    setShowTableSelector(false)
+                }
+                const contextMenu = document.querySelector('.context-menu')
+                if (contextMenu && !contextMenu.contains(event.target)) {
+                    setShowContextMenu(false)
+                }
+            }
+        }
+        document.addEventListener('mousedown', handleClickOutside)
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside)
+        }
+    }, [])
+
+    // 在 useEffect 中添加颜色状态监听
+    useEffect(() => {
+        if (!editor) return
+        
+        const updateColorStates = () => {
+            // 更新文字颜色状态
+            const textColor = editor.getAttributes('textStyle').color
+            if (textColor) {
+                setCurrentTextColor(textColor)
+            }
+            // 更新背景色状态
+            const highlight = editor.getAttributes('highlight')
+            if (highlight.color) {
+                setCurrentBgColor(highlight.color)
+            }
+            // 更新字体大小状态
+            const fontSize = editor.getAttributes('textStyle').fontSize
+            if (fontSize) {
+                setCurrentFontSize(fontSize)
+            }
+            // 更新字体状态
+            const fontFamily = editor.getAttributes('textStyle').fontFamily
+            if (fontFamily) {
+                setCurrentFontFamily(fontFamily)
+            }
+        }
+        editor.on('selectionUpdate', updateColorStates)
+        editor.on('transaction', updateColorStates)
+        return () => {
+            editor.off('selectionUpdate', updateColorStates)
+            editor.off('transaction', updateColorStates)
+        }
+    }, [editor])
+
+    // 单元格是否可以合并和拆分监听
+    useEffect(() => {
+        if (!editor) return
+        const updateCanMerge = () => {
+            const selection = editor.state.selection
+            const { from, to } = selection
+            const { doc } = editor.state
+      
+            // 判断能否合并
+            setCanMergeCells(from !== to)
+            // 判断能否拆分
+            const $from = doc.resolve(from)
+            // 找到最近的 tableCell 或 tableHeader
+            const cellNode = findParentNodeClosestToPos($from, node => node.type.name === 'tableCell' || node.type.name === 'tableHeader')
+
+            if (cellNode && (cellNode.node.attrs.colspan > 1 || cellNode.node.attrs.rowspan > 1)) {
+            setCanSplitCell(true)
+            } else {
+            setCanSplitCell(false)
+            }
+        }
+        editor.on('selectionUpdate', updateCanMerge)
+        return () => {
+            editor.off('selectionUpdate', updateCanMerge)
+        }
+    }, [editor])
+
+    // 监听selectionUpdate事件
+    useEffect(() => {
+        if (!editor) return
+        const updateListStyles = () => {
+            const { state } = editor
+            const { from } = state.selection
+            const $from = state.doc.resolve(from)
+            const nodeTypes = $from.path.map(p => p?.type?.name).filter(Boolean)
+    
+            if (nodeTypes.includes('bulletList')) {
+                const bulletAttrs = editor.getAttributes('bulletList')
+                setCurrentBulletStyle(bulletAttrs.listStyleType || 'disc')
+            } else if (nodeTypes.includes('orderedList')) {
+                const orderedAttrs = editor.getAttributes('orderedList')
+                setCurrentOrderedStyle(orderedAttrs.listStyleType || 'decimal')
+            }
+        }
+        editor.on('selectionUpdate', updateListStyles)
+        return () => {
+            editor.off('selectionUpdate', updateListStyles)
+        }
+    }, [editor])
 
     if (!editor) {
         return null
@@ -677,7 +693,6 @@ export default function Editor({ value = '', onChange, readOnly = false, hideToo
                         ←{/* 或者用图标 */}
                     </button>
 
-
                     {/* 插入图片 */}
                     <button onClick={() => fileInputRef.current.click()}>🖼️</button>
                     <input
@@ -715,117 +730,118 @@ export default function Editor({ value = '', onChange, readOnly = false, hideToo
                     )}
                     </div>
 
-
                     {/* 撤销重做 */}
                     <button onClick={() => editor.chain().focus().undo().run()}>↺</button>
                     <button onClick={() => editor.chain().focus().redo().run()}>↻</button>
                 </div>
             )}
-            <EditorContent 
-                editor={editor} 
-                onContextMenu={handleContextMenu} 
-                onCopy={(e) => {
-                    if (!editor) return;
-            
-                    const { state } = editor;
-                    const { selection } = state;
-                    const { from } = selection;
-            
-                    // 查找最近的表格节点
-                    const $from = state.doc.resolve(from);
-                    const tableNode = findParentNodeClosestToPos($from, (node) => node.type.name === 'table');
-            
-                    if (tableNode) {
-                        e.preventDefault();
-            
-                        // 创建容器用于处理表格 HTML
-                        const processedContainer = document.createElement('div');
-                        const serializer = editor.options.editorProps.clipboardSerializer || DOMSerializer.fromSchema(state.schema);
-                        const domFragment = serializer.serializeNode(tableNode.node);
-            
-                        // 将序列化的表格添加到容器
-                        processedContainer.appendChild(domFragment);
-            
-                        // 应用表格样式
-                        processedContainer.querySelectorAll('table').forEach((table) => {
-                            table.classList.add('MsoTableGrid');
-                            table.setAttribute('border', '1');
-                            table.setAttribute('cellspacing', '0');
-                            table.setAttribute('cellpadding', '0');
-                            table.style.borderCollapse = 'collapse';
-                            table.style.border = '1px solid #000';
-                            table.style.width = '100%';
-                            table.removeAttribute('data-pm-slice');
-                        });
-            
-                        // 应用单元格样式
-                        processedContainer.querySelectorAll('td, th').forEach((cell) => {
-                            cell.style.border = '1px solid #000';
-                            cell.style.padding = '4px';
-                            cell.style.verticalAlign = 'middle';
-                        });
-            
-                        // 调试输出
-                        console.log('处理后的表格内容:', {
-                            tables: processedContainer.querySelectorAll('table').length,
-                            cells: processedContainer.querySelectorAll('td, th').length,
-                            html: processedContainer.innerHTML,
-                        });
-            
-                        // 生成剪贴板 HTML
-                        const html = generateClipboardHTML(processedContainer);
-                        const text = processedContainer.innerText;
-            
-                        // 设置剪贴板数据
-                        e.clipboardData.setData('text/html', html);
-                        e.clipboardData.setData('text/plain', text);
-                    } else {
-                        // 非表格选择的回退逻辑
-                        const selection = window.getSelection();
-                        if (!selection || selection.rangeCount === 0) return;
-            
-                        const range = selection.getRangeAt(0);
-                        const container = document.createElement('div');
-                        container.appendChild(range.cloneContents());
-            
-                        // 调试输出
-                        console.log('回退选择内容:', {
-                            tables: container.querySelectorAll('table').length,
-                            cells: container.querySelectorAll('td, th').length,
-                            html: container.innerHTML,
-                        });
-            
-                        // 如果没有表格或单元格，允许默认复制行为
-                        if (container.querySelectorAll('table, td, th').length === 0) return;
-            
-                        e.preventDefault();
-            
-                        // 应用表格和单元格样式
-                        container.querySelectorAll('table').forEach((table) => {
-                            table.classList.add('MsoTableGrid');
-                            table.setAttribute('border', '1');
-                            table.setAttribute('cellspacing', '0');
-                            table.setAttribute('cellpadding', '0');
-                            table.style.borderCollapse = 'collapse';
-                            table.style.border = '1px solid #000';
-                            table.style.width = '100%';
-                            table.removeAttribute('data-pm-slice');
-                        });
-            
-                        container.querySelectorAll('td, th').forEach((cell) => {
-                            cell.style.border = '1px solid #000';
-                            cell.style.padding = '4px';
-                            cell.style.verticalAlign = 'middle';
-                        });
-            
-                        const html = generateClipboardHTML(container);
-                        const text = container.innerText;
-            
-                        e.clipboardData.setData('text/html', html);
-                        e.clipboardData.setData('text/plain', text);
-                    }
-                }}
-            />
+            <div className="editor-resizable" ref={resizableRef}>
+                <EditorContent 
+                    editor={editor} 
+                    onContextMenu={handleContextMenu} 
+                    onCopy={(e) => {
+                        if (!editor) return;
+                
+                        const { state } = editor;
+                        const { selection } = state;
+                        const { from } = selection;
+                
+                        // 查找最近的表格节点
+                        const $from = state.doc.resolve(from);
+                        const tableNode = findParentNodeClosestToPos($from, (node) => node.type.name === 'table');
+                
+                        if (tableNode) {
+                            e.preventDefault();
+                
+                            // 创建容器用于处理表格 HTML
+                            const processedContainer = document.createElement('div');
+                            const serializer = editor.options.editorProps.clipboardSerializer || DOMSerializer.fromSchema(state.schema);
+                            const domFragment = serializer.serializeNode(tableNode.node);
+                
+                            // 将序列化的表格添加到容器
+                            processedContainer.appendChild(domFragment);
+                
+                            // 应用表格样式
+                            processedContainer.querySelectorAll('table').forEach((table) => {
+                                table.classList.add('MsoTableGrid');
+                                table.setAttribute('border', '1');
+                                table.setAttribute('cellspacing', '0');
+                                table.setAttribute('cellpadding', '0');
+                                table.style.borderCollapse = 'collapse';
+                                table.style.border = '1px solid #000';
+                                table.style.width = '100%';
+                                table.removeAttribute('data-pm-slice');
+                            });
+                
+                            // 应用单元格样式
+                            processedContainer.querySelectorAll('td, th').forEach((cell) => {
+                                cell.style.border = '1px solid #000';
+                                cell.style.padding = '4px';
+                                cell.style.verticalAlign = 'middle';
+                            });
+                
+                            // 调试输出
+                            console.log('处理后的表格内容:', {
+                                tables: processedContainer.querySelectorAll('table').length,
+                                cells: processedContainer.querySelectorAll('td, th').length,
+                                html: processedContainer.innerHTML,
+                            });
+                
+                            // 生成剪贴板 HTML
+                            const html = generateClipboardHTML(processedContainer);
+                            const text = processedContainer.innerText;
+                
+                            // 设置剪贴板数据
+                            e.clipboardData.setData('text/html', html);
+                            e.clipboardData.setData('text/plain', text);
+                        } else {
+                            // 非表格选择的回退逻辑
+                            const selection = window.getSelection();
+                            if (!selection || selection.rangeCount === 0) return;
+                
+                            const range = selection.getRangeAt(0);
+                            const container = document.createElement('div');
+                            container.appendChild(range.cloneContents());
+                
+                            // 调试输出
+                            console.log('回退选择内容:', {
+                                tables: container.querySelectorAll('table').length,
+                                cells: container.querySelectorAll('td, th').length,
+                                html: container.innerHTML,
+                            });
+                
+                            // 如果没有表格或单元格，允许默认复制行为
+                            if (container.querySelectorAll('table, td, th').length === 0) return;
+                
+                            e.preventDefault();
+                
+                            // 应用表格和单元格样式
+                            container.querySelectorAll('table').forEach((table) => {
+                                table.classList.add('MsoTableGrid');
+                                table.setAttribute('border', '1');
+                                table.setAttribute('cellspacing', '0');
+                                table.setAttribute('cellpadding', '0');
+                                table.style.borderCollapse = 'collapse';
+                                table.style.border = '1px solid #000';
+                                table.style.width = '100%';
+                                table.removeAttribute('data-pm-slice');
+                            });
+                
+                            container.querySelectorAll('td, th').forEach((cell) => {
+                                cell.style.border = '1px solid #000';
+                                cell.style.padding = '4px';
+                                cell.style.verticalAlign = 'middle';
+                            });
+                
+                            const html = generateClipboardHTML(container);
+                            const text = container.innerText;
+                
+                            e.clipboardData.setData('text/html', html);
+                            e.clipboardData.setData('text/plain', text);
+                        }
+                    }}
+                />
+            </div>
             {showContextMenu && (
                 <div
                     className="context-menu"
@@ -854,4 +870,6 @@ export default function Editor({ value = '', onChange, readOnly = false, hideToo
             )}
         </div>
     )
-}
+});
+
+export default Editor;

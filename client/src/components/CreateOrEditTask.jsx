@@ -1,8 +1,7 @@
 // src/pages/CreateOrEditTask.jsx
-import TaskPane from './TaskPane'; 
+import React, { useEffect, useState, useCallback, useRef, lazy, Suspense } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useLocation } from 'react-router-dom';
-import { useEffect, useState, useCallback } from 'react';
 import {
   IconButton,
   Grid,
@@ -24,14 +23,14 @@ import SaveIcon from '@mui/icons-material/Save';
 import DeleteIcon from '@mui/icons-material/Delete';
 import CancelIcon from '@mui/icons-material/Cancel';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
-
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { DatePicker }      from '@mui/x-date-pickers';
 import { AdapterDateFns }      from '@mui/x-date-pickers/AdapterDateFns';
-import { useSnackbar } from 'notistack';
-import { useTasks } from '../contexts/TaskStore';
 
-import React, { lazy, Suspense } from 'react';
+import { useSnackbar } from 'notistack';
+
+import { useTasks } from '../contexts/TaskStore';
+import TaskPane from './TaskPane'; 
 
 const LazyEditor = lazy(() => 
   import('./Editor').then(module => ({
@@ -44,6 +43,7 @@ const types = ['室外工程', '室内工程', '后院施工', '除霉处理'];
 export default function CreateOrEditTask({ id: propId, task: propTask, embedded = false, onClose }) {
   const navigate = useNavigate();
   const location = useLocation();
+  const editorRef = useRef();
   const taskFromRoute = location.state?.task;
 
   const { id: routeId } = useParams();
@@ -66,7 +66,7 @@ export default function CreateOrEditTask({ id: propId, task: propTask, embedded 
     applicant: '',
     start: new Date(),
     end: new Date(),
-    descriptions: ''
+    description: ''
   });
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [editorReady, setEditorReady] = useState(false);
@@ -81,15 +81,13 @@ export default function CreateOrEditTask({ id: propId, task: propTask, embedded 
     const cachedTask = propTask ?? taskFromRoute ?? taskMap[id];
   
     if (cachedTask) {
+      const { mode, ...cleanTask } = cachedTask;
       const parsedTask = {
-        ...cachedTask,
-        start: new Date(cachedTask.start),
-        end: new Date(cachedTask.end),
-        description: '',
+        ...cleanTask,
+        start: new Date(cleanTask.start),
+        end: new Date(cleanTask.end),
       };
-      //setForm(parsedTask);
       setForm(prev => ({ ...prev, ...parsedTask }));
-
       taskApi.getTaskDescription(id)
         .then(descData => {
           setForm(prev => ({ ...prev, description: descData.description }));
@@ -126,7 +124,13 @@ export default function CreateOrEditTask({ id: propId, task: propTask, embedded 
   }, []);
   // 使用 useCallback 优化日期更改
   const handleStartDateChange = useCallback((newValue) => {
-    setForm(prev => ({ ...prev, start: newValue }));
+    setForm(prev => {
+      let newEnd = prev.end;
+      if (newValue && newEnd && new Date(newValue) > new Date(newEnd)) {
+        newEnd = newValue;
+      }
+      return { ...prev, start: newValue, end: newEnd };
+    });
   }, []);
   
   const handleEndDateChange = useCallback((newValue) => {
@@ -138,49 +142,16 @@ export default function CreateOrEditTask({ id: propId, task: propTask, embedded 
   }, []);
 
   const handleSubmit = async () => {
-  //const handleSubmit = () => {
+    const description = editorRef.current?.getHTML?.() || '';   // 单独提取 description
     const {
-      description, // 单独提取 description
-      ...mainData  // 主体数据：form 中除 description 外的所有字段
+      description: _desc, 
+      ...mainData          // 主体数据：form 中除 description 外的所有字段
     } = form;
-    
-    /*
-    if (isEdit) {
-      // 更新任务：先更新主体，再更新描述
-      Promise.all([
-        api.updateTask(id, mainData),
-        api.updateTaskDescription(id, description)
-      ])
-        .then(() => {
-          if (embedded) {
-            onClose?.('reload');
-          } else {
-            navigate('/');
-          }
-        })
-        .catch(err => console.error('更新失败', err));
-    } else {
-      // 创建任务：先创建主体，再用新 ID 更新描述
-      api.createTask(mainData)
-      .then((newTask) => {
-        return api.updateTaskDescription(newTask.id, description).then(() => newTask);
-      })
-      .then(() => {
-        if (embedded) {
-          onClose?.('reload');
-        } else {
-          navigate('/');
-        }
-      })
-      .catch(err => console.error('创建失败', err));
-    }
-    */
     try {
       setSaving(true);
       let taskId = id;
 
       if (isEdit) {
-        console.log(id, mainData)
         await Promise.all([
           taskApi.update(id, mainData),
           taskApi.updateDesc(id, description),
@@ -190,28 +161,15 @@ export default function CreateOrEditTask({ id: propId, task: propTask, embedded 
         taskId = newTask.id;
         await taskApi.updateDesc(taskId, description);    // 才写描述
       }
-
       embedded ? onClose?.('reload') : navigate('/');
     } catch (e) {
       /* fetcher 已有全局报错，若要局部提示可加 enqueueSnackbar */
     } finally {
       setSaving(false);
     }
-
   };
 
   const handleDelete = () => {
-    /*
-    taskApi.remove(id)
-    .then(() => {
-      if (embedded) {
-         onClose?.('reload');
-      } else {
-        navigate('/');
-      }
-    })
-    .catch(err => console.error('delete failed', err));
-    */
     const doDelete = async () => {       // ★ 真正的删除逻辑
       try {
         await taskApi.remove(id);
@@ -220,7 +178,6 @@ export default function CreateOrEditTask({ id: propId, task: propTask, embedded 
         enqueueSnackbar('删除失败，已还原', { variant: 'error' });
       }
     };
-    
     if (embedded) {
       onClose?.(doDelete);               // ★ 1) 先关闭；2) 把 doDelete 交给 Home
     } else {
@@ -233,10 +190,9 @@ export default function CreateOrEditTask({ id: propId, task: propTask, embedded 
       <Box sx={{ 
         display: 'flex', 
         flexDirection: 'column', 
-        height: embedded ? '100%' : 'auto',
-        //minHeight: embedded ? '100%' : '80vh',
+        //height: embedded ? '100%' : 'auto',
         width: embedded ? '100%' : '80%',
-        maxWidth: embedded ? 'none' : '1920px',
+        maxWidth: embedded ? 'none' : '100vw',
         minWidth: 0, // 防止内容撑开容器
         justifyContent: 'flex-start',
         overflowX: 'hidden', // 防止溢出
@@ -416,6 +372,7 @@ export default function CreateOrEditTask({ id: propId, task: propTask, embedded 
               <DatePicker
                 label="结束日期"
                 value={form.end}
+                minDate={form.start}
                 onChange={handleEndDateChange}
                 slotProps={{ textField: { size: 'small', fullWidth: true } }}
               />
@@ -432,9 +389,10 @@ export default function CreateOrEditTask({ id: propId, task: propTask, embedded 
             {editorReady ? (
               <Suspense fallback={<Typography variant="body2">加载编辑器中...</Typography>}>
                 <LazyEditor
+                  ref={editorRef}
                   key={id ?? 'new'}
                   value={form.description}
-                  onChange={handleDescriptionChange}
+                  maxHeightOffset={embedded ? 40 : 100}
                 />
               </Suspense>
             ) : (
@@ -449,7 +407,6 @@ export default function CreateOrEditTask({ id: propId, task: propTask, embedded 
           {isEdit &&(
             <Button variant='text' color="error" onClick={() => setConfirmDeleteOpen(true)}>删除</Button>
           )}
-          {/*<Button variant='text' onClick={handleSubmit}>{isEdit ? '保存修改' : '创建任务'}</Button>*/}
           <Button
             loading={saving}
             onClick={handleSubmit}

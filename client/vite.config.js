@@ -11,6 +11,10 @@ export default defineConfig({
     },
   },
   server: {
+    host: '0.0.0.0', // 让外网可访问
+    allowedHosts: [
+      'd0d1-171-43-247-174.ngrok-free.app', // 必须写 ngrok 当前分配的域名
+    ],
     proxy: {
       '/api': {
         target: 'http://localhost:4399', // ✅ 后端地址

@@ -9,23 +9,23 @@ export default function CreateOrEditTaskPage() {
   const navigate = useNavigate();
 
   return (
-    <Box sx={{ width: '100vw', minHeight: '100vh' }}>
+    <Box sx={{ width: '100vw', minHeight: '100vh', m: 0, p: 0}}>
       <TopAppBar 
         showHomeButton         
         onHomeClick={() => navigate('/')}
       />
-      <Box sx={{ 
+      <Box 
+        sx={{ 
           width: '100%', 
           margin: '0 auto', // 水平居中
-          maxWidth: '1920px',
           display: 'flex',
           flexDirection: 'column',
+          flex: 1,
           justifyContent: 'center',
           alignItems: 'center',
-          minHeight: '100vh',
           p: 2, 
           boxSizing: 'border-box',  
-          }}>
+        }}>
         <CreateOrEditTask id={id} />
       </Box>
     </Box>

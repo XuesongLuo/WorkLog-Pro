@@ -10,7 +10,6 @@ import TaskList from '../components/TaskList';
 import CalendarView from '../components/CalendarView';
 import TaskDetail from '../components/TaskDetail';
 import CreateOrEditTask from '../components/CreateOrEditTask';
-//import { api } from '../api/tasks';
 import { useDebounce}  from '../hooks/useDebounce';
 import useTaskDetailState from '../hooks/useTaskDetailState';
 
@@ -54,11 +53,10 @@ const useNormalizedEvents = (tasks) => useMemo(() => {
 }, [tasks]);
 
 export default function Home() {
-  //const [tasks, setTasks] = useState([]);
   const { tasks, api } = useTasks(); 
   const events = useNormalizedEvents(tasks);
   const [lang, setLang] = useState('zh');
-  const [viewMode, setViewMode] = useState('calendar'); // 'calendar' | 'list'
+  const [viewMode, setViewMode] = useState('list'); // 'calendar' | 'list'
   const navigate = useNavigate();
 
   const {
@@ -68,7 +66,6 @@ export default function Home() {
     openTaskEdit,
     openTaskCreate,
     handleTaskClose
-  //} = useTaskDetailState(fetchTasks);
   } = useTaskDetailState(() => api.load());
 
   // 使用 useMemo 优化计算
@@ -153,9 +150,17 @@ export default function Home() {
     <Box sx={{ width: '100vw', minHeight: '100vh' }}>
       <TopAppBar /> 
       <Container
-        maxWidth="lg"
+        maxWidth={false}
         disableGutters
-        sx={{ py: 3, height: 'calc(100vh - 64px)', overflowX: 'hidden', }}
+        sx={{ 
+          py: 3,
+          height: 'calc(100vh - 64px)',
+          overflowX: 'hidden',
+          width: '80vw',          // 固定 80% 视口宽度
+          minWidth: 0,
+          maxWidth: 'none',
+          mx: 'auto',             // 居中
+        }}
       >
         <Grid
           container
