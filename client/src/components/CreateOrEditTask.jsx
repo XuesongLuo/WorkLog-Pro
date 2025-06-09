@@ -324,27 +324,7 @@ export default function CreateOrEditTask({ id: propId, task: propTask, embedded 
             </FormControl>
           </Grid>
 
-          {/* 第3行：公司、项目申请人、项目负责人 */}
-          <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 6', md: 'span 4', lg: 'span 6' } }}>
-            <TextField 
-              name="company" 
-              label="公司" 
-              size="small" 
-              fullWidth 
-              value={form.company} 
-              onChange={handleChange} 
-            />
-          </Grid>
-          <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 3', md: 'span 2', lg: 'span 3' } }}>
-            <TextField 
-              name="applicant" 
-              label="项目申请人" 
-              size="small" 
-              fullWidth 
-              value={form.applicant} 
-              onChange={handleChange} 
-            />
-          </Grid>
+          {/* 第3行：公司、项目推荐人、项目负责人 */}
           <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 3', md: 'span 2', lg: 'span 3' } }}>
             <TextField 
               name="manager" 
@@ -355,7 +335,27 @@ export default function CreateOrEditTask({ id: propId, task: propTask, embedded 
               onChange={handleChange} 
             />
           </Grid>
-
+          <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 3', md: 'span 2', lg: 'span 3' } }}>
+            <TextField 
+              name="applicant" 
+              label="项目推荐人" 
+              size="small" 
+              fullWidth 
+              value={form.applicant} 
+              onChange={handleChange} 
+            />
+          </Grid>
+          <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 6', md: 'span 4', lg: 'span 6' } }}>
+            <TextField 
+              name="company" 
+              label="公司" 
+              size="small" 
+              fullWidth 
+              value={form.company} 
+              onChange={handleChange} 
+            />
+          </Grid>
+          
           {/* 第4行：开始日期、结束日期 */}
           <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 6', md: 'span 4', lg: 'span 6' } }}>
             <LocalizationProvider dateAdapter={AdapterDateFns}>

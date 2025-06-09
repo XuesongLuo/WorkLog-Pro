@@ -192,17 +192,17 @@ export default function TaskDetail({ id, embedded = false, onClose }) {
           <Typography><strong>项目类型：</strong>{task.type}</Typography>
         </Grid>
 
-         {/* 第三行：公司 项目申请人 项目负责人 项目类型 */}
-         <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 3', md: 'span 3', lg: 'span 4' } }}>
-          <Typography><strong>项目所属公司：</strong>{task.company ?? '未填写'}</Typography>
+        {/* 第三行：公司 项目推荐人 项目负责人 项目类型 */}
+        <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 6', md: 'span 2', lg: 'span 4' } }}>
+          <Typography><strong>项目负责人：</strong>{task.manager}</Typography>
         </Grid>
         <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 3', md: 'span 2', lg: 'span 4' }, textAlign: 'center' }}>
           <Typography><strong>项目推荐人：</strong>{task.applicant}</Typography>
         </Grid>
-        <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 6', md: 'span 2', lg: 'span 4' }, textAlign: 'right' }}>
-          <Typography><strong>项目负责人：</strong>{task.manager}</Typography>
+         <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 3', md: 'span 3', lg: 'span 4' }, textAlign: 'right' }}>
+          <Typography><strong>项目所属公司：</strong>{task.company ?? '未填写'}</Typography>
         </Grid>
-      
+        
         {/* 第四行：开始日期 结束日期 */}
         <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 6', md: 'span 6', lg: 'span 6' } }}>
           <Typography><strong>开始日期：</strong>{task.start ? new Date(task.start).toLocaleDateString() : '未填写'}</Typography>

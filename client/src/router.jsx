@@ -1,19 +1,55 @@
 // src/router.jsx
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+import Login from './pages/Login';
+import AuthRoute from './components/AuthRoute';
 import Home from './pages/Home';
 import TaskDetailPage from './pages/TaskDetailPage'; // 预留页面
 import CreateOrEditTaskPage from './pages/CreateOrEditTaskPage'; // 预留页面
 import ProjectTableEditor from './pages/ProjectTableEditorPage';
-import ExcelEditor from './pages/ExcelEditor';
 
 
 const router = createBrowserRouter([
-  { path: '/', element: <Home /> },
-  { path: '/task/:id', element: <TaskDetailPage /> },
-  { path: '/task/new', element: <CreateOrEditTaskPage /> },
-  { path: '/task/edit/:id', element: <CreateOrEditTaskPage /> },
-  { path: '/project-table', element: <ProjectTableEditor /> },
-  { path: '/excel', element: <ExcelEditor /> }
+  { path: '/login', element: <Login /> }, 
+  { 
+    path: '/', 
+    element: (
+      <AuthRoute>
+        <Home />
+      </AuthRoute>
+    ) 
+  },
+  { 
+    path: '/task/:id', 
+    element: (
+      <AuthRoute>
+        <TaskDetailPage />
+      </AuthRoute>
+    )
+  },
+  { 
+    path: '/task/new', 
+    element: (
+      <AuthRoute>
+        <CreateOrEditTaskPage />
+      </AuthRoute>
+    )
+  },
+  { 
+    path: '/task/edit/:id', 
+    element: (
+      <AuthRoute>
+        <CreateOrEditTaskPage />
+      </AuthRoute>
+    )
+  },
+  { 
+    path: '/project-table', 
+    element: (
+      <AuthRoute>
+        <ProjectTableEditor />
+      </AuthRoute>
+    )
+  },
 ]);
 
 export default function AppRouter() {

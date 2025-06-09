@@ -106,18 +106,18 @@ export default function Home() {
   const handleSlideClose = (payload) => {
     /* ① 编辑：直接切换，不收起面板 */
     if (payload && typeof payload === 'object' && payload.mode === 'edit') {
-      openTaskEdit(payload.id, payload.task);          // 来自 useTaskDetailState
-      return;                         // 提前退出
+      openTaskEdit(payload.id, payload.task);   // 来自 useTaskDetailState
+      return;                                   // 提前退出
     }
     /* ② 其它情况：先收起面板 */
     debouncedTaskClose();
-    /* ②-a 保存 → 刷新列表 */
-    if (payload === 'reload') {
-      setTimeout(() => api.load(), ANIM_MS);
-    }
     /* ②-b 删除 → 真删 */
     if (typeof payload === 'function') {
       setTimeout(payload, ANIM_MS);
+    }
+     /* ②-a 保存 → 刷新列表 */
+    if (payload === 'reload') {
+      setTimeout(() => api.load(), ANIM_MS);
     }
   };
 
