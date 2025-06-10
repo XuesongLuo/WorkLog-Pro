@@ -1,3 +1,4 @@
+USE worklog;
 
 CREATE TABLE users (
     -- UUID字符串作为主键
@@ -74,3 +75,4 @@ CREATE TABLE project_progress (
     comments VARCHAR(255),
     CONSTRAINT fk_projects FOREIGN KEY (p_id) REFERENCES projects(p_id)
 );
+
