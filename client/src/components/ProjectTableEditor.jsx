@@ -51,8 +51,8 @@ export default function ProjectTableEditor() {
   // 优化后的 rows 创建
   const rows = useMemo(() => {
     if (!progress) return [];
-    return Object.entries(progress).map(([id, record]) => ({
-      id,
+    return Object.entries(progress).map(([p_id, record]) => ({
+      p_id,
       ...record
     }));
   }, [progress]);
@@ -441,7 +441,7 @@ export default function ProjectTableEditor() {
         enableSorting={false}
         enableColumnResizing={true}              // ★ 开启列宽手动调整
         columnResizeMode="onChange"   
-        getRowId={(row) => row.id}
+        getRowId={(row) => row.p_id}
         muiTablePaperProps={{
         sx: {
           height: '100%',

@@ -8,6 +8,15 @@ export function injectLoading(ctx) { loadingApi = ctx; }
 export async function fetcher(url, options = {}) {
   loadingApi?.start();
   try {
+
+    // 1. 获取token
+    const token = localStorage.getItem('token');
+
+    // 2. 合并headers
+    options.headers = options.headers || {};
+    if (token) {
+      options.headers['Authorization'] = `Bearer ${token}`;
+    }
     const res = await fetch(url, options);
     if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
     if (options.method === 'DELETE') return true;

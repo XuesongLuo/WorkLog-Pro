@@ -1,5 +1,6 @@
 // src/pages/Login.jsx
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Button,
@@ -12,8 +13,10 @@ import {
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
+import { login } from '../api/authApi';
 
 export default function Login({ onLogin }) {
+  const navigate = useNavigate();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPwd, setShowPwd] = useState(false);
@@ -24,11 +27,14 @@ export default function Login({ onLogin }) {
     e.preventDefault();
     setLoading(true);
     setError('');
-    // 简单模拟，建议用实际API替换
-    if (username === 'admin' && password === '123456') {
-      onLogin?.({ username }); // 可用props回调
-    } else {
-      setError('用户名或密码错误');
+    try {
+      const res = await login(username, password);
+      localStorage.setItem('token', res.token);
+      localStorage.setItem('user', JSON.stringify(res.user));
+      onLogin?.(res.user);
+      navigate('/'); 
+    } catch (err) {
+      setError(err.message || '登录失败');
     }
     setLoading(false);
   };

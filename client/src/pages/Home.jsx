@@ -21,16 +21,16 @@ const SlideContent = React.memo(
     <Box sx={{ width: '100%', height: '100%', overflow: 'auto' }}>
       {selectedTask?.mode === 'edit' && (
         <CreateOrEditTask
-          key={selectedTask?.id ?? 'new'}
+          key={selectedTask?.p_id ? selectedTask.p_id : 'new'}
           embedded
-          id={selectedTask?.id}
+          p_id={selectedTask?.p_id}
           task={selectedTask}
           onClose={handleTaskClose}
         />
       )}
       {selectedTask?.mode === 'view' && (
         <TaskDetail
-          id={selectedTask.id}
+          p_id={selectedTask.p_id}
           embedded
           onClose={handleTaskClose}
         />
@@ -38,7 +38,7 @@ const SlideContent = React.memo(
     </Box>
   ),
   (prevProps, nextProps) =>
-    prevProps.selectedTask?.id === nextProps.selectedTask?.id &&
+    prevProps.selectedTask?.p_id === nextProps.selectedTask?.p_id &&
     prevProps.selectedTask?.mode === nextProps.selectedTask?.mode &&
     prevProps.handleTaskClose === nextProps.handleTaskClose
 );
@@ -46,6 +46,7 @@ const SlideContent = React.memo(
 const useNormalizedEvents = (tasks) => useMemo(() => {
   return tasks.map(t => ({
     ...t,
+    id   : t.p_id,
     start: t.start instanceof Date ? t.start : new Date(t.start),
     end  : t.end   instanceof Date ? t.end   : new Date(t.end),
     title: `${t.address ?? ''}, ${t.city ?? ''}, ${t.zipcode ?? ''}`,
@@ -106,7 +107,7 @@ export default function Home() {
   const handleSlideClose = (payload) => {
     /* ① 编辑：直接切换，不收起面板 */
     if (payload && typeof payload === 'object' && payload.mode === 'edit') {
-      openTaskEdit(payload.id, payload.task);   // 来自 useTaskDetailState
+      openTaskEdit(payload.p_id, payload.task);   // 来自 useTaskDetailState
       return;                                   // 提前退出
     }
     /* ② 其它情况：先收起面板 */
@@ -208,12 +209,12 @@ export default function Home() {
                 //events={normalizeTaskDates(tasks)}
                 events={events}
                 style={{ height: '100%', width: '100%' }}
-                onSelectEvent={(event) => openTaskDetail(event.id)}
+                onSelectEvent={(event) => openTaskDetail(event.p_id)}
               />
             ) : (
               <TaskList
                 tasks={tasks}
-                onSelectTask={(task) => openTaskDetail(task.id)}
+                onSelectTask={(task) => openTaskDetail(task.p_id)}
                 sx={{ height: '100%' }}
               />
             )}

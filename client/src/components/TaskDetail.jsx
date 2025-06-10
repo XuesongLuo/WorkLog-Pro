@@ -23,7 +23,7 @@ import Editor from './Editor';
 import TaskPane from './TaskPane';
 import { useTasks } from '../contexts/TaskStore';
 
-export default function TaskDetail({ id, embedded = false, onClose }) {
+export default function TaskDetail({ p_id, embedded = false, onClose }) {
   const navigate = useNavigate();
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [task, setTask] = useState(null);
@@ -34,21 +34,20 @@ export default function TaskDetail({ id, embedded = false, onClose }) {
 
   useEffect(() => {
     // 先看缓存（taskMap），再决定是否要远程加载
-    const cachedTask = taskMap[id];
+    const cachedTask = taskMap[p_id];
     if (cachedTask) {
       setTask({ ...cachedTask });
       setLoading(false);
       setTimeout(() => setEditorReady(true), 150);
       // 可选：补充 description 字段，如果 description 单独存
-      taskApi.getTaskDescription(id).then(descData => {
-        let c = id+'new'
+      taskApi.getTaskDescription(p_id).then(descData => {
         setTask(prev => ({ ...prev, description: descData.description }));
       });
     } else {
       setLoading(true);
       Promise.all([
-        taskApi.getTask(id),
-        taskApi.getTaskDescription(id),
+        taskApi.getTask(p_id),
+        taskApi.getTaskDescription(p_id),
       ])
       .then(([taskData, descData]) => {
         setTask({ ...taskData, description: descData.description });
@@ -61,7 +60,7 @@ export default function TaskDetail({ id, embedded = false, onClose }) {
         if (embedded && onClose) onClose();
       });
     }
-  }, [id, taskMap, taskApi]);
+  }, [p_id, taskMap, taskApi]);
 
   const handleEditClick = () => {
     if (!task) return;
@@ -70,11 +69,11 @@ export default function TaskDetail({ id, embedded = false, onClose }) {
     requestAnimationFrame(() => {
       if (embedded) {
         setTimeout(() => {
-          onClose?.({ id: task.id, mode: 'edit', task: taskWithoutDescription });   // 通知父组件切换到编辑表单
+          onClose?.({ p_id: task.p_id, mode: 'edit', task: taskWithoutDescription });   // 通知父组件切换到编辑表单
         }, 0);
       } else {
         setTimeout(() => {
-          navigate(`/task/edit/${task.id}`, { state: { task: taskWithoutDescription } });     // 常规页面跳转
+          navigate(`/task/edit/${task.p_id}`, { state: { task: taskWithoutDescription } });     // 常规页面跳转
         }, 0);      
       }
     });
@@ -83,7 +82,7 @@ export default function TaskDetail({ id, embedded = false, onClose }) {
   const handleDelete = () => {
     const doDelete = async () => {       // ★ 真正的删除逻辑
       try {
-        await taskApi.remove(id);
+        await taskApi.remove(p_id);
         enqueueSnackbar('已删除', { variant: 'success' });
       } catch (err) {
         enqueueSnackbar('删除失败，已还原', { variant: 'error' });
@@ -132,7 +131,7 @@ export default function TaskDetail({ id, embedded = false, onClose }) {
           <Typography variant="h5" textAlign="center" gutterBottom={false} sx={{ mb: 0 }}>
             任务详细内容
             {embedded && (
-              <IconButton onClick={() => navigate(`/task/${task.id}`, { state: { task } } )}>
+              <IconButton onClick={() => navigate(`/task/${task.p_id}`, { state: { task } } )}>
                 <OpenInNewIcon />
               </IconButton>
             )}
@@ -219,7 +218,7 @@ export default function TaskDetail({ id, embedded = false, onClose }) {
         <Box sx={{ mt: 2 }}>
           {(task && typeof task.description === 'string' && editorReady) ? (
             <Editor 
-              key={id + '-' + hashDesc(task.description)} 
+              key={p_id + '-' + hashDesc(task.description)} 
               value={task.description} 
               readOnly 
               hideToolbar 

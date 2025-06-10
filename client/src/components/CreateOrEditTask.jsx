@@ -38,21 +38,30 @@ const LazyEditor = lazy(() =>
   }))
 );
 
+function formatDateToYMD(date) {
+  if (!date) return null;
+  const d = new Date(date);
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+}
+
 const types = ['室外工程', '室内工程', '后院施工', '除霉处理'];
 
-export default function CreateOrEditTask({ id: propId, task: propTask, embedded = false, onClose }) {
+export default function CreateOrEditTask({ p_id: propId, task: propTask, embedded = false, onClose }) {
   const navigate = useNavigate();
   const location = useLocation();
   const editorRef = useRef();
   const taskFromRoute = location.state?.task;
 
-  const { id: routeId } = useParams();
+  const { p_id: routeId } = useParams();
   // 最终 ID：优先使用 props 传入，其次是路由参数
-  const id = propId ?? taskFromRoute?.id ?? (routeId !== 'new' ? routeId : undefined);
+  const p_id = propId ?? taskFromRoute?.p_id ?? (routeId !== 'new' ? routeId : undefined);
   // 判断是否是“新建”任务
-  const isCreateMode = routeId === 'new' || (embedded && !id);
-  // 编辑模式 = 非创建模式，且 id 存在
-  const isEdit = Boolean(id) && !isCreateMode;
+  const isCreateMode = routeId === 'new' || (embedded && !p_id);
+  // 编辑模式 = 非创建模式，且 p_id 存在
+  const isEdit = Boolean(p_id) && !isCreateMode;
   
   const [form, setForm] = useState({
     address: '',
@@ -63,7 +72,7 @@ export default function CreateOrEditTask({ id: propId, task: propTask, embedded 
     type: '',
     company: '',
     manager: '',
-    applicant: '',
+    referrer: '',
     start: new Date(),
     end: new Date(),
     description: ''
@@ -76,9 +85,9 @@ export default function CreateOrEditTask({ id: propId, task: propTask, embedded 
 
 
   useEffect(() => {
-    if (!isEdit || !id) return;
+    if (!isEdit || !p_id) return;
   
-    const cachedTask = propTask ?? taskFromRoute ?? taskMap[id];
+    const cachedTask = propTask ?? taskFromRoute ?? taskMap[p_id];
   
     if (cachedTask) {
       const { mode, ...cleanTask } = cachedTask;
@@ -88,7 +97,7 @@ export default function CreateOrEditTask({ id: propId, task: propTask, embedded 
         end: new Date(cleanTask.end),
       };
       setForm(prev => ({ ...prev, ...parsedTask }));
-      taskApi.getTaskDescription(id)
+      taskApi.getTaskDescription(p_id)
         .then(descData => {
           setForm(prev => ({ ...prev, description: descData.description }));
           // 等富文本内容准备好后，再延迟加载 Editor
@@ -99,8 +108,8 @@ export default function CreateOrEditTask({ id: propId, task: propTask, embedded 
     } else {
       // 完全从接口获取所有数据
       Promise.all([
-        taskApi.getTask(id),
-        taskApi.getTaskDescription(id),
+        taskApi.getTask(p_id),
+        taskApi.getTaskDescription(p_id),
       ])
       .then(([taskData, descData]) => {
         setForm({ ...taskData, description: descData.description });
@@ -108,7 +117,7 @@ export default function CreateOrEditTask({ id: propId, task: propTask, embedded 
       })
       .catch(err => console.error('加载任务失败', err));
     }
-  }, [id, isEdit, propTask, taskFromRoute]);
+  }, [p_id, isEdit, propTask, taskFromRoute]);
 
   useEffect(() => {
     if (!isEdit) {
@@ -145,25 +154,37 @@ export default function CreateOrEditTask({ id: propId, task: propTask, embedded 
     const description = editorRef.current?.getHTML?.() || '';   // 单独提取 description
     const {
       description: _desc, 
+      start,
+      end,
       ...mainData          // 主体数据：form 中除 description 外的所有字段
     } = form;
+
+    const finalData = {
+      ...mainData,
+      start: formatDateToYMD(start),
+      end: formatDateToYMD(end)
+    };
+
     try {
       setSaving(true);
-      let taskId = id;
-
       if (isEdit) {
         await Promise.all([
-          taskApi.update(id, mainData),
-          taskApi.updateDesc(id, description),
+          taskApi.update(p_id, finalData),
+          taskApi.updateDesc(p_id, description),
         ]);
       } else {
-        const newTask = await taskApi.create(mainData);   // 乐观插入已完成
-        taskId = newTask.id;
-        await taskApi.updateDesc(taskId, description);    // 才写描述
+        console.log(0)
+        const newTask = await taskApi.create(finalData);   // 乐观插入已完成
+        console.log(1)
+        let projectId = newTask.p_id;
+        console.log(projectId)
+        await taskApi.updateDesc(projectId, description);    // 才写描述
+        console.log(2)
       }
       embedded ? onClose?.('reload') : navigate('/');
     } catch (e) {
       /* fetcher 已有全局报错，若要局部提示可加 enqueueSnackbar */
+      enqueueSnackbar(e.message || '新建失败', { variant: 'error' });
     } finally {
       setSaving(false);
     }
@@ -172,7 +193,7 @@ export default function CreateOrEditTask({ id: propId, task: propTask, embedded 
   const handleDelete = () => {
     const doDelete = async () => {       // ★ 真正的删除逻辑
       try {
-        await taskApi.remove(id);
+        await taskApi.remove(p_id);
         enqueueSnackbar('已删除', { variant: 'success' });
       } catch (err) {
         enqueueSnackbar('删除失败，已还原', { variant: 'error' });
@@ -207,7 +228,7 @@ export default function CreateOrEditTask({ id: propId, task: propTask, embedded 
           <Typography variant="h5" gutterBottom sx={{ m: 0 }}>
             {isCreateMode ? '新建任务' : '编辑任务'}
             {embedded && (
-              <IconButton onClick={() => navigate(isEdit ? `/task/edit/${id}` : '/task/new', { state: { task: form } } )}>
+              <IconButton onClick={() => navigate(isEdit ? `/task/edit/${p_id}` : '/task/new', { state: { task: form } } )}>
                 <OpenInNewIcon />
               </IconButton>
             )}
@@ -337,11 +358,11 @@ export default function CreateOrEditTask({ id: propId, task: propTask, embedded 
           </Grid>
           <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 3', md: 'span 2', lg: 'span 3' } }}>
             <TextField 
-              name="applicant" 
+              name="referrer" 
               label="项目推荐人" 
               size="small" 
               fullWidth 
-              value={form.applicant} 
+              value={form.referrer} 
               onChange={handleChange} 
             />
           </Grid>
@@ -390,7 +411,7 @@ export default function CreateOrEditTask({ id: propId, task: propTask, embedded 
               <Suspense fallback={<Typography variant="body2">加载编辑器中...</Typography>}>
                 <LazyEditor
                   ref={editorRef}
-                  key={id ?? 'new'}
+                  key={p_id ?? 'new'}
                   value={form.description}
                   maxHeightOffset={embedded ? 40 : 100}
                 />

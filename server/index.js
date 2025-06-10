@@ -1,26 +1,37 @@
 // server/index.js
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const dotenv = require('dotenv');
-const taskRoutes = require('./routes/tasks');
+const userRoutes = require('./routes/users');
+const projectRoutes = require('./routes/projects');
+const descriptionRoutes = require('./routes/descriptions');
 const progressRoutes = require('./routes/progress');
 
-dotenv.config();
+const ensureAdminAccount = require('./utils/initAdmin');
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.SERVER_PORT || 4399;
 
 app.use(cors());
 app.use(express.json());
 
 // 路由挂载
-app.use('/api/tasks', taskRoutes);
+app.use('/api', userRoutes); 
+app.use('/api/tasks', projectRoutes);
+app.use('/api/descriptions', descriptionRoutes);
 app.use('/api/progress', progressRoutes); 
 
 app.get('/', (req, res) => {
-  res.send('WorkLog-Pro 后端已启动。');
+  res.send('WorkLog Server start!');
 });
 
-app.listen(PORT, () => {
-  console.log(`🚀 后端运行中： http://localhost:${PORT}`);
-});
+ensureAdminAccount()
+  .then(() => {
+    app.listen(PORT, () => {
+      console.log(`🚀 Server is running on: http://localhost:${PORT}`);
+    });
+  })
+  .catch(err => {
+    console.error('启动时检测/生成管理员账号失败:', err);
+    process.exit(1); // 启动失败直接退出
+  });

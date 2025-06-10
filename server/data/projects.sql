@@ -1,8 +1,21 @@
+
+CREATE TABLE users (
+    -- UUID字符串作为主键
+    id CHAR(36) NOT NULL PRIMARY KEY,             
+    username VARCHAR(64) NOT NULL UNIQUE,
+    email VARCHAR(128) NOT NULL UNIQUE,
+    password_hash VARCHAR(255) NOT NULL,
+    role VARCHAR(32) NOT NULL DEFAULT 'user',
+    status VARCHAR(16) NOT NULL DEFAULT 'pending',
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+
 CREATE TABLE projects (
     -- 自增主键
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,     
     -- 业务ID，即你的字符串ID   
-    biz_id VARCHAR(32) NOT NULL UNIQUE,                
+    p_id VARCHAR(32) NOT NULL UNIQUE,                
     address VARCHAR(128),
     city VARCHAR(64),
     zipcode VARCHAR(16),
@@ -10,8 +23,8 @@ CREATE TABLE projects (
     insurance VARCHAR(64),
     type VARCHAR(32),
     company VARCHAR(64),
-    Referrer VARCHAR(64),
-    applicant VARCHAR(64),
+    referrer VARCHAR(64),
+    manager VARCHAR(64),
     start DATETIME,
     end DATETIME
 );
@@ -19,7 +32,7 @@ CREATE TABLE projects (
 
 CREATE TABLE project_progress (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    biz_id VARCHAR(32) NOT NULL,
+    p_id VARCHAR(32) NOT NULL,
     arol BOOLEAN,
     test BOOLEAN,
     pak_active BOOLEAN,
@@ -59,5 +72,5 @@ CREATE TABLE project_progress (
 
     payment DECIMAL(12,2),
     comments VARCHAR(255),
-    CONSTRAINT fk_projects FOREIGN KEY (biz_id) REFERENCES projects(biz_id)
+    CONSTRAINT fk_projects FOREIGN KEY (p_id) REFERENCES projects(p_id)
 );
