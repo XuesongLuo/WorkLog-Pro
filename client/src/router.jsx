@@ -19,7 +19,7 @@ const router = createBrowserRouter([
     ) 
   },
   { 
-    path: '/task/:id', 
+    path: '/task/:_id', 
     element: (
       <AuthRoute>
         <TaskDetailPage />
@@ -35,7 +35,7 @@ const router = createBrowserRouter([
     )
   },
   { 
-    path: '/task/edit/:id', 
+    path: '/task/edit/:_id', 
     element: (
       <AuthRoute>
         <CreateOrEditTaskPage />

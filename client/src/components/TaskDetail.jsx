@@ -1,6 +1,6 @@
 // src/components/TaskDetail.jsx
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import {
   Box,
   Grid,
@@ -23,7 +23,7 @@ import Editor from './Editor';
 import TaskPane from './TaskPane';
 import { useTasks } from '../contexts/TaskStore';
 
-export default function TaskDetail({ p_id, embedded = false, onClose }) {
+export default function TaskDetail({ _id: propId, embedded = false, onClose }) {
   const navigate = useNavigate();
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [task, setTask] = useState(null);
@@ -31,23 +31,30 @@ export default function TaskDetail({ p_id, embedded = false, onClose }) {
   const [editorReady, setEditorReady] = useState(false);
   const { taskMap, api: taskApi } = useTasks();
   const { enqueueSnackbar } = useSnackbar();
+  const location = useLocation();
+  const routeTask = location.state?.task;
+
+
+  const { _id: routeId } = useParams();
+  // 最终 ID：优先使用 props 传入，其次是路由参数
+  const _id = propId ?? routeTask?._id ?? routeId;
 
   useEffect(() => {
     // 先看缓存（taskMap），再决定是否要远程加载
-    const cachedTask = taskMap[p_id];
+    const cachedTask = taskMap[_id];
     if (cachedTask) {
       setTask({ ...cachedTask });
       setLoading(false);
       setTimeout(() => setEditorReady(true), 150);
       // 可选：补充 description 字段，如果 description 单独存
-      taskApi.getTaskDescription(p_id).then(descData => {
+      taskApi.getTaskDescription(_id).then(descData => {
         setTask(prev => ({ ...prev, description: descData.description }));
       });
     } else {
       setLoading(true);
       Promise.all([
-        taskApi.getTask(p_id),
-        taskApi.getTaskDescription(p_id),
+        taskApi.getTask(_id),
+        taskApi.getTaskDescription(_id),
       ])
       .then(([taskData, descData]) => {
         setTask({ ...taskData, description: descData.description });
@@ -60,7 +67,7 @@ export default function TaskDetail({ p_id, embedded = false, onClose }) {
         if (embedded && onClose) onClose();
       });
     }
-  }, [p_id, taskMap, taskApi]);
+  }, [_id, taskMap, taskApi]);
 
   const handleEditClick = () => {
     if (!task) return;
@@ -69,11 +76,11 @@ export default function TaskDetail({ p_id, embedded = false, onClose }) {
     requestAnimationFrame(() => {
       if (embedded) {
         setTimeout(() => {
-          onClose?.({ p_id: task.p_id, mode: 'edit', task: taskWithoutDescription });   // 通知父组件切换到编辑表单
+          onClose?.({ _id: task._id, mode: 'edit', task: taskWithoutDescription });   // 通知父组件切换到编辑表单
         }, 0);
       } else {
         setTimeout(() => {
-          navigate(`/task/edit/${task.p_id}`, { state: { task: taskWithoutDescription } });     // 常规页面跳转
+          navigate(`/task/edit/${task._id}`, { state: { task: taskWithoutDescription } });     // 常规页面跳转
         }, 0);      
       }
     });
@@ -82,7 +89,7 @@ export default function TaskDetail({ p_id, embedded = false, onClose }) {
   const handleDelete = () => {
     const doDelete = async () => {       // ★ 真正的删除逻辑
       try {
-        await taskApi.remove(p_id);
+        await taskApi.remove(_id);
         enqueueSnackbar('已删除', { variant: 'success' });
       } catch (err) {
         enqueueSnackbar('删除失败，已还原', { variant: 'error' });
@@ -131,7 +138,7 @@ export default function TaskDetail({ p_id, embedded = false, onClose }) {
           <Typography variant="h5" textAlign="center" gutterBottom={false} sx={{ mb: 0 }}>
             任务详细内容
             {embedded && (
-              <IconButton onClick={() => navigate(`/task/${task.p_id}`, { state: { task } } )}>
+              <IconButton onClick={() => navigate(`/task/${task._id}`, { state: { task } } )}>
                 <OpenInNewIcon />
               </IconButton>
             )}
@@ -173,21 +180,22 @@ export default function TaskDetail({ p_id, embedded = false, onClose }) {
         }}
       >
         {/* 第一行：地址 城市 邮编 */}
-        <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 12', md: 'span 12', lg: 'span 8' } }}>
+        <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 12', md: 'span 12', lg: 'span 12' } }}>
           <Typography>
             <strong>地址：</strong>
             {`${task.address ?? ''}, ${task.city ?? ''}, ${task.zipcode ?? ''}`}
           </Typography>
         </Grid>
-        <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 3', md: 'span 3', lg: 'span 4' }, textAlign: 'right' }}>
+       
+
+        {/* 第二行：房屋年份 保险公司 项目类型 */}
+        <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 3', md: 'span 3', lg: 'span 4' } }}>
           <Typography><strong>房屋年份：</strong>{task.year ?? '未填写'}</Typography>
         </Grid>
-
-        {/* 第二行：保险公司 项目类型 */}
-        <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 3', md: 'span 3', lg: 'span 6' } }}>
+        <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 3', md: 'span 3', lg: 'span 4' }, textAlign: 'center' }}>
           <Typography><strong>保险公司：</strong>{task.insurance ?? '未填写'}</Typography>
         </Grid>
-        <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 6', md: 'span 2', lg: 'span 6' }, textAlign: 'right' }}>
+        <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 6', md: 'span 2', lg: 'span 4' }, textAlign: 'right' }}>
           <Typography><strong>项目类型：</strong>{task.type}</Typography>
         </Grid>
 
@@ -196,7 +204,7 @@ export default function TaskDetail({ p_id, embedded = false, onClose }) {
           <Typography><strong>项目负责人：</strong>{task.manager}</Typography>
         </Grid>
         <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 3', md: 'span 2', lg: 'span 4' }, textAlign: 'center' }}>
-          <Typography><strong>项目推荐人：</strong>{task.applicant}</Typography>
+          <Typography><strong>项目推荐人：</strong>{task.referrer}</Typography>
         </Grid>
          <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 3', md: 'span 3', lg: 'span 4' }, textAlign: 'right' }}>
           <Typography><strong>项目所属公司：</strong>{task.company ?? '未填写'}</Typography>
@@ -218,7 +226,7 @@ export default function TaskDetail({ p_id, embedded = false, onClose }) {
         <Box sx={{ mt: 2 }}>
           {(task && typeof task.description === 'string' && editorReady) ? (
             <Editor 
-              key={p_id + '-' + hashDesc(task.description)} 
+              key={_id + '-' + hashDesc(task.description)} 
               value={task.description} 
               readOnly 
               hideToolbar 

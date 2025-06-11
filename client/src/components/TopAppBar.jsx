@@ -11,9 +11,9 @@ import {
     Button,
     Box,
   } from '@mui/material';
-  import MenuIcon from '@mui/icons-material/Menu';
-  import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew'; 
-  import { getCurrentUser, logout } from '../utils/authUtils';
+import MenuIcon from '@mui/icons-material/Menu';
+import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew'; 
+import { getCurrentUser, logout } from '../utils/authUtils';
   
 
   /**

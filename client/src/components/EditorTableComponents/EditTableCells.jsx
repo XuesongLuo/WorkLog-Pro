@@ -1,5 +1,6 @@
 // src/components/EditorTableComponents/EditTableCells.jsx
 import React from 'react';
+import { Divider } from '@mui/material';
 import EditableTextfield from './EditableTextfield';
 import EditableCheckbox from './EditableCheckbox';
 import EditableNumberCell from './EditableNumberCell';
@@ -10,14 +11,14 @@ const PakToggleCell = React.memo(({ row, onToggleActive, onDateChange }) => (
   <ToggleBox 
     section="pak"
     data={row.original.pak || {}} 
-    onToggleActive={(sect) => onToggleActive(row.original.id, sect)}
-    onDateChange={(sect, key, val) => onDateChange(row.original.id, sect, key, val)}
+    onToggleActive={(sect) => onToggleActive(row.original._id, sect)}
+    onDateChange={(sect, key, val) => onDateChange(row.original._id, sect, key, val)}
   />
 ), (prevProps, nextProps) => {
   // 只有 pak 相关数据变化时才重新渲染
   const prevPak = prevProps.row.original.pak || {};
   const nextPak = nextProps.row.original.pak || {};
-  return prevPak.active === nextPak.active && prevPak.startDate === nextPak.startDate;
+  return prevPak.active === nextPak.active && prevPak.start_date === nextPak.start_date;
 });
 
 // PAK 的 POUT checkbox - 会响应 pak.active 的变化
@@ -25,7 +26,7 @@ const PakPoutCell = React.memo(({ row, onChange }) => (
   <EditableCheckbox 
     value={row.original.pak?.pout || false}
     disabled={!row.original.pak?.active}  // 关键：依赖 pak.active
-    onChange={(e) => onChange(row.original.id, 'pak', 'pout', e.target.checked)}
+    onChange={(e) => onChange(row.original._id, 'pak', 'pout', e.target.checked)}
   />
 ), (prevProps, nextProps) => {
   const prevPak = prevProps.row.original.pak || {};
@@ -39,7 +40,7 @@ const PakPackCell = React.memo(({ row, onChange }) => (
   <EditableCheckbox 
     value={row.original.pak?.pack || false}
     disabled={!row.original.pak?.active}
-    onChange={(e) => onChange(row.original.id, 'pak', 'pack', e.target.checked)}
+    onChange={(e) => onChange(row.original._id, 'pak', 'pack', e.target.checked)}
   />
 ), (prevProps, nextProps) => {
   const prevPak = prevProps.row.original.pak || {};
@@ -49,21 +50,23 @@ const PakPackCell = React.memo(({ row, onChange }) => (
 
 // 通用的估价单元格组件
 const EstimateCell = React.memo(({ row, section, type, onChange }) => {
-  const sectionData = row.original[section] || {};
-  const checkboxField = `estimate${type}`;
-  const amountField = `estimate${type}Amount`;
+  // 读取 estimate 对象下的 send/review/agree
+  const estimate = row.original[section]?.estimate || {};
+  const item = estimate[type] || {};
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
       <EditableCheckbox
-        value={sectionData[checkboxField] || false}
-        disabled={!sectionData.active}
-        onChange={(e) => onChange(row.original.id, section, checkboxField, e.target.checked)}
+        value={item.checked || false}
+        disabled={!row.original[section]?.active}
+        onChange={e => onChange( row.original._id, section, ['estimate', type, 'checked'], e.target.checked )}
         sx={{ marginBottom: '4px' }} // MUI风格
       />
+      <Divider sx={{width: '100%', my: 0.5  }} />
       <EditableNumberCell 
-        value={sectionData[amountField] ?? ''} 
-        disabled={!sectionData.active}
-        onChange={(val) => onChange(row.original.id, section, amountField, val)} 
+        value={item.amount ?? ''}
+        disabled={!row.original[section]?.active}
+        onChange={(val) => onChange(row.original._id, section, ['estimate', type, 'amount'], val)} 
       />
     </div>
   );
@@ -72,16 +75,13 @@ const EstimateCell = React.memo(({ row, section, type, onChange }) => {
   const { row: prevRow, section, type } = prevProps;
   const { row: nextRow } = nextProps;
   
-  const prevSection = prevRow.original[section] || {};
-  const nextSection = nextRow.original[section] || {};
-  
-  const checkboxField = `estimate${type}`;
-  const amountField = `estimate${type}Amount`;
+  const prev = prevRow.original[section]?.estimate?.[type] || {};
+  const next = nextRow.original[section]?.estimate?.[type] || {};
   
   return (
-    prevSection[checkboxField] === nextSection[checkboxField] &&
-    prevSection[amountField] === nextSection[amountField] &&
-    prevSection.active === nextSection.active  // 关键：比较 active 状态
+    prev.checked === next.checked &&
+    prev.amount === next.amount &&
+    (prevRow.original[section]?.active === nextRow.original[section]?.active)  // 关键：比较 active 状态
   );
 });
 
@@ -90,13 +90,13 @@ const WtrToggleCell = React.memo(({ row, onToggleActive, onDateChange }) => (
   <ToggleBox 
     section="wtr"
     data={row.original.wtr || {}} 
-    onToggleActive={(sect) => onToggleActive(row.original.id, sect)}
-    onDateChange={(sect, key, val) => onDateChange(row.original.id, sect, key, val)}
+    onToggleActive={(sect) => onToggleActive(row.original._id, sect)}
+    onDateChange={(sect, key, val) => onDateChange(row.original._id, sect, key, val)}
   />
 ), (prevProps, nextProps) => {
   const prevWtr = prevProps.row.original.wtr || {};
   const nextWtr = nextProps.row.original.wtr || {};
-  return prevWtr.active === nextWtr.active && prevWtr.startDate === nextWtr.startDate;
+  return prevWtr.active === nextWtr.active && prevWtr.start_date === nextWtr.start_date;
 });
 
 // WTR 的各个 checkbox 组件
@@ -104,7 +104,7 @@ const WtrCtrcCell = React.memo(({ row, onChange }) => (
   <EditableCheckbox 
     value={row.original.wtr?.ctrc || false}
     disabled={!row.original.wtr?.active}
-    onChange={(e) => onChange(row.original.id, 'wtr', 'ctrc', e.target.checked)}
+    onChange={(e) => onChange(row.original._id, 'wtr', 'ctrc', e.target.checked)}
   />
 ), (prevProps, nextProps) => {
   const prevWtr = prevProps.row.original.wtr || {};
@@ -116,7 +116,7 @@ const WtrDemoCell = React.memo(({ row, onChange }) => (
   <EditableCheckbox 
     value={row.original.wtr?.demo || false}
     disabled={!row.original.wtr?.active}
-    onChange={(e) => onChange(row.original.id, 'wtr', 'demo', e.target.checked)}
+    onChange={(e) => onChange(row.original._id, 'wtr', 'demo', e.target.checked)}
   />
 ), (prevProps, nextProps) => {
   const prevWtr = prevProps.row.original.wtr || {};
@@ -129,7 +129,7 @@ const WtrItelCell = React.memo(({ row, onChange }) => (
   <EditableCheckbox 
     value={row.original.wtr?.itel || false}
     disabled={!row.original.wtr?.active}
-    onChange={(e) => onChange(row.original.id, 'wtr', 'itel', e.target.checked)}
+    onChange={(e) => onChange(row.original._id, 'wtr', 'itel', e.target.checked)}
   />
 ), (prevProps, nextProps) => {
   const prevWtr = prevProps.row.original.wtr || {};
@@ -141,7 +141,7 @@ const WtrEqCell = React.memo(({ row, onChange }) => (
   <EditableCheckbox 
     value={row.original.wtr?.eq || false}
     disabled={!row.original.wtr?.active}
-    onChange={(e) => onChange(row.original.id, 'wtr', 'eq', e.target.checked)}
+    onChange={(e) => onChange(row.original._id, 'wtr', 'eq', e.target.checked)}
   />
 ), (prevProps, nextProps) => {
   const prevWtr = prevProps.row.original.wtr || {};
@@ -153,7 +153,7 @@ const WtrPickCell = React.memo(({ row, onChange }) => (
   <EditableCheckbox 
     value={row.original.wtr?.pick || false}
     disabled={!row.original.wtr?.active}
-    onChange={(e) => onChange(row.original.id, 'wtr', 'pick', e.target.checked)}
+    onChange={(e) => onChange(row.original._id, 'wtr', 'pick', e.target.checked)}
   />
 ), (prevProps, nextProps) => {
   const prevWtr = prevProps.row.original.wtr || {};
@@ -166,20 +166,20 @@ const StrToggleCell = React.memo(({ row, onToggleActive, onDateChange }) => (
   <ToggleBox 
     section="str"
     data={row.original.str || {}}
-    onToggleActive={(sect) => onToggleActive(row.original.id, sect)}
-    onDateChange={(sect, key, val) => onDateChange(row.original.id, sect, key, val)}
+    onToggleActive={(sect) => onToggleActive(row.original._id, sect)}
+    onDateChange={(sect, key, val) => onDateChange(row.original._id, sect, key, val)}
   />
 ), (prevProps, nextProps) => {
   const prevStr = prevProps.row.original.str || {};
   const nextStr = nextProps.row.original.str || {};
-  return prevStr.active === nextStr.active && prevStr.startDate === nextStr.startDate;
+  return prevStr.active === nextStr.active && prevStr.start_date === nextStr.start_date;
 });
 
 const StrCtrcCell = React.memo(({ row, onChange }) => (
   <EditableCheckbox 
     value={row.original.str?.ctrc || false}
     disabled={!row.original.str?.active}
-    onChange={(e) => onChange(row.original.id, 'str', 'ctrc', e.target.checked)}
+    onChange={(e) => onChange(row.original._id, 'str', 'ctrc', e.target.checked)}
   />
 ), (prevProps, nextProps) => {
   const prevStr = prevProps.row.original.str || {};
@@ -188,15 +188,13 @@ const StrCtrcCell = React.memo(({ row, onChange }) => (
 });
 
 // 4. 基础单元格组件（不依赖 active 状态）
-const LocationCell = React.memo(({ row, /*onChange*/ }) => (
-  /*
-  <EditableTextfield
-    field="location"
-    value={row.original.location}
-    onChange={(field, _key, val) => onChange(row.original.id, field, null, val)}
-  />
-  */
-  <span>{row.original.location}</span>
+const LocationCell = React.memo(({ row, onShowDetail }) => (
+  <span
+    style={{ color: '#1976d2', cursor: 'pointer', textDecoration: 'underline' }}
+    onClick={() => onShowDetail?.(row.original._id)}
+  >
+    {row.original.location}
+  </span>
 ), (prevProps, nextProps) => {
   return prevProps.row.original.location === nextProps.row.original.location;
 });
@@ -205,7 +203,7 @@ const YearCell = React.memo(({ row, onChange }) => (
   <EditableTextfield 
     field="year" 
     value={row.original.year} 
-    onChange={(field, _key, val) => onChange(row.original.id, field, null, val)}
+    onChange={(field, _key, val) => onChange(row.original._id, field, null, val)}
   />
 ), (prevProps, nextProps) => {
   return prevProps.row.original.year === nextProps.row.original.year;
@@ -215,7 +213,7 @@ const InsuranceCell = React.memo(({ row, onChange }) => (
   <EditableTextfield 
     field="insurance" 
     value={row.original.insurance} 
-    onChange={(field, _key, val) => onChange(row.original.id, field, null, val)}
+    onChange={(field, _key, val) => onChange(row.original._id, field, null, val)}
   />
 ), (prevProps, nextProps) => {
   return prevProps.row.original.insurance === nextProps.row.original.insurance;
@@ -224,7 +222,7 @@ const InsuranceCell = React.memo(({ row, onChange }) => (
 const ArolCell = React.memo(({ row, onChange }) => (
   <EditableCheckbox 
     value={row.original.arol || false}
-    onChange={(e) => onChange(row.original.id, 'arol', null, e.target.checked)}
+    onChange={(e) => onChange(row.original._id, 'arol', null, e.target.checked)}
   />
 ), (prevProps, nextProps) => {
   return prevProps.row.original.arol === nextProps.row.original.arol;
@@ -233,7 +231,7 @@ const ArolCell = React.memo(({ row, onChange }) => (
 const TestCell = React.memo(({ row, onChange }) => (
   <EditableCheckbox 
     value={row.original.test || false}
-    onChange={(e) => onChange(row.original.id, 'test', null, e.target.checked)}
+    onChange={(e) => onChange(row.original._id, 'test', null, e.target.checked)}
   />
 ), (prevProps, nextProps) => {
   return prevProps.row.original.test === nextProps.row.original.test;
@@ -242,7 +240,7 @@ const TestCell = React.memo(({ row, onChange }) => (
 const PaymentCell = React.memo(({ row, onChange }) => (
   <EditableNumberCell 
     value={row.original.payment} 
-    onChange={(val) => onChange(row.original.id, 'payment', null, val)} 
+    onChange={(val) => onChange(row.original._id, 'payment', null, val)} 
   />
 ), (prevProps, nextProps) => {
   return prevProps.row.original.payment === nextProps.row.original.payment;
@@ -252,7 +250,7 @@ const CommentsCell = React.memo(({ row, onChange }) => (
   <EditableTextfield 
     field="comments" 
     value={row.original.comments} 
-    onChange={(field, _key, val) => onChange(row.original.id, field, null, val)}
+    onChange={(field, _key, val) => onChange(row.original._id, field, null, val)}
   />
 ), (prevProps, nextProps) => {
   return prevProps.row.original.comments === nextProps.row.original.comments;

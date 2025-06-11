@@ -18,7 +18,7 @@ import OrderedList from '@tiptap/extension-ordered-list'
 import { findParentNodeClosestToPos } from 'prosemirror-utils'
 import { DOMSerializer } from 'prosemirror-model'
 
-import { CustomTextStyle } from './EditorComponents/CustomTextStyle'
+import { CustomTextStyle } from './RichEditorComponents/CustomTextStyle'
 import './editor.css'
 
 // 表格选择器最大尺寸
@@ -269,7 +269,6 @@ const Editor = forwardRef(({ value = '', readOnly = false, hideToolbar = false, 
           const node = resizableRef.current;
           if (!node) return;
           const maxInit = Math.max(window.innerHeight - node.getBoundingClientRect().top - maxHeightOffset, 180);
-          console.log('box top', node.getBoundingClientRect().top)
           if (!node.dataset.userResized) {
                 node.style.height = Math.min(maxInit, 400) + 'px';
           }

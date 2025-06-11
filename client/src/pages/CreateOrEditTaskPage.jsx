@@ -5,7 +5,7 @@ import CreateOrEditTask from '../components/CreateOrEditTask';
 import TopAppBar from '../components/TopAppBar';
 
 export default function CreateOrEditTaskPage() {
-  const { id } = useParams();
+  const { _id } = useParams();
   const navigate = useNavigate();
 
   return (
@@ -26,7 +26,7 @@ export default function CreateOrEditTaskPage() {
           p: 2, 
           boxSizing: 'border-box',  
         }}>
-        <CreateOrEditTask id={id} />
+        <CreateOrEditTask _id={_id} />
       </Box>
     </Box>
   );

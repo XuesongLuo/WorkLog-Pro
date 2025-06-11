@@ -4,15 +4,14 @@ import { Box, Checkbox } from '@mui/material';
 import EditableDate from './EditableDate';
 
 const ToggleBox = React.memo(function ToggleBox({section, data, onToggleActive, onDateChange}) {
-  const { active, startDate } = data;
+  const { active, start_date } = data;
 
   const toggle = React.useCallback( () => {
-    console.log('ToggleBox toggle clicked:', section);
     onToggleActive(section);  
   }, [section, onToggleActive]);
 
   const changeDate = React.useCallback(
-    e => onDateChange(section, 'startDate', e.target.value),
+    e => onDateChange(section, 'start_date', e.target.value),
     [section, onDateChange]
   );
 
@@ -45,7 +44,7 @@ const ToggleBox = React.memo(function ToggleBox({section, data, onToggleActive, 
         />
         <Box sx={{ width: '100%', display: 'flex', justifyContent: 'center', mb: 1 }}>
           <EditableDate
-            value={startDate}
+            value={start_date}
             onChange={changeDate}
             disabled={!active}
           />
@@ -57,7 +56,7 @@ const ToggleBox = React.memo(function ToggleBox({section, data, onToggleActive, 
 // 日期字段变化不会触发整个 ToggleBox 重渲染
 (prevProps, nextProps) => {
   return prevProps.data.active === nextProps.data.active &&
-         prevProps.data.startDate === nextProps.data.startDate &&
+         prevProps.data.start_date === nextProps.data.start_date &&
          prevProps.section === nextProps.section;
 });
 

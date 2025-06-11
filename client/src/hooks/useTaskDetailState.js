@@ -10,13 +10,13 @@ export default function useTaskDetailState(onReload) {
   const [showDetail, setShowDetail] = useState(false);
 
   // 打开任务详情（只读模式）
-  const openTaskDetail = (p_id) => {
-    setSelectedTask({ p_id, mode: 'view' });
+  const openTaskDetail = (_id) => {
+    setSelectedTask({ _id, mode: 'view' });
     setShowDetail(true);
   };
 
   // 打开任务编辑
-  const openTaskEdit = (p_id, task) => { setSelectedTask(task ? { ...task, p_id, mode: 'edit' } : { p_id, mode: 'edit' });
+  const openTaskEdit = (_id, task) => { setSelectedTask(task ? { ...task, _id, mode: 'edit' } : { _id, mode: 'edit' });
     setShowDetail(true);
   };
 
@@ -26,27 +26,36 @@ export default function useTaskDetailState(onReload) {
     setShowDetail(true);
   };
 
+  
+  // 只关闭，不处理任何副作用
+  const handleTaskClose = () => {
+    setShowDetail(false);
+    setSelectedTask(null);
+  };
   // 从任务组件中回调关闭或切换编辑
+  /*
   const handleTaskClose = (payload) => {
     if (payload === 'reload') {
       if (typeof onReload === 'function') onReload();
       setShowDetail(false);
-      setTimeout(() => setSelectedTask(null), 200);
+      setSelectedTask(null); 
+      //setTimeout(() => setSelectedTask(null), 500);
       return;
     }
     if (payload?.mode === 'edit') {
       // 如果带有 task 数据就合并进来
       if (payload.task) {
-        setSelectedTask({ ...payload.task, p_id: payload.p_id, mode: 'edit' });
+        setSelectedTask({ ...payload.task, _id: payload._id, mode: 'edit' });
       } else {
         setSelectedTask(payload);
       }
       setShowDetail(true);
     } else {
       setShowDetail(false);
-      setTimeout(() => setSelectedTask(null), 200); // 延迟卸载右侧面板
+      //setTimeout(() => setSelectedTask(null), 200); // 延迟卸载右侧面板
     }
   };
+  */
 
   return {
     selectedTask,
@@ -55,5 +64,6 @@ export default function useTaskDetailState(onReload) {
     openTaskEdit,
     openTaskCreate,
     handleTaskClose,
+    setSelectedTask,
   };
 }

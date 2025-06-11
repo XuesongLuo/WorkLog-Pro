@@ -24,6 +24,8 @@ import {
   PaymentCell,
   CommentsCell
 } from './EditorTableComponents/EditTableCells';
+import TaskCard from './TaskCard';
+import Dialog from '@mui/material/Dialog';
 
 
 function useContainerWidth() {
@@ -47,25 +49,34 @@ function useContainerWidth() {
 export default function ProjectTableEditor() {
   const { progress, api } = useTasks();
   const [containerRef, containerWidth] = useContainerWidth();
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [taskDetail, setTaskDetail] = useState(null);
   
   // 优化后的 rows 创建
   const rows = useMemo(() => {
     if (!progress) return [];
-    return Object.entries(progress).map(([p_id, record]) => ({
-      p_id,
+    return Object.entries(progress).map(([_id, record]) => ({
+      _id,
       ...record
     }));
   }, [progress]);
 
   // 稳定的回调函数
   const handleChange = useCallback((rowId, section, key, value) => {
+    console.log('handleChange', rowId, section, key, value);
     if (!rowId) return;
-    const patch = key == null
-      ? { [section]: value }
-      : { [section]: { [key]: value } };
+    let patch;
+    if (Array.isArray(key)) {
+      // 多层嵌套路径 ['estimate', 'send', 'checked']
+      patch = { [section]: key.reduceRight((acc, cur) => ({ [cur]: acc }), value) };
+    } else if (key == null) {
+      patch = { [section]: value };
+    } else {
+      patch = { [section]: { [key]: value } };
+    }
     api.mergeProgress(rowId, patch);
     api.saveCell(rowId, patch);
-    console.log("api.saveCell: ", rowId, patch)
   }, [api]);
 
   const handleToggleActive = useCallback((rowId, section) => {
@@ -78,13 +89,25 @@ export default function ProjectTableEditor() {
     api.saveCell(rowId, patch);
   }, [api, progress]);
 
+  // 拉取详情并打开弹窗
+  const handleShowDetail = useCallback(async (_id) => {
+    setDialogOpen(true);
+    setLoading(true);
+    try {
+      const task = await api.getTask(_id);
+      setTaskDetail(task); // {...task, description: desc.description }
+    } finally {
+      setLoading(false);
+    }
+  }, [api]);
+
   // 优化后的列定义
   const columns = useMemo(() => [
     {
         header: 'LOCATION',
         baseWidth: 110,
         accessorKey: 'location',
-        Cell: ({ row }) => <LocationCell row={row} onChange={handleChange} />,
+        Cell: ({ row }) => <LocationCell row={row} onShowDetail={handleShowDetail} />,
     },
     {
         header: 'YEAR',
@@ -152,7 +175,7 @@ export default function ProjectTableEditor() {
           <EstimateCell 
             row={row} 
             section="pak" 
-            type="Send" 
+            type="send" 
             onChange={handleChange} 
           />
         ),
@@ -169,7 +192,7 @@ export default function ProjectTableEditor() {
           <EstimateCell 
             row={row} 
             section="pak" 
-            type="Review" 
+            type="review" 
             onChange={handleChange} 
           />
         ),
@@ -186,7 +209,7 @@ export default function ProjectTableEditor() {
           <EstimateCell 
             row={row} 
             section="pak" 
-            type="Agree" 
+            type="agree" 
             onChange={handleChange} 
           />
         ),
@@ -254,7 +277,7 @@ export default function ProjectTableEditor() {
           <EstimateCell 
             row={row} 
             section="wtr" 
-            type="Send" 
+            type="send" 
             onChange={handleChange} 
           />
         ),
@@ -271,7 +294,7 @@ export default function ProjectTableEditor() {
           <EstimateCell 
             row={row} 
             section="wtr" 
-            type="Review" 
+            type="review" 
             onChange={handleChange} 
           />
         ),
@@ -288,7 +311,7 @@ export default function ProjectTableEditor() {
           <EstimateCell 
             row={row} 
             section="wtr" 
-            type="Agree" 
+            type="agree" 
             onChange={handleChange} 
           />
         ),
@@ -328,7 +351,7 @@ export default function ProjectTableEditor() {
           <EstimateCell 
             row={row} 
             section="str" 
-            type="Send" 
+            type="send" 
             onChange={handleChange} 
           />
         ),
@@ -345,7 +368,7 @@ export default function ProjectTableEditor() {
           <EstimateCell 
             row={row} 
             section="str" 
-            type="Review" 
+            type="review" 
             onChange={handleChange} 
           />
         ),
@@ -362,7 +385,7 @@ export default function ProjectTableEditor() {
           <EstimateCell 
             row={row} 
             section="str" 
-            type="Agree" 
+            type="agree" 
             onChange={handleChange} 
           />
         ),
@@ -382,7 +405,7 @@ export default function ProjectTableEditor() {
         Cell: ({ row }) => <CommentsCell row={row} onChange={handleChange} />,
     },
    
-  ], [handleChange, handleToggleActive]);
+  ], [handleChange, handleToggleActive, handleShowDetail]);
 
   const dynamicColumns = useMemo(() => {
     const totalBase = columns.reduce((sum, col) => sum + (col.baseWidth || 60), 0);
@@ -441,61 +464,67 @@ export default function ProjectTableEditor() {
         enableSorting={false}
         enableColumnResizing={true}              // ★ 开启列宽手动调整
         columnResizeMode="onChange"   
-        getRowId={(row) => row.p_id}
+        getRowId={(row) => row._id}
         muiTablePaperProps={{
-        sx: {
-          height: '100%',
-          p: 0,
-          my: 0,
-          display: 'flex',
-          flexDirection: 'column',
-          boxShadow: 'none',
-          border: 'none',
-          boxSizing: 'border-box',
-        }
-      }}
-      muiTableContainerProps={{
-        sx: {
-            flex: 1,
+          sx: {
             height: '100%',
             p: 0,
-            '& .MuiTable-root': {
-                tableLayout: 'fixed',
-                width: '100%',
-            },
-            overflowX: 'auto',
-        }
-      }}
-      muiTableHeadCellProps={{
-        align: 'center',
-        sx: {
-          verticalAlign: 'middle',
-          p: "2px",
-          fontWeight: 700,
-          fontSize: 13,   // 更小
-          background: '#f8fafd',
-          boxSizing: 'border-box',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          whiteSpace: 'normal',
-          border: '0.2px solid #e0e0e0',
-        }
-      }}
-      muiTableBodyCellProps={{
-        align: 'center',
-        sx: {
-          p: 0,        // 更小padding
-          minHeight: '80px',  // 行高压缩
-          fontSize: 12,
-          boxSizing: 'border-box',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          whiteSpace: 'normal',
-          border: '0.2px solid #e0e0e0',
-        }
-      }}
-      
-    />
+            my: 0,
+            display: 'flex',
+            flexDirection: 'column',
+            boxShadow: 'none',
+            border: 'none',
+            boxSizing: 'border-box',
+          }
+        }}
+        muiTableContainerProps={{
+          sx: {
+              flex: 1,
+              height: '100%',
+              p: 0,
+              '& .MuiTable-root': {
+                  tableLayout: 'fixed',
+                  width: '100%',
+              },
+              overflowX: 'auto',
+          }
+        }}
+        muiTableHeadCellProps={{
+          align: 'center',
+          sx: {
+            verticalAlign: 'middle',
+            p: "2px",
+            fontWeight: 700,
+            fontSize: 13,   // 更小
+            background: '#f8fafd',
+            boxSizing: 'border-box',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'normal',
+            border: '0.2px solid #e0e0e0',
+          }
+        }}
+        muiTableBodyCellProps={{
+          align: 'center',
+          sx: {
+            p: 0,        // 更小padding
+            minHeight: '80px',  // 行高压缩
+            fontSize: 12,
+            boxSizing: 'border-box',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'normal',
+            border: '0.2px solid #e0e0e0',
+          }
+        }}
+      />
+      <Dialog open={dialogOpen} maxWidth="md" fullWidth onClose={() => setDialogOpen(false)}>
+        {loading ? (
+          <Box sx={{ p: 6, textAlign: 'center' }}>加载中...</Box>
+        ) : (
+          <TaskCard task={taskDetail} onClose={() => setDialogOpen(false)} />
+        )}
+      </Dialog>
     </Box>
   );
 }

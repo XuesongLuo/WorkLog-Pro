@@ -20,12 +20,33 @@ function EditableNumberCell({ value, onChange, disabled = false }) {
   const handleBlur = useCallback(() => {
     setIsEditing(false);
     if (!disabled && draft !== value) {
-      onChange(draft);
+      let v = draft;
+      if (v !== '') {
+        let n = Number(v);
+        if (!isNaN(n)) {
+          v = n.toFixed(2);  // 强制两位小数
+          onChange(Number(v)); // 保证父组件拿到的就是数值型
+        } else {
+          onChange('');
+        }
+      } else {
+        onChange('');
+      }
+      setDraft(v); // 输入框显示格式化后的
     }
   }, [value, draft, disabled, onChange]);
 
   const handleChange = useCallback((e) => {
-    setDraft(e.target.value);
+    let val = e.target.value;
+    if (val === '') {
+      setDraft('');
+      return;
+    }
+    // 只允许数字/小数点，最多两位小数
+    if (!/^\d*(\.\d{0,2})?$/.test(val)) {
+      return; // 非法输入直接忽略
+    }
+    setDraft(val);
   }, []);
 
   return (
@@ -59,7 +80,7 @@ function EditableNumberCell({ value, onChange, disabled = false }) {
             paddingLeft: "4px",
             paddingRight: "4px",
             paddingTop: "12px",
-            paddingBottom: 0
+            paddingBottom: "0px"
           },
           // 移除默认的数字上下箭头（spin buttons）
           '& input[type=number]': { MozAppearance: 'textfield' },

@@ -1,63 +1,92 @@
 const express = require('express');
 const router = express.Router();
-const { mysqlPool } = require('../db');
+const { mysqlPool, getMongoDb } = require('../db');
 const auth = require('../middleware/auth');
 const adminOnly = require('../middleware/adminOnly');
 
 
+function flattenForSet(obj, prefix = '') {
+  return Object.entries(obj).reduce((acc, [key, val]) => {
+    if (val && typeof val === 'object' && !Array.isArray(val)) {
+      Object.assign(acc, flattenForSet(val, prefix ? `${prefix}.${key}` : key));
+    } else {
+      acc[prefix ? `${prefix}.${key}` : key] = val;
+    }
+    return acc;
+  }, {});
+}
+
 
 // GET /api/progress  → 表格一次性加载（管理员可访问）
 router.get('/', auth, adminOnly, async (req, res) => {
-    try {
-      // 查主表项目数据
-      const [projects] = await mysqlPool.query('SELECT * FROM projects');
-      // 查进度表
-      const [progressRows] = await mysqlPool.query('SELECT * FROM project_progress');
-      // 组装返回
-      const progressArray = progressRows.map(progress => {
-        const project = projects.find(proj => proj.p_id === progress.p_id) || {};
-        const location = [project.address, project.city, project.zipcode].filter(Boolean).join(', ');
-        return {
-          p_id: progress.p_id,
-          ...progress,
-          location,
-          year: project.year,
-          insurance: project.insurance,
-        };
-      });
-      res.json(progressArray);
-    } catch (e) {
-      res.status(500).json({ error: e.message });
-    }
-  });
-  
+  try {
+    const db = await getMongoDb();
+    // 查主表项目数据
+    const projects = await db.collection('projects').find().toArray();
+    const projectMap = Object.fromEntries(projects.map(p => [p._id, p]));
+    // 查进度表
+    const progressRows = await db.collection('progress').find().toArray();
+    // 合并：为每一行进度加 location/year/insurance 字段
+    const progressArray = progressRows.map(progress => {
+      const project = projectMap[progress._id] || {};
+      const location = [project.address, project.city, project.zipcode].filter(Boolean).join(', ');
+      return {
+        ...progress,
+        location,
+        year: project.year,
+        insurance: project.insurance,
+      };
+    });
+    res.json(progressArray);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
 
-// PUT /api/progress/:p_id  → 行级保存（仅管理员可用，禁止自动插入新行）
-router.put('/:p_id', auth, adminOnly, async (req, res) => {
-    const p_id = req.params.p_id;
-    const fields = Object.keys(req.body);
-    if (!fields.length) return res.status(400).json({ error: '无可更新字段' });
-  
-    const setSql = fields.map(f => `${f}=?`).join(', ');
-    const values = fields.map(f => req.body[f]);
-    values.push(p_id);
-  
-    try {
-      // 先查当前进度（判断是否存在）
-      const [rows] = await mysqlPool.query('SELECT * FROM project_progress WHERE p_id=?', [p_id]);
-      if (!rows.length) {
-        // 不存在则返回404，不插入新行
-        return res.status(404).json({ error: '进度行不存在，无法修改' });
-      }
-      // 存在则更新
-      await mysqlPool.query(
-        `UPDATE progress SET ${setSql} WHERE p_id=?`, values
-      );
-      const [[row]] = await mysqlPool.query('SELECT * FROM project_progress WHERE p_id=?', [p_id]);
-      res.json(row);
-    } catch (e) {
-      res.status(500).json({ error: e.message });
-    }
-  });
-  
-  module.exports = router;
+
+router.patch('/:_id', auth, adminOnly, async (req, res) => {
+  const _id = req.params._id;
+  const updateFields = { ...req.body };
+  if (!Object.keys(updateFields).length)
+    return res.status(400).json({ error: '无可更新字段' });
+  try {
+    const db = await getMongoDb();
+    // --- 关键：扁平化传入字段 ---
+    const setFields = flattenForSet(updateFields);
+    // 只更新传入的字段（可嵌套）
+    const result = await db.collection('progress').updateOne({ _id }, { $set: setFields });
+    if (!result.matchedCount)
+      return res.status(404).json({ error: '进度行不存在，无法修改' });
+    const row = await db.collection('progress').findOne({ _id });
+    res.json(row);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+
+/*
+// PUT /api/progress/:_id  → 行级保存（仅管理员可用，禁止自动插入新行）
+router.put('/:_id', auth, adminOnly, async (req, res) => {
+  const _id = req.params._id;
+  const updateFields = { ...req.body };
+  //const fields = Object.keys(req.body);
+  if (!Object.keys(updateFields).length) return res.status(400).json({ error: '无可更新字段' });
+  //if (!fields.length) return res.status(400).json({ error: '无可更新字段' });
+  try {
+    const db = await getMongoDb();
+    // 先查当前进度（判断是否存在）
+    const result = await db.collection('progress').updateOne({ _id }, { $set: updateFields });
+
+    if (!result.matchedCount) return res.status(404).json({ error: '进度行不存在，无法修改' });
+    // 存在则更新
+    const row = await db.collection('progress').findOne({ _id });
+    res.json(row);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+*/
+
+
+module.exports = router;

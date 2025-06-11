@@ -1,7 +1,6 @@
 // src/pages/CreateOrEditTask.jsx
 import React, { useEffect, useState, useCallback, useRef, lazy, Suspense } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { useLocation } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import {
   IconButton,
   Grid,
@@ -26,8 +25,8 @@ import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { DatePicker }      from '@mui/x-date-pickers';
 import { AdapterDateFns }      from '@mui/x-date-pickers/AdapterDateFns';
-
 import { useSnackbar } from 'notistack';
+import { useLoading } from '../contexts/LoadingContext';
 
 import { useTasks } from '../contexts/TaskStore';
 import TaskPane from './TaskPane'; 
@@ -49,19 +48,20 @@ function formatDateToYMD(date) {
 
 const types = ['室外工程', '室内工程', '后院施工', '除霉处理'];
 
-export default function CreateOrEditTask({ p_id: propId, task: propTask, embedded = false, onClose }) {
+export default function CreateOrEditTask({ _id: propId, task: propTask, embedded = false, onClose }) {
   const navigate = useNavigate();
   const location = useLocation();
   const editorRef = useRef();
+  const { start: startLoading, end: endLoading } = useLoading();
   const taskFromRoute = location.state?.task;
 
-  const { p_id: routeId } = useParams();
+  const { _id: routeId } = useParams();
   // 最终 ID：优先使用 props 传入，其次是路由参数
-  const p_id = propId ?? taskFromRoute?.p_id ?? (routeId !== 'new' ? routeId : undefined);
+  const _id = propId ?? taskFromRoute?._id ?? (routeId !== 'new' ? routeId : undefined);
   // 判断是否是“新建”任务
-  const isCreateMode = routeId === 'new' || (embedded && !p_id);
-  // 编辑模式 = 非创建模式，且 p_id 存在
-  const isEdit = Boolean(p_id) && !isCreateMode;
+  const isCreateMode = routeId === 'new' || (embedded && !_id);
+  // 编辑模式 = 非创建模式，且 _id 存在
+  const isEdit = Boolean(_id) && !isCreateMode;
   
   const [form, setForm] = useState({
     address: '',
@@ -75,8 +75,8 @@ export default function CreateOrEditTask({ p_id: propId, task: propTask, embedde
     referrer: '',
     start: new Date(),
     end: new Date(),
-    description: ''
   });
+  const [desc, setDesc] = useState('');
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [editorReady, setEditorReady] = useState(false);
   const { taskMap, api: taskApi } = useTasks();
@@ -85,9 +85,9 @@ export default function CreateOrEditTask({ p_id: propId, task: propTask, embedde
 
 
   useEffect(() => {
-    if (!isEdit || !p_id) return;
-  
-    const cachedTask = propTask ?? taskFromRoute ?? taskMap[p_id];
+    if (!isEdit || !_id) return;
+    console.log('111', { _id, isEdit, propTask, taskFromRoute });
+    const cachedTask = propTask ?? taskFromRoute ?? taskMap[_id];
   
     if (cachedTask) {
       const { mode, ...cleanTask } = cachedTask;
@@ -96,10 +96,12 @@ export default function CreateOrEditTask({ p_id: propId, task: propTask, embedde
         start: new Date(cleanTask.start),
         end: new Date(cleanTask.end),
       };
-      setForm(prev => ({ ...prev, ...parsedTask }));
-      taskApi.getTaskDescription(p_id)
+      //setForm(prev => ({ ...prev, ...parsedTask }));
+      setForm(parsedTask);
+      taskApi.getTaskDescription(_id)
         .then(descData => {
-          setForm(prev => ({ ...prev, description: descData.description }));
+          setDesc(descData.description || '');
+          //setForm(prev => ({ ...prev, description: descData.description }));
           // 等富文本内容准备好后，再延迟加载 Editor
           requestIdleCallback(() => setEditorReady(true));
         })
@@ -108,19 +110,21 @@ export default function CreateOrEditTask({ p_id: propId, task: propTask, embedde
     } else {
       // 完全从接口获取所有数据
       Promise.all([
-        taskApi.getTask(p_id),
-        taskApi.getTaskDescription(p_id),
+        taskApi.getTask(_id),
+        taskApi.getTaskDescription(_id),
       ])
       .then(([taskData, descData]) => {
-        setForm({ ...taskData, description: descData.description });
+        setForm(taskData);
+        setDesc(descData.description || '');
         requestIdleCallback(() => setEditorReady(true));
       })
       .catch(err => console.error('加载任务失败', err));
     }
-  }, [p_id, isEdit, propTask, taskFromRoute]);
+  }, [_id, isEdit, propTask, taskFromRoute]);
 
   useEffect(() => {
     if (!isEdit) {
+      setDesc('');
       // 新建模式直接准备好编辑器
       requestIdleCallback(() => setEditorReady(true));
     }
@@ -145,55 +149,47 @@ export default function CreateOrEditTask({ p_id: propId, task: propTask, embedde
   const handleEndDateChange = useCallback((newValue) => {
     setForm(prev => ({ ...prev, end: newValue }));
   }, []);
+
   // 使用 useCallback 优化描述更改
-  const handleDescriptionChange = useCallback((val) => {
-    setForm(prev => ({ ...prev, description: val }));
-  }, []);
+  const handleDescriptionChange = useCallback((val) => setDesc(val), []);
+  
 
   const handleSubmit = async () => {
     const description = editorRef.current?.getHTML?.() || '';   // 单独提取 description
-    const {
-      description: _desc, 
-      start,
-      end,
-      ...mainData          // 主体数据：form 中除 description 外的所有字段
-    } = form;
-
+    const { start, end, ...mainData } = form;
     const finalData = {
       ...mainData,
       start: formatDateToYMD(start),
       end: formatDateToYMD(end)
     };
-
+    setSaving(true);
+    startLoading();
     try {
-      setSaving(true);
       if (isEdit) {
         await Promise.all([
-          taskApi.update(p_id, finalData),
-          taskApi.updateDesc(p_id, description),
+          taskApi.update(_id, finalData),
+          taskApi.updateDesc(_id, description),
         ]);
       } else {
-        console.log(0)
         const newTask = await taskApi.create(finalData);   // 乐观插入已完成
-        console.log(1)
-        let projectId = newTask.p_id;
-        console.log(projectId)
+        let projectId = newTask._id;
         await taskApi.updateDesc(projectId, description);    // 才写描述
-        console.log(2)
       }
-      embedded ? onClose?.('reload') : navigate('/');
+      enqueueSnackbar(isEdit ? '保存成功' : '创建成功', { variant: 'success' });
+      onClose?.('reload');
     } catch (e) {
       /* fetcher 已有全局报错，若要局部提示可加 enqueueSnackbar */
       enqueueSnackbar(e.message || '新建失败', { variant: 'error' });
     } finally {
       setSaving(false);
+      endLoading();
     }
   };
 
   const handleDelete = () => {
     const doDelete = async () => {       // ★ 真正的删除逻辑
       try {
-        await taskApi.remove(p_id);
+        await taskApi.remove(_id);
         enqueueSnackbar('已删除', { variant: 'success' });
       } catch (err) {
         enqueueSnackbar('删除失败，已还原', { variant: 'error' });
@@ -204,6 +200,10 @@ export default function CreateOrEditTask({ p_id: propId, task: propTask, embedde
     } else {
       doDelete().then(() => navigate('/'));
     }
+  };
+
+  const handleCancel = () => {
+    onClose?.('close');
   };
 
   return (
@@ -228,7 +228,7 @@ export default function CreateOrEditTask({ p_id: propId, task: propTask, embedde
           <Typography variant="h5" gutterBottom sx={{ m: 0 }}>
             {isCreateMode ? '新建任务' : '编辑任务'}
             {embedded && (
-              <IconButton onClick={() => navigate(isEdit ? `/task/edit/${p_id}` : '/task/new', { state: { task: form } } )}>
+              <IconButton onClick={() => navigate(isEdit ? `/task/edit/${_id}` : '/task/new', { state: { task: form } } )}>
                 <OpenInNewIcon />
               </IconButton>
             )}
@@ -244,11 +244,8 @@ export default function CreateOrEditTask({ p_id: propId, task: propTask, embedde
               <IconButton color="primary" onClick={handleSubmit}>
                 <SaveIcon />
               </IconButton>
-              <IconButton onClick={() => {
-                requestAnimationFrame(() => {
-                  onClose?.();
-                });
-              }}
+              <IconButton 
+                onClick={handleCancel}
               >
                 <CancelIcon />
               </IconButton>
@@ -256,10 +253,7 @@ export default function CreateOrEditTask({ p_id: propId, task: propTask, embedde
           )}
           </Stack>
         </Box>
-      
         <Divider sx={{ mb: 2 }} />
-
-          
         <Grid 
           container 
           spacing={2} 
@@ -301,7 +295,7 @@ export default function CreateOrEditTask({ p_id: propId, task: propTask, embedde
               size="small" 
               fullWidth 
               value={form.zipcode || ''} 
-              onChange={(e) => setForm({ ...form, zipcode: e.target.value })} 
+              onChange={handleChange} 
             />
           </Grid>
           {/* 第2行：房子年份、保险公司、项目类型选择*/}
@@ -411,8 +405,9 @@ export default function CreateOrEditTask({ p_id: propId, task: propTask, embedde
               <Suspense fallback={<Typography variant="body2">加载编辑器中...</Typography>}>
                 <LazyEditor
                   ref={editorRef}
-                  key={p_id ?? 'new'}
-                  value={form.description}
+                  key={_id ?? 'new'}
+                  value={desc}
+                  onChange={handleDescriptionChange}
                   maxHeightOffset={embedded ? 40 : 100}
                 />
               </Suspense>

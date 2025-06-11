@@ -1,42 +1,35 @@
 // utils/initAdmin.js
-const mysql = require('mysql2/promise');
+const { getMongoDb } = require('../db');
 const bcrypt = require('bcryptjs');
+const { v4: uuidv4 } = require('uuid');
 
 async function ensureAdminAccount() {
+  const db = await getMongoDb();
+  
+  // 检查是否已有管理员
+  const admin = await db.collection('users').findOne({ role: 'admin' });
+  if (!admin) {
+    // 没有管理员，自动创建一个
+    const username = 'admin';
+    const email = '422836560@qq.com';
+    const password = '123456';   // 默认密码，记得后续修改
 
-    const uuid = require('crypto').randomUUID();
+    const hash = await bcrypt.hash(password, 10);
 
-    const connection = await mysql.createConnection({
-      host:     process.env.MYSQL_HOST,
-      user:     process.env.MYSQL_USER,
-      password: process.env.MYSQL_PASSWORD,
-      database: process.env.MYSQL_DATABASE
+    await db.collection('users').insertOne({
+        _id: uuidv4(),
+        username,
+        email,
+        password_hash: hash,
+        role: 'admin',
+        status: 'active',
+        created_at: new Date(),
     });
-  
-    // 查询是否已有管理员
-    const [rows] = await connection.execute(
-      "SELECT * FROM users WHERE role = 'admin' LIMIT 1"
-    );
-  
-    if (rows.length === 0) {
-      // 没有管理员，创建一个
-      const username = 'admin';
-      const email = 'admin@example.com';
-      const password = '123456';           // 默认密码，可自定义
-  
-      const password_hash = await bcrypt.hash(password, 10);
-  
-      await connection.execute(
-        "INSERT INTO users (id, username, email, password_hash, role, status) VALUES (?, ?, ?, ?, 'admin', 'active')",
-        [uuid, username, email, password_hash]
-      );
-  
-      console.log(`🌟 已自动生成管理员账号 admin / ${password}，请尽快修改密码！`);
-    } else {
-      console.log('✅ 管理员账号已存在，不重复生成');
-    }
-  
-    await connection.end();
-  }
 
-  module.exports = ensureAdminAccount;
+    console.log(`🌟 已自动生成管理员账号 admin / ${password}，请尽快修改密码！`);
+  } else {
+      console.log('✅ 管理员账号已存在，不重复生成');
+  }
+ 
+}
+module.exports = ensureAdminAccount;

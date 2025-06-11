@@ -5,7 +5,7 @@ import TaskDetail from '../components/TaskDetail';
 import TopAppBar from '../components/TopAppBar';
 
 export default function TaskDetailPage() {
-  const { id } = useParams();
+  const { _id } = useParams();
   const navigate = useNavigate();
 
   return (
@@ -26,7 +26,7 @@ export default function TaskDetailPage() {
           p: 2, 
           boxSizing: 'border-box', 
         }}>
-        <TaskDetail id={id} />
+        <TaskDetail _id={_id} />
       </Box>
     </Box>
   );

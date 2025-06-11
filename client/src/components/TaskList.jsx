@@ -35,7 +35,7 @@ const TaskList = forwardRef(function TaskList(
     { tasks, onSelectTask, sx = {} }, ref
 ) {
     /** ① 排序状态 */ 
-    const [orderBy, setOrderBy] = useState('p_id');
+    const [orderBy, setOrderBy] = useState('_id');
     const [order, setOrder]     = useState('asc');     // 'asc' | 'desc'
 
     /** ② 表头点击切换排序 */
@@ -85,7 +85,7 @@ const TaskList = forwardRef(function TaskList(
           <TableBody>
             {sortedTasks.map(t => (
               <TableRow
-                hover key={t.p_id}
+                hover key={t._id}
                 onClick={() => onSelectTask(t)}
                 sx={{ cursor: 'pointer' }}
               >

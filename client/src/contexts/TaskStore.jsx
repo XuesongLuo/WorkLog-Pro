@@ -10,8 +10,8 @@ function taskReducer(state, action) {
   switch (action.type) {
     case 'set':     return action.payload;
     case 'add':     return [...state, action.payload];
-    case 'replace': return state.map(t => t.p_id === action.payload.old ? action.payload.new : t);
-    case 'delete':  return state.filter(t => t.p_id !== action.payload);
+    case 'replace': return state.map(t => t._id === action.payload.old ? action.payload.new : t);
+    case 'delete':  return state.filter(t => t._id !== action.payload);
     default:        return state;
   }
 }
@@ -20,7 +20,7 @@ function progressReducer(state, action) {
   switch (action.type) {
     case 'set':    return action.payload;                               // 替换整表
     case 'patch': {
-      const prevRow = state[action.p_id];
+      const prevRow = state[action._id];
       if (!prevRow) return state;
       // 使用浅比较优化
       const updatedRow = merge({}, prevRow, action.data);
@@ -36,7 +36,7 @@ function progressReducer(state, action) {
       });
       if (!hasChanged) return state;
 
-      return { ...state, [action.p_id]: updatedRow };
+      return { ...state, [action._id]: updatedRow };
     }
     default: return state;
   }
@@ -47,33 +47,34 @@ export function TaskProvider({ children }) {
   /* ---------- Project Progress reducer ---------- */
   const [progressRows, progressDispatch] = useReducer(progressReducer, {});
   const [tasks, taskDispatch] = useReducer(taskReducer, []);
-  const taskMap = useMemo(() => Object.fromEntries(tasks.map(t => [t.p_id, t])), [tasks]);
+  const taskMap = useMemo(() => Object.fromEntries(tasks.map(t => [t._id, t])), [tasks]);
 
 
   /* 公共 API（用 fetcher 自动带 loading + 报错） */
   const load = useCallback(async () => {
       const list = await fetcher('/api/tasks');
+      console.log('tasks reloaded', list);
       taskDispatch({ type: 'set', payload: list });
   }, []);
 
 
   // 读取单条任务
   const getTask = useCallback(
-    (p_id) => fetcher(`/api/tasks/${p_id}`),
+    (_id) => fetcher(`/api/tasks/${_id}`),
     []
   );
 
 
   // 读取任务的富文本描述
   const getTaskDescription = useCallback(
-    (p_id) => fetcher(`/api/descriptions/${p_id}`),
+    (_id) => fetcher(`/api/descriptions/${_id}`),
     []
   );
   
 
   const create = useCallback(async (mainData) => {
     const tempId = `temp-${Date.now()}`;              // 1️⃣ 乐观插入
-    taskDispatch({ type: 'add', payload: { ...mainData, p_id: tempId } });
+    taskDispatch({ type: 'add', payload: { ...mainData, _id: tempId } });
     try {
       const real = await fetcher('/api/tasks', {
         method: 'POST',
@@ -89,30 +90,30 @@ export function TaskProvider({ children }) {
     }
   }, [load]);
 
-  const remove = useCallback(async (p_id) => {
-    taskDispatch({ type: 'delete', payload: p_id });        // 先删
+  const remove = useCallback(async (_id) => {
+    taskDispatch({ type: 'delete', payload: _id });        // 先删
     try {
-      await fetcher(`/api/tasks/${p_id}`, { method: 'DELETE' });
+      await fetcher(`/api/tasks/${_id}`, { method: 'DELETE' });
       await load();
     } catch (err) {
       await load();                             // 删除失败时回滚
     }
   }, []);
 
-  const update = useCallback((p_id, data) => fetcher(`/api/tasks/${p_id}`, {
+  const update = useCallback((_id, data) => fetcher(`/api/tasks/${_id}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
   }), []);
 
-  const updateDesc = useCallback((p_id, description) => fetcher(`/api/descriptions/${p_id}`, {
+  const updateDesc = useCallback((_id, description, userId) => fetcher(`/api/descriptions/${_id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ description }),
+        body: JSON.stringify({ description, userId }),
   }), []);
 
 
-  const patchTask = useCallback((p_id, data) => fetcher(`/api/tasks/${p_id}`, {
+  const patchTask = useCallback((_id, data) => fetcher(`/api/tasks/${_id}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
@@ -123,7 +124,7 @@ export function TaskProvider({ children }) {
   const loadProgress = useCallback(async () => {
     try {
       const arr = await fetcher('/api/progress');           // ① raw 是键值对对象
-      const map = Object.fromEntries(arr.map(row => [row.p_id, row]));
+      const map = Object.fromEntries(arr.map(row => [row._id, row]));
       progressDispatch({ type: 'set', payload: map });    // 键值对对象直接传递
     } catch (error) {
       console.error('Failed to load progress:', error);
@@ -131,14 +132,14 @@ export function TaskProvider({ children }) {
   }, []);
 
   /** ① 本地乐观合并（不打网络）——给前端即时反馈用 */
-  const mergeProgress = useCallback((p_id, data) => {
-    progressDispatch({ type: 'patch', p_id, data });
+  const mergeProgress = useCallback((_id, data) => {
+    progressDispatch({ type: 'patch', _id, data });
   }, []);
 
   // ② 行级保存
-  const saveProgress = useCallback(async (p_id, data) => {
+  const saveProgress = useCallback(async (_id, data) => {
 
-    if (!p_id || typeof p_id !== 'string') {
+    if (!_id || typeof _id !== 'string') {
       console.error('Invalid ID provided to saveProgress');
       return;
     }
@@ -147,22 +148,25 @@ export function TaskProvider({ children }) {
       return;
     }
     try {
-      //progressDispatch({ type: 'patch', p_id, data });            // Optimistic UI
-      await fetcher(`/api/progress/${p_id}`, {
+      //progressDispatch({ type: 'patch', _id, data });            // Optimistic UI
+      await fetcher(`/api/progress/${_id}`, {
         method : 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body   : JSON.stringify(data),
       });
     } catch (error) {
-      console.error('Failed to save progress for p_id:', p_id, error);
+      console.error('Failed to save progress for _id:', _id, error);
       // 回滚（保持原逻辑）
-      progressDispatch({ type: 'patch', p_id, data: state.find(r => r.p_id === p_id) || {} }); // 清除失败的更新
+      progressDispatch({ type: 'patch', _id, data: state.find(r => r._id === _id) || {} }); // 清除失败的更新
       throw error;
     }
   }, []);
 
   const saveCell = useCallback((rowId, patch) => {
-    console.log("saveCell: ", rowId, patch )
+    console.log('saveCell', rowId, patch);
+    if (!rowId || typeof rowId !== 'string') return;
+    if (!patch || typeof patch !== 'object') return;
+    
     const section = Object.keys(patch)[0];
     const value = patch[section];
     // 基础字段
@@ -172,15 +176,16 @@ export function TaskProvider({ children }) {
       return patchTask(rowId, { [section]: value });
     } else {
       // 其他写入 progress
-      /*
-      const patch = key == null
-        ? { [section]: value }
-        : { [section]: { [key]: value } };
-        */
       mergeProgress(rowId, patch);
-      return saveProgress(rowId, patch);
+      //return saveProgress(rowId, patch);
+      return fetcher(`/api/progress/${rowId}`, {
+        method : 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body   : JSON.stringify(patch),
+      });
     }
-  }, [patchTask, mergeProgress, saveProgress]);
+  }, [patchTask, mergeProgress]);
+
 
 
   const api = useMemo(() => ({ 

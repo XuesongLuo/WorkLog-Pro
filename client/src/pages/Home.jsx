@@ -1,5 +1,5 @@
 // src/pages/Home.jsx
-import React, { useEffect, useState, useMemo, useCallback } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Typography, Box, Button, Stack, Grid, Container, Slide} from '@mui/material';
 import ViewListIcon from '@mui/icons-material/ViewList';
@@ -12,7 +12,6 @@ import TaskDetail from '../components/TaskDetail';
 import CreateOrEditTask from '../components/CreateOrEditTask';
 import { useDebounce }  from '../hooks/useDebounce';
 import useTaskDetailState from '../hooks/useTaskDetailState';
-
 import { useTasks } from '../contexts/TaskStore'; 
 
 
@@ -21,16 +20,16 @@ const SlideContent = React.memo(
     <Box sx={{ width: '100%', height: '100%', overflow: 'auto' }}>
       {selectedTask?.mode === 'edit' && (
         <CreateOrEditTask
-          key={selectedTask?.p_id ? selectedTask.p_id : 'new'}
+          key={selectedTask?._id ? selectedTask._id : 'new'}
           embedded
-          p_id={selectedTask?.p_id}
+          _id={selectedTask?._id}
           task={selectedTask}
           onClose={handleTaskClose}
         />
       )}
       {selectedTask?.mode === 'view' && (
         <TaskDetail
-          p_id={selectedTask.p_id}
+          _id={selectedTask._id}
           embedded
           onClose={handleTaskClose}
         />
@@ -38,7 +37,7 @@ const SlideContent = React.memo(
     </Box>
   ),
   (prevProps, nextProps) =>
-    prevProps.selectedTask?.p_id === nextProps.selectedTask?.p_id &&
+    prevProps.selectedTask?._id === nextProps.selectedTask?._id &&
     prevProps.selectedTask?.mode === nextProps.selectedTask?.mode &&
     prevProps.handleTaskClose === nextProps.handleTaskClose
 );
@@ -46,7 +45,7 @@ const SlideContent = React.memo(
 const useNormalizedEvents = (tasks) => useMemo(() => {
   return tasks.map(t => ({
     ...t,
-    id   : t.p_id,
+    id   : t._id,
     start: t.start instanceof Date ? t.start : new Date(t.start),
     end  : t.end   instanceof Date ? t.end   : new Date(t.end),
     title: `${t.address ?? ''}, ${t.city ?? ''}, ${t.zipcode ?? ''}`,
@@ -66,7 +65,8 @@ export default function Home() {
     openTaskDetail,
     openTaskEdit,
     openTaskCreate,
-    handleTaskClose
+    handleTaskClose,
+    setSelectedTask
   } = useTaskDetailState(() => api.load());
 
   // 使用 useMemo 优化计算
@@ -103,23 +103,42 @@ export default function Home() {
   const [afterClose, setAfterClose] = useState(null);
   const debouncedTaskClose = useDebounce(handleTaskClose, 100);   // 包装防抖版本的 handleTaskClose
 
-  const ANIM_MS = 550;                // 与 DelayedUnmount 的 0.5 s 一致
   const handleSlideClose = (payload) => {
     /* ① 编辑：直接切换，不收起面板 */
     if (payload && typeof payload === 'object' && payload.mode === 'edit') {
-      openTaskEdit(payload.p_id, payload.task);   // 来自 useTaskDetailState
+      openTaskEdit(payload._id, payload.task);   // 来自 useTaskDetailState
       return;                                   // 提前退出
     }
     /* ② 其它情况：先收起面板 */
     debouncedTaskClose();
+    // 关键：确保 always 触发 Slide 收起
+    setSelectedTask(null);
     /* ②-b 删除 → 真删 */
     if (typeof payload === 'function') {
-      setTimeout(payload, ANIM_MS);
+      //setTimeout(payload, ANIM_MS);
+      setAfterClose(() => payload);
     }
      /* ②-a 保存 → 刷新列表 */
     if (payload === 'reload') {
-      setTimeout(() => api.load(), ANIM_MS);
+      //setTimeout(() => api.load(), ANIM_MS);
+      setAfterClose(() => () => api.load());
     }
+  };
+
+  // 新的关闭&刷新逻辑
+  const handlePanelClose = (payload) => {
+    // 1. 如果是编辑payload，切换到编辑模式（而不是关闭面板）
+    if (payload && typeof payload === 'object' && payload.mode === 'edit') {
+      openTaskEdit(payload._id, payload.task);
+      return;  // 不要关闭面板
+    }
+    // 关闭面板
+    handleTaskClose();
+    // 只要 payload === 'reload'，就刷新
+    if (payload === 'reload') {
+      api.load();
+    }
+    // 其它情况不用管，比如 payload === 'close'
   };
 
   // 从后端加载任务列表
@@ -188,9 +207,6 @@ export default function Home() {
                 {viewMode === 'calendar' ? '项目--日历' : '项目--列表'}
               </Typography>
               <Stack direction="row" spacing={2}>
-                {/*<Button variant="outlined" onClick={debouncedTaskClose}>
-                  返回首页
-                </Button>*/}
                 <Button variant="contained" color="secondary" onClick={openTaskCreate}>
                   新增任务
                 </Button>
@@ -205,16 +221,14 @@ export default function Home() {
             </Stack>
             {viewMode === 'calendar' ? (
               <CalendarView
-                //events={tasks}
-                //events={normalizeTaskDates(tasks)}
                 events={events}
                 style={{ height: '100%', width: '100%' }}
-                onSelectEvent={(event) => openTaskDetail(event.p_id)}
+                onSelectEvent={(event) => openTaskDetail(event._id)}
               />
             ) : (
               <TaskList
                 tasks={tasks}
-                onSelectTask={(task) => openTaskDetail(task.p_id)}
+                onSelectTask={(task) => openTaskDetail(task._id)}
                 sx={{ height: '100%' }}
               />
             )}
@@ -227,18 +241,17 @@ export default function Home() {
               mountOnEnter 
               unmountOnExit
               onExited={() => {              // 动画完全收起 → 执行回调
-                afterClose?.();
-                setAfterClose(null);
+                // 可选：面板动画结束后也可以再做一次清理
+                setSelectedTask(null);
               }}
             >
-              <div>
-                <DelayedUnmount show={!!selectedTask}>
+              <div style={{ height: '100%' }}>
+                
                   <SlideContent
                     selectedTask={selectedTask}
-                    //handleTaskClose={debouncedTaskClose}
-                    handleTaskClose={handleSlideClose}
+                    handleTaskClose={handlePanelClose}
                   />
-                </DelayedUnmount>
+               
               </div>
               </Slide>
             </Grid>

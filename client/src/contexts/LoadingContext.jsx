@@ -22,6 +22,12 @@ export function LoadingProvider({ children }) {
             left: 0,
             right: 0,
             zIndex: 13000,
+            // 主要颜色（进度条本身）
+            '& .MuiLinearProgress-bar': {
+              backgroundColor: '#f44336', // 橙色举例，换成你喜欢的
+            },
+            // 背景色
+            backgroundColor: '#fff7e6',   // 更浅的背景
           }}
         />
       )}
