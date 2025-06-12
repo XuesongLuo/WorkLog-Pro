@@ -147,6 +147,7 @@ router.patch('/:_id', auth, adminOnly, async (req, res) => {
 
 // DELETE /api/tasks/:_id - 删除项目（管理员权限）
 router.delete('/:_id', auth, adminOnly, async (req, res) => {
+    console.log('delete')
     try {
         const db = await getMongoDb();
         // 1. 删除项目主表

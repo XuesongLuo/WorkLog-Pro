@@ -134,11 +134,16 @@ export default function Home() {
     }
     // 关闭面板
     handleTaskClose();
+    // 如果是删除等传递过来的函数
+    if (typeof payload === 'function') {
+      // 你可以选择直接调用（同步）或者动画结束后调用（异步）
+      payload();
+      return;
+    }
     // 只要 payload === 'reload'，就刷新
     if (payload === 'reload') {
       api.load();
     }
-    // 其它情况不用管，比如 payload === 'close'
   };
 
   // 从后端加载任务列表
