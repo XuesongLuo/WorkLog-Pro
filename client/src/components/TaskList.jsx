@@ -1,105 +1,189 @@
-import {
-    Table, TableBody, TableCell, TableContainer,
-    TableHead, TableRow, Paper, TableSortLabel
-  } from '@mui/material';
-import { forwardRef, useState, useMemo } from 'react';          // 供 <Fade> 使用
+// src/components/TaskList.jsx
+import React, { useMemo, useRef, useEffect, useState } from 'react';
+import { MaterialReactTable } from 'material-react-table';
 
+// 日期格式化工具
+function formatDate(val) {
+  if (!val) return '';
+  const d = typeof val === 'string' ? new Date(val) : val;
+  if (isNaN(d)) return '';
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+}
 
-// 比较器：按数据类型自动选择
-const getComparator = (field, order) => (a, b) => {
-    const [x, y] = order === 'asc' ? [a, b] : [b, a];
-  
-    const vx = field === 'fulladdress'
-    ? `${x.address ?? ''}, ${x.city ?? ''}, ${x.zipcode ?? ''}`
-    : x[field];
-
-  const vy = field === 'fulladdress'
-    ? `${y.address ?? ''}, ${y.city ?? ''}, ${y.zipcode ?? ''}`
-    : y[field];
-  
-    // 1) 日期 / 数字
-    if (vx instanceof Date && vy instanceof Date) {
-      return vx - vy;
-    }
-    if (typeof vx === 'number' && typeof vy === 'number') {
-      return vx - vy;
-    }
-  
-    // 2) 其他 -> 字符串本地比较（含中文拼音）
-    return String(vx ?? '').localeCompare(String(vy ?? ''), 'zh');
-};
-  
-
-// forwardRef 让父组件 <Fade> 能拿到 DOM 引用
-const TaskList = forwardRef(function TaskList(
-    { tasks, onSelectTask, sx = {} }, ref
-) {
-    /** ① 排序状态 */ 
-    const [orderBy, setOrderBy] = useState('_id');
-    const [order, setOrder]     = useState('asc');     // 'asc' | 'desc'
-
-    /** ② 表头点击切换排序 */
-    const handleSort = (field) => {
-        if (orderBy === field) {
-            setOrder(prev => (prev === 'asc' ? 'desc' : 'asc'));
-        } else {
-            setOrderBy(field);
-            setOrder('asc');
+function useContainerWidth() {
+    const ref = useRef(null);
+    const [width, setWidth] = useState(1200);
+    useEffect(() => {
+        function updateWidth() {
+            if (ref.current) {
+                const rect = ref.current.getBoundingClientRect();
+                setWidth(Math.floor(rect.width));
+            }
         }
-    };
+        // 延迟获取宽度，确保元素已渲染
+        const timer = setTimeout(updateWidth, 100);
+        //updateWidth();
+        // 使用 ResizeObserver
+        const observer = new window.ResizeObserver(() => {
+            updateWidth();
+        });
+        if (ref.current) observer.observe(ref.current);
+        return () => {
+            clearTimeout(timer);
+            observer.disconnect();
+        };
+    }, []);
+    return [ref, width];
+}
 
-    /** ③ 计算排序后的列表（useMemo 避免重复排序） */
-    const sortedTasks = useMemo(() => {
-        const cmp = getComparator(orderBy, order);
-        return [...tasks].sort(cmp);
-    }, [tasks, orderBy, order]);
+const TaskList = React.forwardRef(function TaskList( { tasks, onSelectTask, sx = {} }, ref) {
+    const [containerRef, containerWidth] = useContainerWidth();
+    // 列定义
+    const columns = useMemo(
+        () => [
+        {
+            accessorKey: 'start',
+            header: '开始日期',
+            baseWidth: 50,
+            Cell: ({ cell }) => formatDate(cell.getValue()),
+            sortingFn: (rowA, rowB) => {
+            // 直接按时间戳倒序
+            const a = new Date(rowA.original.start).getTime() || 0;
+            const b = new Date(rowB.original.start).getTime() || 0;
+            return b - a; // 降序，最近在前
+            },
+        },
+        {
+            accessorKey: 'fulladdress',
+            header: '地址',
+            baseWidth: 150,
+            Cell: ({ row }) =>
+            (
+                <div style={{ whiteSpace: 'normal', wordWrap: 'break-word' }}>
+                    {`${row.original.address ?? ''}, ${row.original.city ?? ''}, ${row.original.state ?? ''}, ${row.original.zipcode ?? ''}`}
+                </div>
+            ),
+            sortingFn: (rowA, rowB) => {
+            const a = `${rowA.original.address ?? ''},${rowA.original.city ?? ''},${rowA.original.state ?? ''},${rowA.original.zipcode ?? ''}`;
+            const b = `${rowB.original.address ?? ''},${rowB.original.city ?? ''},${rowB.original.state ?? ''},${rowB.original.zipcode ?? ''}`;
+            return a.localeCompare(b, 'zh');
+            },
+        },
+        {
+            accessorKey: 'year',
+            header: '房屋年份',
+            baseWidth: 50
+        },
+        {
+            accessorKey: 'insurance',
+            header: '保险公司',
+            baseWidth: 80
+        },
+        {
+            accessorKey: 'type',
+            header: '类型',
+            baseWidth: 50,
+            align: 'right',
+        },
+        ],
+        []
+    );
+
+    const dynamicColumns = useMemo(() => {
+        const totalBase = columns.reduce((sum, col) => sum + (col.baseWidth || 80), 0);
+        const w = containerWidth - 164; // 增加余量，防止溢出
+        return columns.map((col, index) => {
+            const ratio = (col.baseWidth || 80) / totalBase;
+            let size = Math.round(w * ratio);
+            // 确保最小宽度
+            const minWidth = Math.max(60, col.baseWidth * 0.6);
+            size = Math.max(minWidth, size);
+            // 最后一列特殊处理，确保不超出
+            if (index === columns.length - 1) {
+                const usedWidth = columns.slice(0, -1).reduce((sum, _, i) => {
+                    const prevRatio = (columns[i].baseWidth || 80) / totalBase;
+                    return sum + Math.max(Math.max(60, columns[i].baseWidth * 0.6), Math.floor(w * prevRatio));
+                }, 0);
+                size = Math.max(minWidth, w - usedWidth);
+            }
+            return {
+                ...col,
+                size,
+                minSize: minWidth,
+                maxSize: size * 1.5,
+            };
+        });
+    }, [columns, containerWidth]);
+
+    // 数据
+    const data = useMemo(() => {
+        return tasks.map(t => ({
+            ...t,
+            fulladdress: `${t.address ?? ''}, ${t.city ?? ''}, ${t.state ?? ''}, ${t.zipcode ?? ''}`,
+        }));
+    }, [tasks]);
 
     return (
-      <TableContainer component={Paper} ref={ref} sx={{ flex: 1, ...sx }}>
-        <Table size="small" stickyHeader>
-          <TableHead>
-            <TableRow>
-                {[
-                    { field: 'fulladdress', label: '地址' },
-                    { field: 'year', label: '房屋年份' },
-                    { field: 'insurance', label: '保险公司' },
-                    { field: 'type',    label: '类型', align: 'right' },
-                ].map(col => (
-                <TableCell
-                    key={col.field}
-                    align={col.align || 'left'}
-                    sortDirection={orderBy === col.field ? order : false}
-                >
-                    <TableSortLabel
-                    active={orderBy === col.field}
-                    direction={orderBy === col.field ? order : 'asc'}
-                    onClick={() => handleSort(col.field)}
-                    >
-                    {col.label}
-                    </TableSortLabel>
-                </TableCell>
-                ))}
-            </TableRow>
-          </TableHead>
-  
-          <TableBody>
-            {sortedTasks.map(t => (
-              <TableRow
-                hover key={t._id}
-                onClick={() => onSelectTask(t)}
-                sx={{ cursor: 'pointer' }}
-              >
-                <TableCell>{`${t.address}, ${t.city}, ${t.state}, ${t.zipcode}`}</TableCell>
-                <TableCell>{t.year}</TableCell>
-                <TableCell>{t.insurance}</TableCell>
-                <TableCell align="right">{t.type}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+        <div 
+            ref={containerRef} 
+            style={{ 
+                width: '100%', 
+                maxWidth: '100%',
+                height: '100%',
+                minHeight: 0,
+                minWidth: 0,
+                overflow: 'auto', // 防止MRT溢出
+            }}
+        >
+            <MaterialReactTable
+                enableColumnActions={false}
+                columns={dynamicColumns}
+                data={data}
+                enableRowVirtualization={true}
+                enablePagination={false}
+                enableColumnResizing={false}
+                enableSorting={true}
+                initialState={{
+                    sorting: [{ id: 'start', desc: true }], // 默认按开始日期倒序
+                }}
+                muiTableBodyRowProps={({ row }) => ({
+                    hover: true,
+                    onClick: () => onSelectTask && onSelectTask(row.original),
+                    sx: { cursor: 'pointer' },
+                })}
+                muiTablePaperProps={{
+                    ref,
+                    sx: { width: '100%', maxWidth: '100%', ...sx, height: '100%', boxShadow: 'none', border: 'none', boxSizing: 'border-box' }
+                    //sx: { flex: 1, ...sx, height: '100%', boxShadow: 'none', border: 'none', boxSizing: 'border-box' },
+                }}
+                muiTableContainerProps={{
+                    sx: { height: '100%', width: '100%', maxWidth: '100%' },
+                }}
+                muiTableHeadCellProps={{
+                    align: 'center',
+                    sx: {
+                        fontWeight: 700,
+                        fontSize: 13,
+                        background: '#f8fafd',
+                        //border: '0.2px solid #e0e0e0',
+                    },
+                }}
+                muiTableBodyCellProps={{
+                    align: 'center',
+                    sx: {
+                        fontSize: 12,
+                        //border: '0.2px solid #e0e0e0',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                    },
+                }}
+            />
+        </div>
     );
-  });
-  
-  export default TaskList;
-  
+});
+
+export default TaskList;

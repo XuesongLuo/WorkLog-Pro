@@ -185,6 +185,7 @@ export default function Home() {
           minWidth: 0,
           maxWidth: 'none',
           mx: 'auto',             // 居中
+          
         }}
       >
         <Grid
@@ -203,7 +204,7 @@ export default function Home() {
             <Stack direction="row" justifyContent="space-between" mb={2}>
               <Button
                   variant="outlined"
-                  startIcon={viewMode === 'calendar' ? <ViewListIcon /> : <CalendarMonthIcon />}
+                  startIcon={viewMode === 'list' ? <CalendarMonthIcon /> : <ViewListIcon />}
                   onClick={toggleView}
                 >
                   {viewMode === 'calendar' ? '列表视图' : '日历视图'}
@@ -224,17 +225,17 @@ export default function Home() {
                 </Button>
               </Stack>
             </Stack>
-            {viewMode === 'calendar' ? (
-              <CalendarView
-                events={events}
-                style={{ height: '100%', width: '100%' }}
-                onSelectEvent={(event) => openTaskDetail(event._id)}
-              />
-            ) : (
+            {viewMode === 'list' ? (
               <TaskList
                 tasks={tasks}
                 onSelectTask={(task) => openTaskDetail(task._id)}
                 sx={{ height: '100%' }}
+              />
+            ) : (
+              <CalendarView
+                events={events}
+                style={{ height: '100%', width: '100%' }}
+                onSelectEvent={(event) => openTaskDetail(event._id)}
               />
             )}
           </Grid>

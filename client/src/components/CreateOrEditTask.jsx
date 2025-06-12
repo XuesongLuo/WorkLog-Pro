@@ -48,7 +48,7 @@ function formatDateToYMD(date) {
 
 const types = ['室外工程', '室内工程', '后院施工', '除霉处理'];
 
-export default function CreateOrEditTask({ _id: propId, task: propTask, embedded = false, onClose }) {
+export default function CreateOrEditTask({ _id: propId, task: propTask, embedded = false, onClose, onSuccess }) {
   const navigate = useNavigate();
   const location = useLocation();
   const editorRef = useRef();
@@ -97,12 +97,10 @@ export default function CreateOrEditTask({ _id: propId, task: propTask, embedded
         start: new Date(cleanTask.start),
         end: new Date(cleanTask.end),
       };
-      //setForm(prev => ({ ...prev, ...parsedTask }));
       setForm(parsedTask);
       taskApi.getTaskDescription(_id)
         .then(descData => {
           setDesc(descData.description || '');
-          //setForm(prev => ({ ...prev, description: descData.description }));
           // 等富文本内容准备好后，再延迟加载 Editor
           requestIdleCallback(() => setEditorReady(true));
         })
@@ -177,7 +175,11 @@ export default function CreateOrEditTask({ _id: propId, task: propTask, embedded
         await taskApi.updateDesc(projectId, description);    // 才写描述
       }
       enqueueSnackbar(isEdit ? '保存成功' : '创建成功', { variant: 'success' });
-      onClose?.('reload');
+      if (onSuccess) {
+        onSuccess();       // ← 独立页面用这个
+      } else if (onClose) {
+        onClose('reload'); // ← 嵌入式用这个
+      }
     } catch (e) {
       /* fetcher 已有全局报错，若要局部提示可加 enqueueSnackbar */
       enqueueSnackbar(e.message || '新建失败', { variant: 'error' });
@@ -212,7 +214,6 @@ export default function CreateOrEditTask({ _id: propId, task: propTask, embedded
       <Box sx={{ 
         display: 'flex', 
         flexDirection: 'column', 
-        //height: embedded ? '100%' : 'auto',
         width: embedded ? '100%' : '80%',
         maxWidth: embedded ? 'none' : '100vw',
         minWidth: 0, // 防止内容撑开容器
@@ -242,7 +243,7 @@ export default function CreateOrEditTask({ _id: propId, task: propTask, embedded
                   <DeleteIcon />
                 </IconButton>
               )}
-              <IconButton color="primary" onClick={handleSubmit}>
+              <IconButton color="primary" onClick={handleSubmit} disabled={saving}>
                 <SaveIcon />
               </IconButton>
               <IconButton 
@@ -435,7 +436,8 @@ export default function CreateOrEditTask({ _id: propId, task: propTask, embedded
             <Button variant='text' color="error" onClick={() => setConfirmDeleteOpen(true)}>删除</Button>
           )}
           <Button
-            loading={saving}
+            //loading={saving}
+            disabled={saving}
             onClick={handleSubmit}
           >
             {isEdit ? '保存修改' : '创建任务'}
