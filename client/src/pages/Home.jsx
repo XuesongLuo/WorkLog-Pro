@@ -48,7 +48,7 @@ const useNormalizedEvents = (tasks) => useMemo(() => {
     id   : t._id,
     start: t.start instanceof Date ? t.start : new Date(t.start),
     end  : t.end   instanceof Date ? t.end   : new Date(t.end),
-    title: `${t.address ?? ''}, ${t.city ?? ''}, ${t.zipcode ?? ''}`,
+    title: `${t.address ?? ''}, ${t.city ?? ''}, ${t.state ?? ''}, ${t.zipcode ?? ''}`,
   }));
 }, [tasks]);
 

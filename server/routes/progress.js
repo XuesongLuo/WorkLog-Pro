@@ -29,7 +29,7 @@ router.get('/', auth, adminOnly, async (req, res) => {
     // 合并：为每一行进度加 location/year/insurance 字段
     const progressArray = progressRows.map(progress => {
       const project = projectMap[progress._id] || {};
-      const location = [project.address, project.city, project.zipcode].filter(Boolean).join(', ');
+      const location = [project.address, project.city, project.state, project.zipcode].filter(Boolean).join(', ');
       return {
         ...progress,
         location,

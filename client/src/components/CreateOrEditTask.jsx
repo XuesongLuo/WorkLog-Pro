@@ -66,6 +66,7 @@ export default function CreateOrEditTask({ _id: propId, task: propTask, embedded
   const [form, setForm] = useState({
     address: '',
     city: '',
+    state: '',
     zipcode: '',
     year: '',
     insurance: '',
@@ -257,18 +258,18 @@ export default function CreateOrEditTask({ _id: propId, task: propTask, embedded
         <Grid 
           container 
           spacing={2} 
-          columns={12} 
+          columns={24} 
           sx={{ 
             display: 'grid', 
             gridTemplateColumns: {
               xs: 'repeat(1, 1fr)',
               sm: 'repeat(6, 1fr)',
               md: 'repeat(8, 1fr)',
-              lg: 'repeat(12, 1fr)',
+              lg: 'repeat(24, 1fr)',
             }, 
           }}>
           {/* 第1行：地址、城市、邮政编码 */}
-          <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 6', md: 'span 6', lg: 'span 6' } }}>
+          <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 6', md: 'span 6', lg: 'span 12' } }}>
             <TextField 
               name="address" 
               label="地址" 
@@ -278,7 +279,7 @@ export default function CreateOrEditTask({ _id: propId, task: propTask, embedded
               onChange={handleChange} 
             />
           </Grid>
-          <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 3', md: 'span 1', lg: 'span 3' } }}>
+          <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 3', md: 'span 1', lg: 'span 5' } }}>
             <TextField 
               name="city" 
               label="城市" 
@@ -290,6 +291,16 @@ export default function CreateOrEditTask({ _id: propId, task: propTask, embedded
           </Grid>
           <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 3', md: 'span 1', lg: 'span 3' } }}>
             <TextField 
+              name="state" 
+              label="州" 
+              size="small" 
+              fullWidth 
+              value={form.state} 
+              onChange={handleChange} 
+            />
+          </Grid>
+          <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 3', md: 'span 1', lg: 'span 4' } }}>
+            <TextField 
               name="zipcode" 
               label="邮政编码" 
               size="small" 
@@ -299,7 +310,7 @@ export default function CreateOrEditTask({ _id: propId, task: propTask, embedded
             />
           </Grid>
           {/* 第2行：房子年份、保险公司、项目类型选择*/}
-          <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 6', md: 'span 6', lg: 'span 2' } }}>
+          <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 6', md: 'span 6', lg: 'span 4' } }}>
             <TextField 
               name="year" 
               label="年份" 
@@ -309,7 +320,7 @@ export default function CreateOrEditTask({ _id: propId, task: propTask, embedded
               onChange={handleChange} 
             />
           </Grid>
-          <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 3', md: 'span 1', lg: 'span 6' } }}>
+          <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 3', md: 'span 1', lg: 'span 12' } }}>
             <TextField 
               name="insurance" 
               label="保险公司" 
@@ -319,7 +330,7 @@ export default function CreateOrEditTask({ _id: propId, task: propTask, embedded
               onChange={handleChange} 
             />
           </Grid>
-          <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 2', md: 'span 2', lg: 'span 4' } }}>
+          <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 2', md: 'span 2', lg: 'span 8' } }}>
             <FormControl fullWidth size="small">
               <InputLabel id="type-label">项目类型</InputLabel>
               <Select
@@ -340,7 +351,7 @@ export default function CreateOrEditTask({ _id: propId, task: propTask, embedded
           </Grid>
 
           {/* 第3行：公司、项目推荐人、项目负责人 */}
-          <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 3', md: 'span 2', lg: 'span 3' } }}>
+          <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 3', md: 'span 2', lg: 'span 6' } }}>
             <TextField 
               name="manager" 
               label="项目负责人" 
@@ -350,7 +361,7 @@ export default function CreateOrEditTask({ _id: propId, task: propTask, embedded
               onChange={handleChange} 
             />
           </Grid>
-          <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 3', md: 'span 2', lg: 'span 3' } }}>
+          <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 3', md: 'span 2', lg: 'span 6' } }}>
             <TextField 
               name="referrer" 
               label="项目推荐人" 
@@ -360,7 +371,7 @@ export default function CreateOrEditTask({ _id: propId, task: propTask, embedded
               onChange={handleChange} 
             />
           </Grid>
-          <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 6', md: 'span 4', lg: 'span 6' } }}>
+          <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 6', md: 'span 4', lg: 'span 12' } }}>
             <TextField 
               name="company" 
               label="公司" 
@@ -372,7 +383,7 @@ export default function CreateOrEditTask({ _id: propId, task: propTask, embedded
           </Grid>
           
           {/* 第4行：开始日期、结束日期 */}
-          <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 6', md: 'span 4', lg: 'span 6' } }}>
+          <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 6', md: 'span 4', lg: 'span 12' } }}>
             <LocalizationProvider dateAdapter={AdapterDateFns}>
               <DatePicker
                 label="开始日期"
@@ -382,7 +393,7 @@ export default function CreateOrEditTask({ _id: propId, task: propTask, embedded
               />
             </LocalizationProvider>
           </Grid>
-          <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 6', md: 'span 4', lg: 'span 6' } }}>
+          <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 6', md: 'span 4', lg: 'span 12' } }}>
             <LocalizationProvider dateAdapter={AdapterDateFns}>
               <DatePicker
                 label="结束日期"

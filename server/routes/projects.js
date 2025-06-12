@@ -53,6 +53,7 @@ router.post('/', auth, adminOnly, async (req, res) => {
             _id: _id,
             address: rest.address || null,
             city: rest.city || null,
+            state: rest.state || null,
             zipcode: rest.zipcode || null,
             year: rest.year || null,
             insurance: rest.insurance || null,
@@ -110,10 +111,10 @@ router.put('/:_id', auth, adminOnly, async (req, res) => {
     try {
         const db = await getMongoDb();
         // 这里只做全字段更新（一般业务可先查再改，也可直接update）
-        const { address, city, zipcode, year, insurance, type, company, referrer, manager, start, end } = req.body;
+        const { address, city, state, zipcode, year, insurance, type, company, referrer, manager, start, end } = req.body;
         const result = await db.collection('projects').updateOne(
             { _id: req.params._id },
-            { $set: { address, city, zipcode, year, insurance, type, company, referrer, manager, start, end } }
+            { $set: { address, city, state, zipcode, year, insurance, type, company, referrer, manager, start, end } }
         );
         if (!result.matchedCount) return res.status(404).json({ error: '项目未找到' });
         const project = await db.collection('projects').findOne({ _id: req.params._id });

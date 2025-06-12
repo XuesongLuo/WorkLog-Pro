@@ -170,7 +170,7 @@ export function TaskProvider({ children }) {
     const section = Object.keys(patch)[0];
     const value = patch[section];
     // 基础字段
-    if (["location", "year", "insurance"].includes(section)) {
+    if (["year", "insurance"].includes(section)) {
       // 写回 tasks
       console.log("if:", rowId, { [section]: value } )
       return patchTask(rowId, { [section]: value });

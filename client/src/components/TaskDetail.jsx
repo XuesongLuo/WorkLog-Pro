@@ -183,7 +183,7 @@ export default function TaskDetail({ _id: propId, embedded = false, onClose }) {
         <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 12', md: 'span 12', lg: 'span 12' } }}>
           <Typography>
             <strong>地址：</strong>
-            {`${task.address ?? ''}, ${task.city ?? ''}, ${task.zipcode ?? ''}`}
+            {`${task.address ?? ''}, ${task.city ?? ''}, ${task.state ?? ''}, ${task.zipcode ?? ''}`}
           </Typography>
         </Grid>
        

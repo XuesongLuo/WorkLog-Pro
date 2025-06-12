@@ -89,7 +89,7 @@ const TaskList = forwardRef(function TaskList(
                 onClick={() => onSelectTask(t)}
                 sx={{ cursor: 'pointer' }}
               >
-                <TableCell>{`${t.address}, ${t.city}, ${t.zipcode}`}</TableCell>
+                <TableCell>{`${t.address}, ${t.city}, ${t.state}, ${t.zipcode}`}</TableCell>
                 <TableCell>{t.year}</TableCell>
                 <TableCell>{t.insurance}</TableCell>
                 <TableCell align="right">{t.type}</TableCell>
