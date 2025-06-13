@@ -53,7 +53,6 @@ export function TaskProvider({ children }) {
   /* 公共 API（用 fetcher 自动带 loading + 报错） */
   const load = useCallback(async () => {
       const list = await fetcher('/api/tasks');
-      console.log('tasks reloaded', list);
       taskDispatch({ type: 'set', payload: list });
   }, []);
 

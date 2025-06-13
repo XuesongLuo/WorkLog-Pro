@@ -1,5 +1,5 @@
 // src/pages/Home.jsx
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Typography, Box, Button, Stack, Grid, Container, Slide} from '@mui/material';
 import ViewListIcon from '@mui/icons-material/ViewList';
@@ -58,6 +58,9 @@ export default function Home() {
   const [lang, setLang] = useState('zh');
   const [viewMode, setViewMode] = useState('list'); // 'calendar' | 'list'
   const navigate = useNavigate();
+  const [showPanelContent, setShowPanelContent] = useState(false);
+  const containerOuterRef = useRef(null);
+  const [lockedWidth, setLockedWidth] = useState(null);
 
   const {
     selectedTask,
@@ -73,13 +76,13 @@ export default function Home() {
   const gridStyles = useMemo(() => ({
     display: 'flex',
     flexDirection: 'column',
-    transition: 'all 0.5s ease',
+    //transition: 'all 0.5s ease',
     flexGrow: 1,
     width: showDetail ? '50%' : '100%',
     maxWidth: showDetail ? '50%' : '100%',
     flexBasis: showDetail ? '50%' : '100%',
-    pl: 1,
-    pr: 1,
+    pl: 0,
+    pr: showDetail ? 2 : 'auto',
     ml: showDetail ? 0 : 'auto',
     mr: showDetail ? 0 : 'auto',
     height: '100%',
@@ -92,7 +95,7 @@ export default function Home() {
     width: showDetail ? '50%' : 0,
     maxWidth: showDetail ? '50%' : 0,
     flexBasis: showDetail ? '50%' : 0,
-    transition: 'all 0.5s ease',
+    //transition: 'all 0.5s ease',
     opacity: showDetail ? 1 : 0,
     pl: showDetail ? 2 : 0,
     borderLeft: showDetail ? '1px solid #ddd' : 'none',
@@ -100,30 +103,14 @@ export default function Home() {
     overflow: 'hidden',
   }), [showDetail]);
 
-  const [afterClose, setAfterClose] = useState(null);
   const debouncedTaskClose = useDebounce(handleTaskClose, 100);   // 包装防抖版本的 handleTaskClose
 
-  const handleSlideClose = (payload) => {
-    /* ① 编辑：直接切换，不收起面板 */
-    if (payload && typeof payload === 'object' && payload.mode === 'edit') {
-      openTaskEdit(payload._id, payload.task);   // 来自 useTaskDetailState
-      return;                                   // 提前退出
-    }
-    /* ② 其它情况：先收起面板 */
-    debouncedTaskClose();
-    // 关键：确保 always 触发 Slide 收起
-    setSelectedTask(null);
-    /* ②-b 删除 → 真删 */
-    if (typeof payload === 'function') {
-      //setTimeout(payload, ANIM_MS);
-      setAfterClose(() => payload);
-    }
-     /* ②-a 保存 → 刷新列表 */
-    if (payload === 'reload') {
-      //setTimeout(() => api.load(), ANIM_MS);
-      setAfterClose(() => () => api.load());
-    }
-  };
+
+  // 语言切换
+  const handleLangChange = (e) => setLang(e.target.value);
+  // 视图切换
+  const toggleView = () =>
+    setViewMode(prev => (prev === 'calendar' ? 'list' : 'calendar'));
 
   // 新的关闭&刷新逻辑
   const handlePanelClose = (payload) => {
@@ -146,35 +133,27 @@ export default function Home() {
     }
   };
 
+  // 3. Slide 动画事件，测量锁定宽度
+  const handlePanelAnimationEnd = () => {
+    if (containerOuterRef.current) {
+      const parentW = containerOuterRef.current.clientWidth;
+      const percent = showDetail ? 0.5 : 1;
+      setLockedWidth(Math.round(parentW * percent));
+    }
+  };
+
   // 从后端加载任务列表
   useEffect(() => {         // 组件挂载 → 拉一次任务
     api.load();
   }, [api]);
 
-  // 卸载行为延迟进行
-  const DelayedUnmount = ({ show, children }) => {
-    const [render, setRender] = useState(show);
-    useEffect(() => {
-      if (show) setRender(true);
-      else {
-        const id = setTimeout(() => setRender(false), 500); // 等动画完成
-        return () => clearTimeout(id);
-      }
-    }, [show]);
-    return render ? children : null;
-  };
-
-  // 语言切换
-  const handleLangChange = (e) => setLang(e.target.value);
-  // 视图切换
-  const toggleView = () =>
-    setViewMode(prev => (prev === 'calendar' ? 'list' : 'calendar'));
   
   /* --------------------- 组件渲染 --------------------- */
   return (
     <Box sx={{ width: '100vw', minHeight: '100vh' }}>
       <TopAppBar /> 
       <Container
+        ref={containerOuterRef}
         maxWidth={false}
         disableGutters
         sx={{ 
@@ -190,7 +169,6 @@ export default function Home() {
       >
         <Grid
           container
-          spacing={2}
           sx={{
             height: '100%',
             width: '100%',
@@ -230,6 +208,7 @@ export default function Home() {
                 tasks={tasks}
                 onSelectTask={(task) => openTaskDetail(task._id)}
                 sx={{ height: '100%' }}
+                lockedWidth={lockedWidth}            // 传递锁定宽度
               />
             ) : (
               <CalendarView
@@ -246,9 +225,15 @@ export default function Home() {
               in={!!selectedTask} 
               mountOnEnter 
               unmountOnExit
+              onEntered={() => {
+                setShowPanelContent(true);     // 动画后加载内容
+                handlePanelAnimationEnd();     // 你的原有测宽/布局逻辑
+              }}
+              onExit={() => setShowPanelContent(false)} // 动画开始卸载内容
               onExited={() => {              // 动画完全收起 → 执行回调
                 // 可选：面板动画结束后也可以再做一次清理
                 setSelectedTask(null);
+                handlePanelAnimationEnd();
               }}
             >
               <div style={{ height: '100%' }}>

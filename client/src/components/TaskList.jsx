@@ -39,8 +39,11 @@ function useContainerWidth() {
     return [ref, width];
 }
 
-const TaskList = React.forwardRef(function TaskList( { tasks, onSelectTask, sx = {} }, ref) {
-    const [containerRef, containerWidth] = useContainerWidth();
+const TaskList = React.forwardRef(function TaskList( { tasks, onSelectTask, sx = {}, lockedWidth }, ref) {
+    //const [containerRef, containerWidth] = useContainerWidth();
+
+    const containerWidth = lockedWidth ?? 1200;
+    console.log("containerWidth:", containerWidth)
     // 列定义
     const columns = useMemo(
         () => [
@@ -94,7 +97,7 @@ const TaskList = React.forwardRef(function TaskList( { tasks, onSelectTask, sx =
 
     const dynamicColumns = useMemo(() => {
         const totalBase = columns.reduce((sum, col) => sum + (col.baseWidth || 80), 0);
-        const w = containerWidth - 164; // 增加余量，防止溢出
+        const w = containerWidth - 180; // 增加余量，防止溢出
         return columns.map((col, index) => {
             const ratio = (col.baseWidth || 80) / totalBase;
             let size = Math.round(w * ratio);
@@ -128,7 +131,6 @@ const TaskList = React.forwardRef(function TaskList( { tasks, onSelectTask, sx =
 
     return (
         <div 
-            ref={containerRef} 
             style={{ 
                 width: '100%', 
                 maxWidth: '100%',
