@@ -14,7 +14,6 @@ import { useDebounce }  from '../hooks/useDebounce';
 import useTaskDetailState from '../hooks/useTaskDetailState';
 import { useTasks } from '../contexts/TaskStore'; 
 
-
 const SlideContent = React.memo(
   ({ selectedTask, handleTaskClose }) => (
     <Box sx={{ width: '100%', height: '100%', overflow: 'auto' }}>
@@ -53,7 +52,7 @@ const useNormalizedEvents = (tasks) => useMemo(() => {
 }, [tasks]);
 
 export default function Home() {
-  const { tasks, api } = useTasks(); 
+  const { tasks, api, loaded, page, setPage, hasMore, loading } = useTasks(); 
   const events = useNormalizedEvents(tasks);
   const [lang, setLang] = useState('zh');
   const [viewMode, setViewMode] = useState('list'); // 'calendar' | 'list'
@@ -70,7 +69,7 @@ export default function Home() {
     openTaskCreate,
     handleTaskClose,
     setSelectedTask
-  } = useTaskDetailState(() => api.load());
+  } = useTaskDetailState(() => api.loadPage(page));
 
   // 使用 useMemo 优化计算
   const gridStyles = useMemo(() => ({
@@ -127,9 +126,13 @@ export default function Home() {
       payload();
       return;
     }
-    // 只要 payload === 'reload'，就刷新
-    if (payload === 'reload') {
-      api.load();
+    // 如果 payload === 'reload-first'， 从第一页开始刷新， 如果 payload === 'reload-current'， 从当前页开始刷新
+    if (payload === 'reload-first') {
+      api.loadPage(1);
+      setPage(1);
+    }
+    if (payload === 'reload-current') {
+      api.loadPage(page);
     }
   };
 
@@ -143,9 +146,12 @@ export default function Home() {
   };
 
   // 从后端加载任务列表
-  useEffect(() => {         // 组件挂载 → 拉一次任务
-    api.load();
-  }, [api]);
+  useEffect(() => {
+    if (!loaded) {
+      api.loadPage(1);
+      setPage(1);
+    }
+  }, [loaded]);
 
   
   /* --------------------- 组件渲染 --------------------- */
@@ -209,6 +215,13 @@ export default function Home() {
                 onSelectTask={(task) => openTaskDetail(task._id)}
                 sx={{ height: '100%' }}
                 lockedWidth={lockedWidth}            // 传递锁定宽度
+                loading={loading}           // 新增
+                hasMore={hasMore}           // 新增
+                onLoadMore={() => {
+                  if (!loading && hasMore) {
+                    api.loadPage(page + 1);
+                  }
+                }}
               />
             ) : (
               <CalendarView
@@ -237,12 +250,10 @@ export default function Home() {
               }}
             >
               <div style={{ height: '100%' }}>
-                
                   <SlideContent
                     selectedTask={selectedTask}
                     handleTaskClose={handlePanelClose}
                   />
-               
               </div>
               </Slide>
             </Grid>

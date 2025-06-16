@@ -1,6 +1,6 @@
 // src/contexts/TaskStore.jsx
 import merge from 'lodash.merge'; 
-import { createContext, useContext, useReducer, useMemo, useCallback } from 'react';
+import { useState, createContext, useContext, useReducer, useMemo, useCallback } from 'react';
 import { fetcher } from '../utils/fetcher';
 
 const TaskCtx = createContext();
@@ -47,15 +47,44 @@ export function TaskProvider({ children }) {
   /* ---------- Project Progress reducer ---------- */
   const [progressRows, progressDispatch] = useReducer(progressReducer, {});
   const [tasks, taskDispatch] = useReducer(taskReducer, []);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+
   const taskMap = useMemo(() => Object.fromEntries(tasks.map(t => [t._id, t])), [tasks]);
+
+  // 分页加载
+  const loadPage = useCallback(async (pageNumber = 1, pageSize = 100) => {
+    if (loading) return;
+    setLoading(true);
+    try {
+      const res = await fetcher(`/api/tasks?page=${pageNumber}&pageSize=${pageSize}`);
+      const { data, total } = res;
+      if (pageNumber === 1) {
+        taskDispatch({ type: 'set', payload: data });
+      } else {
+        data.forEach(t => taskDispatch({ type: 'add', payload: t }));
+      }
+      const totalSoFar = tasks.length + data.length;
+      setPage(pageNumber);
+      setHasMore(totalSoFar < total);
+      setLoaded(true);
+    } finally {
+      setLoading(false);
+    }
+  }, [tasks, loading]);
+
 
 
   /* 公共 API（用 fetcher 自动带 loading + 报错） */
+  // 废弃
+  /*
   const load = useCallback(async () => {
       const list = await fetcher('/api/tasks');
       taskDispatch({ type: 'set', payload: list });
   }, []);
-
+  */
 
   // 读取单条任务
   const getTask = useCallback(
@@ -81,29 +110,32 @@ export function TaskProvider({ children }) {
         body:   JSON.stringify(mainData),
       });
       taskDispatch({ type: 'replace', payload: { old: tempId, new: real } }); // 2️⃣ 成功替换
-      await load();
+      //await loadPage(1);
       return real;
     } catch (err) {
       taskDispatch({ type: 'delete', payload: tempId });  // 3️⃣ 失败回滚
       throw err;
     }
-  }, [load]);
+  }, []);
+
 
   const remove = useCallback(async (_id) => {
     taskDispatch({ type: 'delete', payload: _id });        // 先删
     try {
       await fetcher(`/api/tasks/${_id}`, { method: 'DELETE' });
-      await load();
+      await loadPage(1);
     } catch (err) {
-      await load();                             // 删除失败时回滚
+      await loadPage(1);                             // 删除失败时回滚
     }
   }, []);
+
 
   const update = useCallback((_id, data) => fetcher(`/api/tasks/${_id}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
   }), []);
+
 
   const updateDesc = useCallback((_id, description, userId) => fetcher(`/api/descriptions/${_id}`, {
         method: 'PUT',
@@ -130,14 +162,15 @@ export function TaskProvider({ children }) {
     }
   }, []);
 
+
   /** ① 本地乐观合并（不打网络）——给前端即时反馈用 */
   const mergeProgress = useCallback((_id, data) => {
     progressDispatch({ type: 'patch', _id, data });
   }, []);
 
+
   // ② 行级保存
   const saveProgress = useCallback(async (_id, data) => {
-
     if (!_id || typeof _id !== 'string') {
       console.error('Invalid ID provided to saveProgress');
       return;
@@ -160,6 +193,7 @@ export function TaskProvider({ children }) {
       throw error;
     }
   }, []);
+
 
   const saveCell = useCallback((rowId, patch) => {
     console.log('saveCell', rowId, patch);
@@ -188,7 +222,7 @@ export function TaskProvider({ children }) {
 
 
   const api = useMemo(() => ({ 
-    load, 
+    loadPage,
     getTask, 
     getTaskDescription, 
     create, 
@@ -200,7 +234,7 @@ export function TaskProvider({ children }) {
     saveProgress,
     saveCell
   }), [
-    load, getTask, getTaskDescription, create, remove, update, updateDesc, loadProgress, mergeProgress, saveProgress, saveCell
+    loadPage, getTask, getTaskDescription, create, remove, update, updateDesc, loadProgress, mergeProgress, saveProgress, saveCell
   ]);
 
   return (
@@ -208,7 +242,8 @@ export function TaskProvider({ children }) {
       tasks,       // 数组，for 渲染
       taskMap,     // map，for 查找
       progress: progressRows,
-      api
+      api,
+      page, hasMore, loaded, setPage, loading
     }}>
       {children}
     </TaskCtx.Provider>

@@ -1,6 +1,7 @@
 // src/components/TaskList.jsx
 import React, { useMemo, useRef, useEffect, useState } from 'react';
 import { MaterialReactTable } from 'material-react-table';
+import { CircularProgress } from '@mui/material';
 
 // 日期格式化工具
 function formatDate(val) {
@@ -13,37 +14,13 @@ function formatDate(val) {
   return `${yyyy}-${mm}-${dd}`;
 }
 
-function useContainerWidth() {
-    const ref = useRef(null);
-    const [width, setWidth] = useState(1200);
-    useEffect(() => {
-        function updateWidth() {
-            if (ref.current) {
-                const rect = ref.current.getBoundingClientRect();
-                setWidth(Math.floor(rect.width));
-            }
-        }
-        // 延迟获取宽度，确保元素已渲染
-        const timer = setTimeout(updateWidth, 100);
-        //updateWidth();
-        // 使用 ResizeObserver
-        const observer = new window.ResizeObserver(() => {
-            updateWidth();
-        });
-        if (ref.current) observer.observe(ref.current);
-        return () => {
-            clearTimeout(timer);
-            observer.disconnect();
-        };
-    }, []);
-    return [ref, width];
-}
 
-const TaskList = React.forwardRef(function TaskList( { tasks, onSelectTask, sx = {}, lockedWidth }, ref) {
+const TaskList = React.forwardRef(function TaskList( { tasks, onSelectTask, sx = {}, lockedWidth, loading, hasMore, onLoadMore }, ref) {
     //const [containerRef, containerWidth] = useContainerWidth();
 
     const containerWidth = lockedWidth ?? 1200;
-    console.log("containerWidth:", containerWidth)
+    //console.log("containerWidth:", containerWidth)
+    const containerRef = useRef();
     // 列定义
     const columns = useMemo(
         () => [
@@ -129,6 +106,20 @@ const TaskList = React.forwardRef(function TaskList( { tasks, onSelectTask, sx =
         }));
     }, [tasks]);
 
+    // 滚动触底监听
+    useEffect(() => {
+      const el = containerRef.current;
+      if (!el) return;
+      const handleScroll = () => {
+        if (loading || !hasMore) return;
+        if (el.scrollTop + el.clientHeight >= el.scrollHeight - 80) {
+          if (typeof onLoadMore === 'function') onLoadMore();
+        }
+      };
+      el.addEventListener('scroll', handleScroll);
+      return () => el.removeEventListener('scroll', handleScroll);
+    }, [loading, hasMore, onLoadMore]);
+
     return (
         <div 
             style={{ 
@@ -138,6 +129,7 @@ const TaskList = React.forwardRef(function TaskList( { tasks, onSelectTask, sx =
                 minHeight: 0,
                 minWidth: 0,
                 overflow: 'auto', // 防止MRT溢出
+                position: 'relative',
             }}
         >
             <MaterialReactTable
@@ -153,8 +145,8 @@ const TaskList = React.forwardRef(function TaskList( { tasks, onSelectTask, sx =
                 }}
                 muiTableBodyRowProps={({ row }) => ({
                     hover: true,
-                    onClick: () => onSelectTask && onSelectTask(row.original),
                     sx: { cursor: 'pointer' },
+                    onClick: () => onSelectTask && onSelectTask(row.original),
                 })}
                 muiTablePaperProps={{
                     ref,
@@ -184,6 +176,24 @@ const TaskList = React.forwardRef(function TaskList( { tasks, onSelectTask, sx =
                     },
                 }}
             />
+            {/* 底部 loading */}
+            {loading && (
+                <div style={{
+                    position: 'absolute', left: 0, right: 0, bottom: 8,
+                    display: 'flex', justifyContent: 'center', pointerEvents: 'none',
+                }}>
+                    <CircularProgress size={24} />
+                </div>
+            )}
+            {/* 到底提示 */}
+            {!hasMore && (
+                <div style={{
+                    textAlign: 'center', color: '#999', padding: 8,
+                    position: 'absolute', left: 0, right: 0, bottom: 0,
+                }}>
+                    已经到底了
+                </div>
+            )}
         </div>
     );
 });

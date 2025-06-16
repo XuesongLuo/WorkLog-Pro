@@ -16,6 +16,30 @@ const generateIdFromStart = (start) => {
 };
 
 
+// GET /api/tasks?page=1&pageSize=100
+router.get('/', async (req, res) => {
+    try {
+        const db = await getMongoDb();
+        const page = parseInt(req.query.page || '1');
+        const pageSize = parseInt(req.query.pageSize || '100');
+        const skip = (page - 1) * pageSize;
+
+        const cursor = db.collection('projects')
+                         .find({})
+                         .sort({ start: -1 })   // 可选：默认按开始时间降序
+                         .skip(skip)
+                         .limit(pageSize);
+
+        const total = await db.collection('projects').countDocuments();
+        const data = await cursor.toArray();
+
+        res.json({ data, total });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+/*
 // GET /api/tasks - 获取所有项目
 router.get('/', async (req, res) => {
     try {
@@ -26,7 +50,7 @@ router.get('/', async (req, res) => {
         res.status(500).json({ error: e.message });
     }
 });
-
+*/
 
 // GET /api/tasks/:_id - 获取单个项目详情（p_id）
 router.get('/:_id', async (req, res) => {

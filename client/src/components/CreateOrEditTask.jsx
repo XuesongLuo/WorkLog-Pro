@@ -178,7 +178,7 @@ export default function CreateOrEditTask({ _id: propId, task: propTask, embedded
       if (onSuccess) {
         onSuccess();       // ← 独立页面用这个
       } else if (onClose) {
-        onClose('reload'); // ← 嵌入式用这个
+        onClose(isEdit ? 'reload-current' : 'reload-first'); // ← 嵌入式用这个
       }
     } catch (e) {
       /* fetcher 已有全局报错，若要局部提示可加 enqueueSnackbar */
@@ -432,16 +432,15 @@ export default function CreateOrEditTask({ _id: propId, task: propTask, embedded
       {/* ---------- 按钮区 ---------- */}
       {!embedded && (
         <Stack direction="row" spacing={2} mt="auto" pt={1} justifyContent="center">
-          {isEdit &&(
-            <Button variant='text' color="error" onClick={() => setConfirmDeleteOpen(true)}>删除</Button>
-          )}
           <Button
-            //loading={saving}
             disabled={saving}
             onClick={handleSubmit}
           >
             {isEdit ? '保存修改' : '创建任务'}
           </Button>
+          {isEdit &&(
+            <Button variant='text' color="error" onClick={() => setConfirmDeleteOpen(true)}>删除</Button>
+          )}
         </Stack>
 
       )}

@@ -41,7 +41,6 @@ export default function TaskDetail({ _id: propId, embedded = false, onClose }) {
 
   useEffect(() => {
     // 先看缓存（taskMap），再决定是否要远程加载
-    console.log('taskdetail')
     const cachedTask = taskMap[_id];
     if (cachedTask) {
       setTask({ ...cachedTask });
