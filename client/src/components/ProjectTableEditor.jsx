@@ -47,24 +47,23 @@ function useContainerWidth() {
 
 
 export default function ProjectTableEditor() {
-  const { progress, api } = useTasks();
+  console.log("ProjectTableEditor rendered!!!");
+  const { progress, api, progressHasMore, progressLoading, progressPage } = useTasks();
   const [containerRef, containerWidth] = useContainerWidth();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [taskDetail, setTaskDetail] = useState(null);
+  const [editingRowId, setEditingRowId] = useState(null);
   
-  // 优化后的 rows 创建
-  const rows = useMemo(() => {
-    if (!progress) return [];
-    return Object.entries(progress).map(([_id, record]) => ({
-      _id,
-      ...record
-    }));
-  }, [progress]);
+  // 用 ref 固定 api，避免 callback 引用每次变
+  const apiRef = useRef(api);
+  useEffect(() => { apiRef.current = api; }, [api]);
+
+  const rows = progress;
 
   // 稳定的回调函数
   const handleChange = useCallback((rowId, section, key, value) => {
-    console.log('handleChange', rowId, section, key, value);
+    console.log('handleChange render')
     if (!rowId) return;
     let patch;
     if (Array.isArray(key)) {
@@ -75,31 +74,29 @@ export default function ProjectTableEditor() {
     } else {
       patch = { [section]: { [key]: value } };
     }
-    api.mergeProgress(rowId, patch);
-    api.saveCell(rowId, patch);
-  }, [api]);
+    apiRef.current.mergeProgress(rowId, patch);
+    apiRef.current.saveCell(rowId, patch);
+  }, []);
 
-  const handleToggleActive = useCallback((rowId, section) => {
-    if (!rowId) return;
-    const rowObj = progress[rowId];
-    if (!rowObj) return;
+  const handleToggleActive = useCallback((rowObj, section) => {
+    if (!rowObj || !rowObj._id) return;
     const newActive = !rowObj[section]?.active;
     const patch = { [section]: { active: newActive } };
-    api.mergeProgress(rowId, patch);
-    api.saveCell(rowId, patch);
-  }, [api, progress]);
+    apiRef.current.mergeProgress(rowObj._id, patch);
+    apiRef.current.saveCell(rowObj._id, patch);
+  }, []);
 
   // 拉取详情并打开弹窗
   const handleShowDetail = useCallback(async (_id) => {
     setDialogOpen(true);
     setLoading(true);
     try {
-      const task = await api.getTask(_id);
+      const task = await apiRef.current.getTask(_id);
       setTaskDetail(task); // {...task, description: desc.description }
     } finally {
       setLoading(false);
     }
-  }, [api]);
+  }, []);
 
   // 优化后的列定义
   const columns = useMemo(() => [
@@ -110,22 +107,28 @@ export default function ProjectTableEditor() {
         Cell: ({ row }) => <LocationCell row={row} onShowDetail={handleShowDetail} />,
     },
     {
-        header: 'YEAR',
-        baseWidth: 60,
-        accessorKey: 'year',
-        Cell: ({ row }) => <YearCell row={row} onChange={handleChange} />,
+      header: 'YEAR',
+      baseWidth: 60,
+      accessorKey: 'year',
+      Cell: ({ row }) => editingRowId === row.original._id
+        ? <YearCell row={row} onChange={handleChange} autoFocus />
+        : <span>{row.original.year}</span>
     },
     {
         header: 'INSURANCE',
         baseWidth: 80,
         accessorKey: 'insurance',
-        Cell: ({ row }) => <InsuranceCell row={row} onChange={handleChange} />,
+        Cell: ({ row }) => editingRowId === row.original._id
+        ? <InsuranceCell row={row} onChange={handleChange} autoFocus />
+        : <span>{row.original.insurance}</span>
     },
     {
-        header: 'AROL',
-        baseWidth: 50,
-        accessorKey: 'arol',
-        Cell: ({ row }) => <ArolCell row={row} onChange={handleChange} />,
+      header: 'AROL',
+      baseWidth: 50,
+      accessorKey: 'arol',
+      Cell: ({ row }) => editingRowId === row.original._id
+        ? <ArolCell row={row} onChange={handleChange} autoFocus />
+        : <span>{row.original.arol}</span>
     },
     {
         header: 'TEST',
@@ -142,7 +145,7 @@ export default function ProjectTableEditor() {
         Cell: ({ row }) => (
           <PakToggleCell 
             row={row} 
-            onToggleActive={handleToggleActive}
+            onToggleActive={() => handleToggleActive(row.original, 'pak')}
             onDateChange={handleChange}
           />
         ),
@@ -223,7 +226,7 @@ export default function ProjectTableEditor() {
         Cell: ({ row }) => (
           <WtrToggleCell 
             row={row} 
-            onToggleActive={handleToggleActive}
+            onToggleActive={() => handleToggleActive(row.original, 'wtr')}
             onDateChange={handleChange}
           />
         ),
@@ -325,7 +328,7 @@ export default function ProjectTableEditor() {
         Cell: ({ row }) => (
           <StrToggleCell 
             row={row} 
-            onToggleActive={handleToggleActive}
+            onToggleActive={() => handleToggleActive(row.original, 'str')}
             onDateChange={handleChange}
           />
         ),
@@ -408,8 +411,9 @@ export default function ProjectTableEditor() {
   ], [handleChange, handleToggleActive, handleShowDetail]);
 
   const dynamicColumns = useMemo(() => {
+    console.log('dynamicColumns computed!');
     const totalBase = columns.reduce((sum, col) => sum + (col.baseWidth || 60), 0);
-    const w = containerWidth - 4;
+    const w = containerWidth - 18;
     let used = 0;
     // 1. 先分配前n-1列
     const newCols = columns.map((col, idx) => {
@@ -440,26 +444,53 @@ export default function ProjectTableEditor() {
     return newCols;
   }, [columns, containerWidth]);
 
+  // 只在需要时拉取更多
+  const handleLoadMore = useCallback(() => {
+    if (progressHasMore && !progressLoading) {
+      api.loadProgressPage(progressPage + 1);
+    }
+  }, [progressHasMore, progressLoading, progressPage, api]);
+
+
+  // 滚动监听优化，可用节流进一步降低开销
   useEffect(() => {
-    api.loadProgress();
-  }, [api]);
+    console.log("滚动监听")
+    const el = containerRef.current;
+    if (!el) return;
+    const handleScroll = () => {
+      if (progressLoading || !progressHasMore) return;
+      if (el.scrollTop + el.clientHeight >= el.scrollHeight - 80) {
+        handleLoadMore();
+      }
+    };
+    el.addEventListener('scroll', handleScroll);
+    return () => el.removeEventListener('scroll', handleScroll);
+  }, [progressLoading, progressHasMore, handleLoadMore, containerRef]);
+
+  useEffect(() => {
+    apiRef.current.loadProgressPage(1);
+  }, []);
 
   return (
     <Box 
         ref={containerRef} 
-        sx={{ 
+        sx={{
+            flex: 1,
+            minHeight: 0,
+            height: '100%',
             maxWidth: '100vw', 
-            overflowX: 'hidden', 
-            p:0, 
-            mx: 'auto', 
-            my: 0,
+            overflow: 'hidden',
+            display: 'flex',
+            flexDirection: 'column',
+            p: 0, 
+            m: 0,
         }}
     >
       <MaterialReactTable 
         enableColumnActions={false}
         columns={dynamicColumns}
         data={rows}
-        enableRowVirtualization={true}
+        enableRowVirtualization={false}
         enablePagination={false}
         enableSorting={false}
         enableColumnResizing={true}              // ★ 开启列宽手动调整
@@ -467,26 +498,30 @@ export default function ProjectTableEditor() {
         getRowId={(row) => row._id}
         muiTablePaperProps={{
           sx: {
+            flex: 1,
+            minHeight: 0,
             height: '100%',
-            p: 0,
-            my: 0,
             display: 'flex',
             flexDirection: 'column',
             boxShadow: 'none',
             border: 'none',
+            p: 0,
+            m: 0,
             boxSizing: 'border-box',
           }
         }}
         muiTableContainerProps={{
           sx: {
               flex: 1,
+              minHeight: 0,
               height: '100%',
+              //maxHeight: '100%',
               p: 0,
+              overflow: 'auto',
               '& .MuiTable-root': {
                   tableLayout: 'fixed',
                   width: '100%',
               },
-              overflowX: 'auto',
           }
         }}
         muiTableHeadCellProps={{
@@ -504,7 +539,9 @@ export default function ProjectTableEditor() {
             border: '0.2px solid #e0e0e0',
           }
         }}
-        muiTableBodyCellProps={{
+        muiTableBodyCellProps={({ row }) => ({
+          onDoubleClick: () => setEditingRowId(row.original._id),
+          style: { cursor: 'pointer' },
           align: 'center',
           sx: {
             p: 0,        // 更小padding
@@ -516,7 +553,7 @@ export default function ProjectTableEditor() {
             whiteSpace: 'normal',
             border: '0.2px solid #e0e0e0',
           }
-        }}
+        })}
       />
       <Dialog open={dialogOpen} maxWidth="md" fullWidth onClose={() => setDialogOpen(false)}>
         {loading ? (

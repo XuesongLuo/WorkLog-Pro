@@ -185,15 +185,6 @@ const TaskList = React.forwardRef(function TaskList( { tasks, onSelectTask, sx =
                     <CircularProgress size={24} />
                 </div>
             )}
-            {/* 到底提示 */}
-            {!hasMore && (
-                <div style={{
-                    textAlign: 'center', color: '#999', padding: 8,
-                    position: 'absolute', left: 0, right: 0, bottom: 0,
-                }}>
-                    已经到底了
-                </div>
-            )}
         </div>
     );
 });

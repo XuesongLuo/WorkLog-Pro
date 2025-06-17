@@ -17,6 +17,35 @@ function flattenForSet(obj, prefix = '') {
 }
 
 
+// GET /api/progress?page=1&pageSize=20
+router.get('/', auth, adminOnly, async (req, res) => {
+  try {
+    const db = await getMongoDb();
+    const page = parseInt(req.query.page || '1');
+    const pageSize = parseInt(req.query.pageSize || '100');
+    const skip = (page - 1) * pageSize;
+    // 查主表
+    const projects = await db.collection('projects').find().toArray();
+    const projectMap = Object.fromEntries(projects.map(p => [p._id, p]));
+    // 查进度表分页
+    const progressRows = await db.collection('progress').find().skip(skip).limit(pageSize).toArray();
+    const total = await db.collection('progress').countDocuments();
+    const progressArray = progressRows.map(progress => {
+      const project = projectMap[progress._id] || {};
+      const location = [project.address, project.city, project.state, project.zipcode].filter(Boolean).join(', ');
+      return {
+        ...progress,
+        location,
+        year: project.year,
+        insurance: project.insurance,
+      };
+    });
+    res.json({ data: progressArray, total });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // GET /api/progress  → 表格一次性加载（管理员可访问）
 router.get('/', auth, adminOnly, async (req, res) => {
   try {

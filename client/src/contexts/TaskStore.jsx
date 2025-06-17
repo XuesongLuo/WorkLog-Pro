@@ -45,13 +45,12 @@ function progressReducer(state, action) {
 export function TaskProvider({ children }) {
 
   /* ---------- Project Progress reducer ---------- */
-  const [progressRows, progressDispatch] = useReducer(progressReducer, {});
+  //const [progressRows, progressDispatch] = useReducer(progressReducer, {});
   const [tasks, taskDispatch] = useReducer(taskReducer, []);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [loading, setLoading] = useState(false);
   const [loaded, setLoaded] = useState(false);
-
   const taskMap = useMemo(() => Object.fromEntries(tasks.map(t => [t._id, t])), [tasks]);
 
   // 分页加载
@@ -151,6 +150,37 @@ export function TaskProvider({ children }) {
   }), []);
 
 
+
+  const [progressMap, setProgressMap] = useState({});
+  const progressRows = useMemo(() => Object.values(progressMap), [progressMap]);
+  const [progressPage, setProgressPage] = useState(1);
+  const [progressHasMore, setProgressHasMore] = useState(true);
+  const [progressLoading, setProgressLoading] = useState(false);
+
+  // 加载分页
+  const loadProgressPage = useCallback(async (page = 1, pageSize = 20) => {
+    if (progressLoading) return;
+    setProgressLoading(true);
+    try {
+      const res = await fetcher(`/api/progress?page=${page}&pageSize=${pageSize}`);
+      const { data, total } = res;
+      setProgressMap(prev => {
+        if (page === 1) {
+          return Object.fromEntries(data.map(row => [row._id, row]));
+        } else {
+          const merged = { ...prev };
+          data.forEach(row => { merged[row._id] = row; });
+          return merged;
+        }
+      });
+      setProgressPage(page);
+      setProgressHasMore((page - 1) * pageSize + data.length < total);
+    } finally {
+      setProgressLoading(false);
+    }
+  }, [progressLoading]);
+
+
   // 读取全部进度 – ProjectTableEditor 首次挂载调用
   const loadProgress = useCallback(async () => {
     try {
@@ -163,35 +193,16 @@ export function TaskProvider({ children }) {
   }, []);
 
 
-  /** ① 本地乐观合并（不打网络）——给前端即时反馈用 */
+  // 只合并单行，保持其它行对象引用不变
   const mergeProgress = useCallback((_id, data) => {
-    progressDispatch({ type: 'patch', _id, data });
-  }, []);
-
-
-  // ② 行级保存
-  const saveProgress = useCallback(async (_id, data) => {
-    if (!_id || typeof _id !== 'string') {
-      console.error('Invalid ID provided to saveProgress');
-      return;
-    }
-    if (!data || typeof data !== 'object') {
-      console.error('Invalid data provided to saveProgress');
-      return;
-    }
-    try {
-      //progressDispatch({ type: 'patch', _id, data });            // Optimistic UI
-      await fetcher(`/api/progress/${_id}`, {
-        method : 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body   : JSON.stringify(data),
-      });
-    } catch (error) {
-      console.error('Failed to save progress for _id:', _id, error);
-      // 回滚（保持原逻辑）
-      progressDispatch({ type: 'patch', _id, data: state.find(r => r._id === _id) || {} }); // 清除失败的更新
-      throw error;
-    }
+    setProgressMap(prev => {
+      const oldRow = prev[_id];
+      if (!oldRow) return prev;
+      const newRow = merge({}, oldRow, data);
+      // 如果数据没变就不set
+      if (JSON.stringify(newRow) === JSON.stringify(oldRow)) return prev;
+      return { ...prev, [_id]: newRow };
+    });
   }, []);
 
 
@@ -228,22 +239,24 @@ export function TaskProvider({ children }) {
     create, 
     remove, 
     update, 
-    updateDesc, 
+    updateDesc,
+    loadProgressPage, 
     loadProgress, 
     mergeProgress, 
-    saveProgress,
     saveCell
   }), [
-    loadPage, getTask, getTaskDescription, create, remove, update, updateDesc, loadProgress, mergeProgress, saveProgress, saveCell
+    loadPage, getTask, getTaskDescription, create, remove, update, updateDesc, loadProgressPage, loadProgress, mergeProgress, saveCell
   ]);
 
   return (
     <TaskCtx.Provider value={{ 
+      api,
       tasks,       // 数组，for 渲染
       taskMap,     // map，for 查找
-      progress: progressRows,
-      api,
-      page, hasMore, loaded, setPage, loading
+      page, hasMore, loaded, setPage, loading,
+      progress: progressRows,  // 数组
+      progressMap,
+      progressPage, progressHasMore, progressLoading,
     }}>
       {children}
     </TaskCtx.Provider>
