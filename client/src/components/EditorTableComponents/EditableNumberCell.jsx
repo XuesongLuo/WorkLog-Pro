@@ -2,16 +2,10 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Box, TextField } from '@mui/material';
 
-function EditableNumberCell({ value, onChange, disabled = false }) {
+function EditableNumberCell({ value, onChange, disabled = false, }) {
   const [draft, setDraft] = useState(value ?? '');
   const [isEditing, setIsEditing] = useState(false);
   const inputRef = useRef(null);
-
-  useEffect(() => {
-    if (!isEditing) {
-      setDraft(value ?? '');
-    }
-  }, [value, isEditing]);
 
   const handleFocus = useCallback(() => {
     setIsEditing(true);
@@ -49,6 +43,12 @@ function EditableNumberCell({ value, onChange, disabled = false }) {
     setDraft(val);
   }, []);
 
+  useEffect(() => {
+    if (!isEditing) {
+      setDraft(value ?? '');
+    }
+  }, [value, isEditing]);
+
   return (
     <Box 
       onClick={() => { if (!disabled) inputRef.current?.focus(); }}
@@ -69,13 +69,23 @@ function EditableNumberCell({ value, onChange, disabled = false }) {
         fullWidth
         value={draft}
         disabled={disabled}
-        onChange={handleChange}
-        onFocus={handleFocus}
-        onBlur={handleBlur}
+        onChange={e => {
+          // 只允许数字或空
+          let val = e.target.value;
+          if (val === '') {
+            onChange('');
+            return;
+          }
+          // 保证最多两位小数
+          if (!/^\d*(\.\d{0,2})?$/.test(val)) {
+            return;
+          }
+          onChange(val);
+        }}
         inputProps={{ style: { textAlign: 'center' } }}  // 数字居中显示
         sx={{
           '& .MuiInputBase-input': {
-            fontSize: '0.875rem',
+            fontSize: '12px',
             textAlign: 'center',
             paddingLeft: "4px",
             paddingRight: "4px",
@@ -86,9 +96,11 @@ function EditableNumberCell({ value, onChange, disabled = false }) {
           '& input[type=number]': { MozAppearance: 'textfield' },
           '& input[type=number]::-webkit-outer-spin-button': { WebkitAppearance: 'none', margin: 0},
           '& input[type=number]::-webkit-inner-spin-button': { WebkitAppearance: 'none', margin: 0},
+          /*
           '& .MuiInput-underline:before': {
             borderBottom: 'none !important', // 常规状态无下划线
           },
+          */
           '& .MuiInput-underline:hover:before': {
             borderBottom: '1px solid #1976d2 !important', // hover时有下划线，可换你想要的颜色
           },

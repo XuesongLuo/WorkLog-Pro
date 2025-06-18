@@ -18,7 +18,7 @@ const EditableDate = React.memo(function EditableDate({
       sx={{
         '& .MuiInputBase-input': {
           p: '0px 2px',
-          fontSize: '0.78rem',
+          fontSize: '12px',
           height: '1.7em',
           textAlign: 'center',
         },
