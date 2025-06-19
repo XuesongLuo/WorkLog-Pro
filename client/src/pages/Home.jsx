@@ -75,7 +75,6 @@ export default function Home() {
   const gridStyles = useMemo(() => ({
     display: 'flex',
     flexDirection: 'column',
-    //transition: 'all 0.5s ease',
     flexGrow: 1,
     width: showDetail ? '50%' : '100%',
     maxWidth: showDetail ? '50%' : '100%',
@@ -94,7 +93,6 @@ export default function Home() {
     width: showDetail ? '50%' : 0,
     maxWidth: showDetail ? '50%' : 0,
     flexBasis: showDetail ? '50%' : 0,
-    //transition: 'all 0.5s ease',
     opacity: showDetail ? 1 : 0,
     pl: showDetail ? 2 : 0,
     borderLeft: showDetail ? '1px solid #ddd' : 'none',
@@ -102,7 +100,7 @@ export default function Home() {
     overflow: 'hidden',
   }), [showDetail]);
 
-  const debouncedTaskClose = useDebounce(handleTaskClose, 100);   // 包装防抖版本的 handleTaskClose
+  //const debouncedTaskClose = useDebounce(handleTaskClose, 100);   // 包装防抖版本的 handleTaskClose
 
 
   // 语言切换
@@ -141,9 +139,23 @@ export default function Home() {
     if (containerOuterRef.current) {
       const parentW = containerOuterRef.current.clientWidth;
       const percent = showDetail ? 0.5 : 1;
-      setLockedWidth(Math.round(parentW * percent));
+      if(showDetail) setLockedWidth(Math.round(parentW * percent)-16);
+      else setLockedWidth(Math.round(parentW * percent));
     }
   };
+  // 监听窗口
+  useEffect(() => {
+    function updateWidth() {
+      if (containerOuterRef.current) {
+        const parentW = containerOuterRef.current.clientWidth;
+        const percent = showDetail ? 0.5 : 1;
+        setLockedWidth(Math.round(parentW * percent) - (showDetail ? 16 : 0));
+      }
+    }
+    updateWidth();
+    window.addEventListener('resize', updateWidth);
+    return () => window.removeEventListener('resize', updateWidth);
+  }, [showDetail]);
 
   // 从后端加载任务列表
   useEffect(() => {
@@ -194,7 +206,7 @@ export default function Home() {
                   {viewMode === 'calendar' ? '列表视图' : '日历视图'}
               </Button>
               <Typography variant="h5">
-                {viewMode === 'calendar' ? '项目--日历' : '项目--列表'}
+                {viewMode === 'calendar' ? '项目  日历' : '项目  列表'}
               </Typography>
               <Stack direction="row" spacing={2}>
                 <Button variant="contained" color="secondary" onClick={openTaskCreate}>
@@ -209,6 +221,8 @@ export default function Home() {
                 </Button>
               </Stack>
             </Stack>
+            
+            
             {viewMode === 'list' ? (
               <TaskList
                 tasks={tasks}
@@ -230,6 +244,7 @@ export default function Home() {
                 onSelectEvent={(event) => openTaskDetail(event._id)}
               />
             )}
+  
           </Grid>
           {/* 右侧面板：详情 / 新建 / 编辑 */}
           <Grid sx={rightPanelStyles}>

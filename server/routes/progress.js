@@ -28,7 +28,12 @@ router.get('/', auth, adminOnly, async (req, res) => {
     const projects = await db.collection('projects').find().toArray();
     const projectMap = Object.fromEntries(projects.map(p => [p._id, p]));
     // 查进度表分页
-    const progressRows = await db.collection('progress').find().skip(skip).limit(pageSize).toArray();
+    const progressRows = await db.collection('progress')
+      .find()
+      .sort({ _id: -1 })
+      .skip(skip)
+      .limit(pageSize)
+      .toArray();
     const total = await db.collection('progress').countDocuments();
     const progressArray = progressRows.map(progress => {
       const project = projectMap[progress._id] || {};

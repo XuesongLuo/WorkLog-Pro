@@ -16,10 +16,7 @@ function formatDate(val) {
 
 
 const TaskList = React.forwardRef(function TaskList( { tasks, onSelectTask, sx = {}, lockedWidth, loading, hasMore, onLoadMore }, ref) {
-    //const [containerRef, containerWidth] = useContainerWidth();
-
     const containerWidth = lockedWidth ?? 1200;
-    //console.log("containerWidth:", containerWidth)
     const containerRef = useRef();
     // 列定义
     const columns = useMemo(
@@ -29,12 +26,14 @@ const TaskList = React.forwardRef(function TaskList( { tasks, onSelectTask, sx =
             header: '开始日期',
             baseWidth: 50,
             Cell: ({ cell }) => formatDate(cell.getValue()),
+            /*
             sortingFn: (rowA, rowB) => {
             // 直接按时间戳倒序
             const a = new Date(rowA.original.start).getTime() || 0;
             const b = new Date(rowB.original.start).getTime() || 0;
             return b - a; // 降序，最近在前
             },
+            */
         },
         {
             accessorKey: 'fulladdress',
@@ -72,29 +71,24 @@ const TaskList = React.forwardRef(function TaskList( { tasks, onSelectTask, sx =
         []
     );
 
+    // 动态列宽计算 - 更精确的计算
     const dynamicColumns = useMemo(() => {
         const totalBase = columns.reduce((sum, col) => sum + (col.baseWidth || 80), 0);
-        const w = containerWidth - 180; // 增加余量，防止溢出
+        const availableWidth = containerWidth;
         return columns.map((col, index) => {
-            const ratio = (col.baseWidth || 80) / totalBase;
-            let size = Math.round(w * ratio);
-            // 确保最小宽度
-            const minWidth = Math.max(60, col.baseWidth * 0.6);
-            size = Math.max(minWidth, size);
-            // 最后一列特殊处理，确保不超出
-            if (index === columns.length - 1) {
-                const usedWidth = columns.slice(0, -1).reduce((sum, _, i) => {
-                    const prevRatio = (columns[i].baseWidth || 80) / totalBase;
-                    return sum + Math.max(Math.max(60, columns[i].baseWidth * 0.6), Math.floor(w * prevRatio));
-                }, 0);
-                size = Math.max(minWidth, w - usedWidth);
-            }
-            return {
-                ...col,
-                size,
-                minSize: minWidth,
-                maxSize: size * 1.5,
-            };
+        const ratio = (col.baseWidth || 80) / totalBase;
+        let calculatedWidth = Math.floor(availableWidth * ratio);
+        // 设置最小宽度
+        const minWidth = Math.max(60, Math.floor((col.baseWidth || 80) * 0.7));
+        calculatedWidth = Math.max(minWidth, calculatedWidth);
+        
+        return {
+            ...col,
+            size: calculatedWidth,
+            minSize: minWidth,
+            maxSize: calculatedWidth, // 重要：限制最大宽度防止扩展
+            enableResizing: false, // 禁用列宽调整
+        };
         });
     }, [columns, containerWidth]);
 
@@ -128,8 +122,9 @@ const TaskList = React.forwardRef(function TaskList( { tasks, onSelectTask, sx =
                 height: '100%',
                 minHeight: 0,
                 minWidth: 0,
-                overflow: 'auto', // 防止MRT溢出
+                overflow: 'hidden', // 改为 hidden，让内部表格处理滚动
                 position: 'relative',
+                boxSizing: 'border-box',
             }}
         >
             <MaterialReactTable
@@ -140,39 +135,55 @@ const TaskList = React.forwardRef(function TaskList( { tasks, onSelectTask, sx =
                 enablePagination={false}
                 enableColumnResizing={false}
                 enableSorting={true}
-                initialState={{
-                    sorting: [{ id: 'start', desc: true }], // 默认按开始日期倒序
+                // 关键配置：强制表格布局
+                muiTableProps={{
+                    sx: {
+                    tableLayout: 'fixed', // 强制固定表格布局
+                    width: '100%',
+                    maxWidth: '100%',
+                    }
                 }}
                 muiTableBodyRowProps={({ row }) => ({
                     hover: true,
-                    sx: { cursor: 'pointer' },
+                    sx: { 
+                        cursor: 'pointer',
+                        '& td': {
+                            maxWidth: 0, // 配合 tableLayout: 'fixed' 使用
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                        }
+                    },
                     onClick: () => onSelectTask && onSelectTask(row.original),
                 })}
                 muiTablePaperProps={{
-                    ref,
-                    sx: { width: '100%', maxWidth: '100%', ...sx, height: '100%', boxShadow: 'none', border: 'none', boxSizing: 'border-box' }
-                    //sx: { flex: 1, ...sx, height: '100%', boxShadow: 'none', border: 'none', boxSizing: 'border-box' },
-                }}
+                    sx: { width: '100%', maxWidth: '100%', ...sx, height: '100%', boxShadow: 'none', border: 'none', boxSizing: 'border-box', overflow: 'hidden' }
+                  }}
                 muiTableContainerProps={{
-                    sx: { height: '100%', width: '100%', maxWidth: '100%' },
+                sx: { width: '100%', maxWidth: '100%', height: '100%', maxHeight: '70vh', boxSizing: 'border-box',overflowX: 'hidden', overflowY: 'overlay', }
+                }}
+                muiTableHeaderProps={{
+                    sx: { maxHeight: '100%', width: '100%', maxWidth: '100%', boxSizing: 'border-box' },
                 }}
                 muiTableHeadCellProps={{
                     align: 'center',
                     sx: {
-                        fontWeight: 700,
-                        fontSize: 13,
-                        background: '#f8fafd',
-                        //border: '0.2px solid #e0e0e0',
+                      fontWeight: 700,
+                      fontSize: 13,
+                      background: '#f8fafd',
+                      boxSizing: 'border-box',
+                      padding: '8px 4px', // 减小内边距
                     },
                 }}
                 muiTableBodyCellProps={{
                     align: 'center',
                     sx: {
-                        fontSize: 12,
-                        //border: '0.2px solid #e0e0e0',
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
+                      fontSize: 12,
+                      boxSizing: 'border-box',
+                      padding: '8px 4px', // 减小内边距
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
                     },
                 }}
             />

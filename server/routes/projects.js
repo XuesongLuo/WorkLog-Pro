@@ -26,7 +26,7 @@ router.get('/', async (req, res) => {
 
         const cursor = db.collection('projects')
                          .find({})
-                         .sort({ start: -1 })   // 可选：默认按开始时间降序
+                         .sort({ _id: -1 })   // 可选：默认按开始时间降序
                          .skip(skip)
                          .limit(pageSize);
 

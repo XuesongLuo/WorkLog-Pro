@@ -102,19 +102,18 @@ export default function ProjectTableEditor() {
         overflow: 'auto',
         width: '100%',
         background: '#fff',
-        marginTop: '15px',
-        marginBottom: '20px'
+        marginTop: '20px',
       }}
     >
     <table 
-      ref={tableRef} 
-      className="table-bordered sticky-table" 
-      style={{ 
-        width: '100%', 
-        tableLayout: 'fixed',
-        borderSpacing: 0, 
-        borderCollapse: 'separate' 
-      }}
+       ref={tableRef} 
+       className="table-bordered sticky-table" 
+       style={{ 
+         width: '100%', 
+         tableLayout: 'fixed',
+         borderSpacing: 0, 
+         borderCollapse: 'separate' 
+       }}
     >
       <colgroup>
         {/* 开头部分 17% */} 
@@ -175,7 +174,7 @@ export default function ProjectTableEditor() {
             <th rowSpan={2}>CTRC</th>
             <th colSpan={3}>STR ESTIMATE</th>
             <th rowSpan={2}>PAYMENT</th>
-            <th rowSpan={2}>COMMENT</th>
+            <th rowSpan={2}>COMMENTS</th>
         </tr>
         <tr>
             {/* PAK ESTIMATE 子项 */}
