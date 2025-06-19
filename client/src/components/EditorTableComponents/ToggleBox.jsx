@@ -15,11 +15,11 @@ const ToggleBox = React.memo(function ToggleBox({value, onToggleActive, onDateCh
           position: 'relative',
           width: '100%',
           height: '100%',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'flex-end',
-          alignItems: 'center',
-          p: 0,
+          minHeight:'100px',
+          display: 'flex', // 使用 flex 布局
+          flexDirection: 'column', // 垂直排列
+          justifyContent: 'center', // 垂直居中
+          alignItems: 'center', // 水平居中
           boxSizing: 'border-box'
         }}
       >
@@ -38,12 +38,22 @@ const ToggleBox = React.memo(function ToggleBox({value, onToggleActive, onDateCh
             '& .MuiSvgIcon-root': { fontSize: '1.2rem' }
           }}
         />
-        <Box sx={{ width: '100%', display: 'flex', justifyContent: 'center', mb: 1 }}>
-          <EditableDate
-            value={start_date ?? ''}
-            onChange={val => onDateChange?.(val)}
-            disabled={!active || disabled}
-          />
+        <Box 
+          sx={{ 
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            width: '100%',
+            pointerEvents: 'none',        // 不影响点击表格
+          }}
+        >
+          <Box sx={{ pointerEvents: 'auto' }}>
+            <EditableDate
+              value={start_date ?? ''}
+              onChange={val => onDateChange?.(val)}
+              disabled={!active || disabled}
+            />
+          </Box>
         </Box>
       </Box>
   );

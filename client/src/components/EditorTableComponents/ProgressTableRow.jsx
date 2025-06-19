@@ -30,38 +30,38 @@ const ProgressTableRow = React.memo(function ProgressTableRow({
   }, [onCellChange, isEditing]);
 
   return (
-    <tr ref={trRef} onDoubleClick={onRowDoubleClick} style={{ cursor: 'pointer' }}>
+    <tr ref={trRef} onDoubleClick={onRowDoubleClick} className={isEditing ? 'editing-row' : ''} style={{ cursor: 'pointer' }}>
       {/* LOCATION */}
-      <td>
+      <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
         <LocationCell value={row.location} onShowDetail={onShowDetail} />
       </td>
       {/* YEAR */}
-      <td>
+      <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
         {isEditing
           ? <YearCell value={getVal('year', '')} onChange={val => cellOnChange(['year'], val)} />
-          : <span>{row.year}</span>}
+          : <span  style={{ fontSize:'12px'}}>{row.year}</span>}
       </td>
       {/* INSURANCE */}
-      <td>
+      <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
         {isEditing
           ? <InsuranceCell value={getVal('insurance', '')} onChange={val => cellOnChange(['insurance'], val)} />
-          : <span>{row.insurance}</span>}
+          : <span style={{ fontSize:'12px'}}>{row.insurance}</span>}
       </td>
       {/* AROL */}
-      <td>
+      <td style={{ textAlign: 'center', verticalAlign: 'middle' }}> 
         {isEditing
           ? <ArolCell value={getVal('arol', false)} onChange={val => cellOnChange(['arol'], val)} />
           : <ReadonlyGreenCheckbox checked={row.arol} />}
       </td>
       {/* TEST */}
-      <td>
+      <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
         {isEditing
           ? <TestCell value={getVal('test', false)} onChange={val => cellOnChange(['test'], val)} />
           : <ReadonlyGreenCheckbox checked={row.test} />}
       </td>
 
       {/* PAK 区块 */}
-      <td>
+      <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
         {isEditing
           ? <PakToggleCell
               value={{
@@ -74,18 +74,18 @@ const ProgressTableRow = React.memo(function ProgressTableRow({
             />
           : <ReadonlyToggleBox section={row.pak} />}
       </td>
-      <td>
+      <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
         {isEditing
           ? <PakPoutCell value={getVal('pak.pout', false)} onChange={val => cellOnChange(['pak', 'pout'], val)} disabled={!editRowData?.pak?.active} />
           : <ReadonlyGreenCheckbox checked={row.pak?.pout} />}
       </td>
-      <td>
+      <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
         {isEditing
           ? <PakPackCell value={getVal('pak.pack', false)} onChange={val => cellOnChange(['pak', 'pack'], val)} disabled={!editRowData?.pak?.active} />
           : <ReadonlyGreenCheckbox checked={row.pak?.pack} />}
       </td>
       {/* PAK ESTIMATE 分组 */}
-      <td>
+      <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
         {isEditing
           ? <EstimateCell
               value={{
@@ -101,7 +101,7 @@ const ProgressTableRow = React.memo(function ProgressTableRow({
               //disabled={!row.pak?.active}
             />}
       </td>
-      <td>
+      <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
         {isEditing
           ? <EstimateCell
               value={{
@@ -117,7 +117,7 @@ const ProgressTableRow = React.memo(function ProgressTableRow({
               //disabled={!row.pak?.active}
             />}
       </td>
-      <td>
+      <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
         {isEditing
           ? <EstimateCell
               value={{
@@ -135,7 +135,7 @@ const ProgressTableRow = React.memo(function ProgressTableRow({
       </td>
 
       {/* WTR 区块 */}
-      <td>
+      <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
         {isEditing
           ? <WtrToggleCell
               value={{
@@ -148,33 +148,33 @@ const ProgressTableRow = React.memo(function ProgressTableRow({
             />
           : <ReadonlyToggleBox section={row.wtr} />}
       </td>
-      <td>
+      <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
         {isEditing
           ? <WtrCtrcCell value={getVal('wtr.ctrc', false)} onChange={val => cellOnChange(['wtr', 'ctrc'], val)} disabled={!editRowData?.wtr?.active} />
           : <ReadonlyGreenCheckbox checked={row.wtr?.ctrc} />}
       </td>
-      <td>
+      <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
         {isEditing
           ? <WtrDemoCell value={getVal('wtr.demo', false)} onChange={val => cellOnChange(['wtr', 'demo'], val)} disabled={!editRowData?.wtr?.active} />
           : <ReadonlyGreenCheckbox checked={row.wtr?.demo} />}
       </td>
-      <td>
+      <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
         {isEditing
           ? <WtrItelCell value={getVal('wtr.itel', false)} onChange={val => cellOnChange(['wtr', 'itel'], val)} disabled={!editRowData?.wtr?.active} />
           : <ReadonlyGreenCheckbox checked={row.wtr?.itel} />}
       </td>
-      <td>
+      <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
         {isEditing
           ? <WtrEqCell value={getVal('wtr.eq', false)} onChange={val => cellOnChange(['wtr', 'eq'], val)} disabled={!editRowData?.wtr?.active} />
           : <ReadonlyGreenCheckbox checked={row.wtr?.eq} />}
       </td>
-      <td>
+      <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
         {isEditing
           ? <WtrPickCell value={getVal('wtr.pick', false)} onChange={val => cellOnChange(['wtr', 'pick'], val)} disabled={!editRowData?.wtr?.active} />
           : <ReadonlyGreenCheckbox checked={row.wtr?.pick} />}
       </td>
       {/* WTR ESTIMATE 分组 */}
-      <td>
+      <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
         {isEditing
           ? <EstimateCell
               value={{
@@ -190,7 +190,7 @@ const ProgressTableRow = React.memo(function ProgressTableRow({
               //disabled={!row.wtr?.active}
             />}
       </td>
-      <td>
+      <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
         {isEditing
           ? <EstimateCell
               value={{
@@ -206,7 +206,7 @@ const ProgressTableRow = React.memo(function ProgressTableRow({
               //disabled={!row.wtr?.active}
             />}
       </td>
-      <td>
+      <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
         {isEditing
           ? <EstimateCell
               value={{
@@ -224,7 +224,7 @@ const ProgressTableRow = React.memo(function ProgressTableRow({
       </td>
 
       {/* STR 区块 */}
-      <td>
+      <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
         {isEditing
           ? <StrToggleCell
               value={{
@@ -237,13 +237,13 @@ const ProgressTableRow = React.memo(function ProgressTableRow({
             />
           : <ReadonlyToggleBox section={row.str} />}
       </td>
-      <td>
+      <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
         {isEditing
           ? <StrCtrcCell value={getVal('str.ctrc', false)} onChange={val => cellOnChange(['str', 'ctrc'], val)} disabled={!editRowData?.str?.active} />
           : <ReadonlyGreenCheckbox checked={row.str?.ctrc} />}
       </td>
       {/* STR ESTIMATE 分组 */}
-      <td>
+      <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
         {isEditing
           ? <EstimateCell
               value={{
@@ -259,7 +259,7 @@ const ProgressTableRow = React.memo(function ProgressTableRow({
               //disabled={!row.str?.active}
             />}
       </td>
-      <td>
+      <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
         {isEditing
           ? <EstimateCell
               value={{
@@ -275,7 +275,7 @@ const ProgressTableRow = React.memo(function ProgressTableRow({
               //disabled={!row.str?.active}
             />}
       </td>
-      <td>
+      <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
         {isEditing
           ? <EstimateCell
               value={{
@@ -292,16 +292,16 @@ const ProgressTableRow = React.memo(function ProgressTableRow({
             />}
       </td>
       {/* PAYMENT */}
-      <td>
+      <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
         {isEditing
           ? <PaymentCell value={getVal('payment', 0)} onChange={val => cellOnChange(['payment'], val)} />
-          : <span>${row.payment}</span>}
+          : <span  style={{ fontSize:'12px'}}>${row.payment}</span>}
       </td>
       {/* COMMENTS */}
-      <td>
+      <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
         {isEditing
           ? <CommentsCell value={getVal('comments', '')} onChange={val => cellOnChange(['comments'], val)} />
-          : <span>{row.comments}</span>}
+          : <span style={{ fontSize:'12px'}}>{row.comments}</span>}
       </td>
     </tr>
   );

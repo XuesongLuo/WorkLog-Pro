@@ -11,14 +11,13 @@ function ReadonlyToggleBox({ section }) {
         sx={{
           position: 'relative',
           width: '100%',
+          minHeight:'100px',  
           height: '100%',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'flex-end',
-          alignItems: 'center',
-          p: 0,
-          boxSizing: 'border-box',
-          minHeight: 48 // 或根据表格行高调整
+          display: 'flex', // 使用 flex 布局
+          flexDirection: 'column', // 垂直排列
+          justifyContent: 'center', // 垂直居中
+          alignItems: 'center', // 水平居中
+          boxSizing: 'border-box'
         }}
       >
         <Box
@@ -26,16 +25,26 @@ function ReadonlyToggleBox({ section }) {
             position: 'absolute',
             top: 5,
             left: 5,
+            p: 0,
+            m: 0,
           }}
         >
           <ReadonlyGreenCheckbox checked={section?.active} />
         </Box>
-        <Box sx={{ width: '100%', display: 'flex', justifyContent: 'center', mb: 1, mt: 2 }}>
+        <Box 
+          sx={{ 
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            width: '100%',
+            pointerEvents: 'none',        // 不影响点击表格
+          }}
+        >
           <span
             style={{
               fontSize: 12,
+              height: '1.7em',
               color: section?.active ? '#222' : '#bbb',
-              minWidth: 80, // 或你需要的宽度
               textAlign: 'center'
             }}
           >

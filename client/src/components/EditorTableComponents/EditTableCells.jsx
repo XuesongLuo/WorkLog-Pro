@@ -160,7 +160,7 @@ const StrCtrcCell = React.memo(({ value, onChange, disabled }) => (
 // 4. 基础单元格组件（不依赖 active 状态）
 const LocationCell = React.memo(({ value, onShowDetail }) => (
   <span
-    style={{ color: '#1976d2', cursor: 'pointer', textDecoration: 'underline' }}
+    style={{ fontSize:'12px', color: '#1976d2', cursor: 'pointer', textDecoration: 'underline' }}
     onClick={() => onShowDetail?.()}
   >
     {value}

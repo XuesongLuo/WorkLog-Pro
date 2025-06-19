@@ -12,10 +12,11 @@ const EditableDate = React.memo(function EditableDate({
       type="date"
       size="small"
       value={value || ''}
-      onChange={onChange}
+      onChange={e => onChange?.(e.target.value)}
       disabled={disabled}
       fullWidth
       sx={{
+        width: "90px",
         '& .MuiInputBase-input': {
           p: '0px 2px',
           fontSize: '12px',

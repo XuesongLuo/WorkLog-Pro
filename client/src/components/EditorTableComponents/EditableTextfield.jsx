@@ -7,22 +7,6 @@ function EditableCell({ value, onChange, disabled = false, }) {
   const [isEditing, setIsEditing] = useState(false);
   const inputRef = useRef(null);
 
-  const handleFocus = useCallback(() => {
-    setIsEditing(true);
-  }, []);
-
-  const handleBlur = useCallback(() => {
-    setIsEditing(false);
-    if (!disabled && draft !== value) {
-      onChange(draft);
-    }
-  }, [value, draft, disabled, onChange]);
-
-  const handleChange = useCallback((e) => {
-    console.log('EditableTextfield changed:', e.target.value); 
-    setDraft(e.target.value);
-  }, []);
-
   // 当 props.value 改变时，同步更新本地 draft（若非正在编辑或可根据需要调整条件）
   useEffect(() => {
     if (!isEditing) {

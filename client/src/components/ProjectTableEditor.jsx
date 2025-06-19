@@ -101,10 +101,55 @@ export default function ProjectTableEditor() {
         height: 'calc(100vh - 120px)', // 高度可自定义
         overflow: 'auto',
         width: '100%',
-        background: '#fff'
+        background: '#fff',
+        marginTop: '15px',
+        marginBottom: '20px'
       }}
     >
-    <table ref={tableRef} className="table-bordered sticky-table" style={{ width: '100%', borderSpacing: 0, borderCollapse: 'separate' }}>
+    <table 
+      ref={tableRef} 
+      className="table-bordered sticky-table" 
+      style={{ 
+        width: '100%', 
+        tableLayout: 'fixed',
+        borderSpacing: 0, 
+        borderCollapse: 'separate' 
+      }}
+    >
+      <colgroup>
+        {/* 开头部分 17% */} 
+        <col style={{ width: '5%' }} />   {/* LOCATION */}
+        <col style={{ width: '3%' }} />    {/* YEAR */}
+        <col style={{ width: '3%' }} />    {/* INSURANCE */}
+        <col style={{ width: '3%' }} />    {/* AROL */}
+        <col style={{ width: '3%' }} />    {/* TEST */}
+        {/* PAK部分 23% */}
+        <col style={{ width: '5%' }} />    {/* PAK */}
+        <col style={{ width: '3%' }} />    {/* POUT */}
+        <col style={{ width: '3%' }} />    {/* PACK */}
+        <col style={{ width: '4%' }} />    {/* PAK ESTIMATE SEND */}
+        <col style={{ width: '4%' }} />    {/* PAK ESTIMATE REVIEW */}
+        <col style={{ width: '4%' }} />    {/* PAK ESTIMATE AGREE */}
+         {/* WTR部分 32% */}
+        <col style={{ width: '5%' }} />    {/* WTR */}
+        <col style={{ width: '3%' }} />    {/* CTRC */}
+        <col style={{ width: '3%' }} />    {/* DEMO */}
+        <col style={{ width: '3%' }} />    {/* ITEL */}
+        <col style={{ width: '3%' }} />    {/* EQ */}
+        <col style={{ width: '3%' }} />    {/* PICK */}
+        <col style={{ width: '4%' }} />    {/* WTR ESTIMATE SEND */}
+        <col style={{ width: '4%' }} />    {/* WTR ESTIMATE REVIEW */}
+        <col style={{ width: '4%' }} />    {/* WTR ESTIMATE AGREE */}
+        {/* STR部分 20% */}
+        <col style={{ width: '5%' }} />    {/* STR */}
+        <col style={{ width: '3%' }} />    {/* CTRC */}
+        <col style={{ width: '4%' }} />    {/* STR ESTIMATE SEND */}
+        <col style={{ width: '4%' }} />    {/* STR ESTIMATE REVIEW */}
+        <col style={{ width: '4%' }} />    {/* STR ESTIMATE AGREE */}
+        {/* 剩余部分 8% */}
+        <col style={{ width: '4%' }} />    {/* PAYMENT */}
+        <col style={{ width: '4%' }} />    {/* COMMENTS */}
+      </colgroup>
     <thead>
         <tr>
             <th rowSpan={2}>LOCATION</th>
@@ -130,7 +175,7 @@ export default function ProjectTableEditor() {
             <th rowSpan={2}>CTRC</th>
             <th colSpan={3}>STR ESTIMATE</th>
             <th rowSpan={2}>PAYMENT</th>
-            <th rowSpan={2}>COMMENTS</th>
+            <th rowSpan={2}>COMMENT</th>
         </tr>
         <tr>
             {/* PAK ESTIMATE 子项 */}
