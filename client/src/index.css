@@ -66,3 +66,10 @@ button:focus-visible {
     background-color: #f9f9f9;
   }
 }
+
+
+strong, .label {
+  font-family: PingFang SC, Microsoft YaHei, Arial, Helvetica Neue, Helvetica, sans-serif !important;
+  font-weight: 700 !important;
+  margin-right: 4px;
+}

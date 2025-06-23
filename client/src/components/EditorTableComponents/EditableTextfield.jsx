@@ -1,18 +1,15 @@
 // src/components/EditorTableComponents/EditableTextfield.jsx
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Box, TextField } from '@mui/material';
 
-function EditableCell({ value, onChange, disabled = false, }) {
+function EditableCell({ value, onChange, disabled = false }) {
   const [draft, setDraft] = useState(value ?? '');
-  const [isEditing, setIsEditing] = useState(false);
   const inputRef = useRef(null);
 
-  // 当 props.value 改变时，同步更新本地 draft（若非正在编辑或可根据需要调整条件）
+  // 当 props.value 改变时，同步更新本地 draft
   useEffect(() => {
-    if (!isEditing) {
       setDraft(value ?? '');
-    }
-  }, [value, isEditing]);
+  }, [value]);
 
   return (
     <Box
@@ -53,7 +50,6 @@ function EditableCell({ value, onChange, disabled = false, }) {
           '& .MuiInput-underline:hover:before': {
             borderBottom: '1px solid #1976d2 !important', // hover时有下划线，可换你想要的颜色
           },
-          // 根据需要可调整 TextField 外观，使其与单元格融合
         }}
       />
     </Box>

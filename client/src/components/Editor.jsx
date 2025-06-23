@@ -1,11 +1,9 @@
 import { useState, useEffect, useRef, forwardRef, useImperativeHandle } from 'react'
 import { useEditor, EditorContent } from '@tiptap/react'
-
 import StarterKit from '@tiptap/starter-kit'
 import Underline from '@tiptap/extension-underline'
 import Color from '@tiptap/extension-color'
 import Highlight from '@tiptap/extension-highlight'
-import Image from '@tiptap/extension-image'
 import TaskList from '@tiptap/extension-task-list'
 import TaskItem from '@tiptap/extension-task-item'
 import Table from '@tiptap/extension-table'
@@ -14,10 +12,8 @@ import TableCell from '@tiptap/extension-table-cell'
 import TableHeader from '@tiptap/extension-table-header'
 import BulletList from '@tiptap/extension-bullet-list'
 import OrderedList from '@tiptap/extension-ordered-list'
-
 import { findParentNodeClosestToPos } from 'prosemirror-utils'
 import { DOMSerializer } from 'prosemirror-model'
-
 import { CustomTextStyle } from './RichEditorComponents/CustomTextStyle'
 import './editor.css'
 
@@ -130,12 +126,11 @@ const Editor = forwardRef(({ value = '', readOnly = false, hideToolbar = false, 
     const [showContextMenu, setShowContextMenu] = useState(false)
     const [contextMenuPos, setContextMenuPos] = useState({ x: 0, y: 0 })
     const [canMergeCells, setCanMergeCells] = useState(false)        //  标记单元格是否可以合并
-    const [canSplitCell, setCanSplitCell] = useState(false)       //  标记单元格是否可以拆分
+    const [canSplitCell, setCanSplitCell] = useState(false)          //  标记单元格是否可以拆分
     const [floatingPosition, setFloatingPosition] = useState({ top: 0, left: 0 });
 
     const resizableRef = useRef();
     const toolbarRef = useRef(null)
-    const fileInputRef = useRef(null)
 
     const editor = useEditor({
         extensions: [
@@ -153,7 +148,6 @@ const Editor = forwardRef(({ value = '', readOnly = false, hideToolbar = false, 
             CustomOrderedList,
             TaskList.configure({ nested: true }),
             TaskItem.configure({ nested: true }),
-            Image,
             Table.configure({
                 resizable: true,
             }),
@@ -188,7 +182,7 @@ const Editor = forwardRef(({ value = '', readOnly = false, hideToolbar = false, 
 
         setCurrentBulletStyle(style);
         setShowBulletListStyles(false);
-        };
+    };
       
     const handleOrderedListStyle = (style) => {
         const chain = editor.chain().focus();
@@ -199,15 +193,7 @@ const Editor = forwardRef(({ value = '', readOnly = false, hideToolbar = false, 
 
         setCurrentOrderedStyle(style);
         setShowOrderedListStyles(false);
-      };
-
-    const handleUploadImage = (e) => {
-        const file = e.target.files?.[0]
-        if (file) {
-        const blobUrl = URL.createObjectURL(file)
-        editor.chain().focus().setImage({ src: blobUrl }).run()
-        }
-    }
+    };
 
     const handleInsertTable = () => {
         if (hoverRow > 0 && hoverCol > 0) {
@@ -663,7 +649,7 @@ const Editor = forwardRef(({ value = '', readOnly = false, hideToolbar = false, 
                         )}
                     </div>
 
-                    <button onClick={() => editor.chain().focus().toggleTaskList().run()} className={editor.isActive('taskList') ? 'is-active' : ''}>✅</button>
+                    <button onClick={() => editor.chain().focus().toggleTaskList().run()} className={editor.isActive('taskList') ? 'is-active' : ''}>☑️</button>
                     {/* ✅  ☑️ */}
 
                     <button
@@ -693,6 +679,7 @@ const Editor = forwardRef(({ value = '', readOnly = false, hideToolbar = false, 
                     </button>
 
                     {/* 插入图片 */}
+                    {/* 
                     <button onClick={() => fileInputRef.current.click()}>🖼️</button>
                     <input
                     type="file"
@@ -701,6 +688,7 @@ const Editor = forwardRef(({ value = '', readOnly = false, hideToolbar = false, 
                     ref={fileInputRef}
                     onChange={handleUploadImage}
                     />
+                    */}
 
                     {/* 插入表格按钮 */}
                     <div className="dropdown">

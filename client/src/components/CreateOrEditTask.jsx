@@ -27,9 +27,9 @@ import { DatePicker }      from '@mui/x-date-pickers';
 import { AdapterDateFns }      from '@mui/x-date-pickers/AdapterDateFns';
 import { useSnackbar } from 'notistack';
 import { useLoading } from '../contexts/LoadingContext';
-
 import { useTasks } from '../contexts/TaskStore';
-import TaskPane from './TaskPane'; 
+import TaskPane from './TaskPane';
+import { useTranslation } from 'react-i18next';
 
 const LazyEditor = lazy(() => 
   import('./Editor').then(module => ({
@@ -49,6 +49,7 @@ function formatDateToYMD(date) {
 const types = ['室外工程', '室内工程', '后院施工', '除霉处理'];
 
 export default function CreateOrEditTask({ _id: propId, task: propTask, embedded = false, onClose, onSuccess }) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const editorRef = useRef();
@@ -87,9 +88,7 @@ export default function CreateOrEditTask({ _id: propId, task: propTask, embedded
 
   useEffect(() => {
     if (!isEdit || !_id) return;
-    console.log('111', { _id, isEdit, propTask, taskFromRoute });
     const cachedTask = propTask ?? taskFromRoute ?? taskMap[_id];
-  
     if (cachedTask) {
       const { mode, ...cleanTask } = cachedTask;
       const parsedTask = {
@@ -105,7 +104,6 @@ export default function CreateOrEditTask({ _id: propId, task: propTask, embedded
           requestIdleCallback(() => setEditorReady(true));
         })
         .catch(err => console.error('加载描述失败', err));
-  
     } else {
       // 完全从接口获取所有数据
       Promise.all([
@@ -154,6 +152,11 @@ export default function CreateOrEditTask({ _id: propId, task: propTask, embedded
   
 
   const handleSubmit = async () => {
+    const { address, city, state, zipcode } = form;
+    if (!address.trim() || !city.trim() || !state.trim() || !zipcode.trim()) {
+      enqueueSnackbar(t('EditPro.submitWarn'), { variant: 'error' });
+      return;
+    }
     const description = editorRef.current?.getHTML?.() || '';   // 单独提取 description
     const { start, end, ...mainData } = form;
     const finalData = {
@@ -174,7 +177,7 @@ export default function CreateOrEditTask({ _id: propId, task: propTask, embedded
         let projectId = newTask._id;
         await taskApi.updateDesc(projectId, description);    // 才写描述
       }
-      enqueueSnackbar(isEdit ? '保存成功' : '创建成功', { variant: 'success' });
+      enqueueSnackbar(t('EditPro.saveSuccess'), { variant: 'success' });
       if (onSuccess) {
         onSuccess();       // ← 独立页面用这个
       } else if (onClose) {
@@ -182,7 +185,7 @@ export default function CreateOrEditTask({ _id: propId, task: propTask, embedded
       }
     } catch (e) {
       /* fetcher 已有全局报错，若要局部提示可加 enqueueSnackbar */
-      enqueueSnackbar(e.message || '新建失败', { variant: 'error' });
+      enqueueSnackbar(e.message ||  t('EditPro.saveFailed'), { variant: 'error' });
     } finally {
       setSaving(false);
       endLoading();
@@ -190,16 +193,16 @@ export default function CreateOrEditTask({ _id: propId, task: propTask, embedded
   };
 
   const handleDelete = () => {
-    const doDelete = async () => {       // ★ 真正的删除逻辑
+    const doDelete = async () => {       // 删除逻辑
       try {
         await taskApi.remove(_id);
-        enqueueSnackbar('已删除', { variant: 'success' });
+        enqueueSnackbar( t('EditPro.alreadyDel'), { variant: 'success' });
       } catch (err) {
-        enqueueSnackbar('删除失败，已还原', { variant: 'error' });
+        enqueueSnackbar( t('EditPro.delFailed&Rec'), { variant: 'error' });
       }
     };
     if (embedded) {
-      onClose?.(doDelete);               // ★ 1) 先关闭；2) 把 doDelete 交给 Home
+      onClose?.(doDelete);               // 1) 先关闭；2) 把 doDelete 交给 Home
     } else {
       doDelete().then(() => navigate('/'));
     }
@@ -228,7 +231,7 @@ export default function CreateOrEditTask({ _id: propId, task: propTask, embedded
         {/* 任务创建类型 */}
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
           <Typography variant="h5" gutterBottom sx={{ m: 0 }}>
-            {isCreateMode ? '新建任务' : '编辑任务'}
+            {isCreateMode ?  t('EditPro.createProject') : t('EditPro.editProject')}
             {embedded && (
               <IconButton onClick={() => navigate(isEdit ? `/task/edit/${_id}` : '/task/new', { state: { task: form } } )}>
                 <OpenInNewIcon />
@@ -273,48 +276,56 @@ export default function CreateOrEditTask({ _id: propId, task: propTask, embedded
           <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 6', md: 'span 6', lg: 'span 12' } }}>
             <TextField 
               name="address" 
-              label="地址" 
+              label={t('EditPro.address')}
               size="small" 
               fullWidth 
               value={form.address} 
-              onChange={handleChange} 
+              onChange={handleChange}
+              required
+              error={!form.address.trim() && form.address !== undefined}
             />
           </Grid>
           <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 3', md: 'span 1', lg: 'span 5' } }}>
             <TextField 
               name="city" 
-              label="城市" 
+              label={t('EditPro.city')} 
               size="small" 
               fullWidth 
               value={form.city} 
-              onChange={handleChange} 
+              onChange={handleChange}
+              required
+              error={!form.city.trim() && form.city !== undefined}
             />
           </Grid>
           <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 3', md: 'span 1', lg: 'span 3' } }}>
             <TextField 
               name="state" 
-              label="州" 
+              label={t('EditPro.state')} 
               size="small" 
               fullWidth 
               value={form.state} 
-              onChange={handleChange} 
+              onChange={handleChange}
+              required
+              error={!form.state.trim() && form.state !== undefined}
             />
           </Grid>
           <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 3', md: 'span 1', lg: 'span 4' } }}>
             <TextField 
               name="zipcode" 
-              label="邮政编码" 
+              label={t('EditPro.zip')} 
               size="small" 
               fullWidth 
               value={form.zipcode || ''} 
-              onChange={handleChange} 
+              onChange={handleChange}
+              required
+              error={!form.zipcode.trim() && form.zipcode !== undefined} 
             />
           </Grid>
           {/* 第2行：房子年份、保险公司、项目类型选择*/}
           <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 6', md: 'span 6', lg: 'span 4' } }}>
             <TextField 
               name="year" 
-              label="年份" 
+              label={t('EditPro.year')} 
               size="small" 
               fullWidth 
               value={form.year} 
@@ -324,7 +335,7 @@ export default function CreateOrEditTask({ _id: propId, task: propTask, embedded
           <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 3', md: 'span 1', lg: 'span 12' } }}>
             <TextField 
               name="insurance" 
-              label="保险公司" 
+              label={t('EditPro.insurance')} 
               size="small" 
               fullWidth 
               value={form.insurance} 
@@ -339,7 +350,7 @@ export default function CreateOrEditTask({ _id: propId, task: propTask, embedded
                 name="type"
                 value={form.type}
                 onChange={handleChange}
-                label="项目类型"
+                label={t('EditPro.type')}
                 sx={{ minWidth: 120 }}
               >
                 {types.map((option) => (
@@ -355,7 +366,7 @@ export default function CreateOrEditTask({ _id: propId, task: propTask, embedded
           <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 3', md: 'span 2', lg: 'span 6' } }}>
             <TextField 
               name="manager" 
-              label="项目负责人" 
+              label={t('EditPro.manager')}  
               size="small" 
               fullWidth 
               value={form.manager} 
@@ -365,7 +376,7 @@ export default function CreateOrEditTask({ _id: propId, task: propTask, embedded
           <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 3', md: 'span 2', lg: 'span 6' } }}>
             <TextField 
               name="referrer" 
-              label="项目推荐人" 
+              label={t('EditPro.referrer')} 
               size="small" 
               fullWidth 
               value={form.referrer} 
@@ -375,7 +386,7 @@ export default function CreateOrEditTask({ _id: propId, task: propTask, embedded
           <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 6', md: 'span 4', lg: 'span 12' } }}>
             <TextField 
               name="company" 
-              label="公司" 
+              label={t('EditPro.company')}  
               size="small" 
               fullWidth 
               value={form.company} 
@@ -387,7 +398,7 @@ export default function CreateOrEditTask({ _id: propId, task: propTask, embedded
           <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 6', md: 'span 4', lg: 'span 12' } }}>
             <LocalizationProvider dateAdapter={AdapterDateFns}>
               <DatePicker
-                label="开始日期"
+                label={t('EditPro.startDate')} 
                 value={form.start}
                 onChange={handleStartDateChange}
                 slotProps={{ textField: { size: 'small', fullWidth: true } }}
@@ -397,7 +408,7 @@ export default function CreateOrEditTask({ _id: propId, task: propTask, embedded
           <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 6', md: 'span 4', lg: 'span 12' } }}>
             <LocalizationProvider dateAdapter={AdapterDateFns}>
               <DatePicker
-                label="结束日期"
+                label={t('EditPro.endDate')} 
                 value={form.end}
                 minDate={form.start}
                 onChange={handleEndDateChange}
@@ -411,10 +422,10 @@ export default function CreateOrEditTask({ _id: propId, task: propTask, embedded
             sx={{ gridColumn: '1 / -1' }}
           >
             <Typography gutterBottom>
-              <strong>详细描述</strong>
+              <strong>{t('EditPro.editorTitle')}</strong>
             </Typography>
             {editorReady ? (
-              <Suspense fallback={<Typography variant="body2">加载编辑器中...</Typography>}>
+              <Suspense fallback={<Typography variant="body2">{t('EditPro.editorLoading')}</Typography>}>
                 <LazyEditor
                   ref={editorRef}
                   key={_id ?? 'new'}
@@ -424,7 +435,7 @@ export default function CreateOrEditTask({ _id: propId, task: propTask, embedded
                 />
               </Suspense>
             ) : (
-              <Typography variant="body2" sx={{ color: '#aaa' }}>等待编辑器加载...</Typography>
+              <Typography variant="body2" sx={{ color: '#aaa' }}>{t('EditPro.waitingLoading')}</Typography>
             )}
           </Grid>
         </Grid>
@@ -436,10 +447,10 @@ export default function CreateOrEditTask({ _id: propId, task: propTask, embedded
             disabled={saving}
             onClick={handleSubmit}
           >
-            {isEdit ? '保存修改' : '创建任务'}
+            {isEdit ? t('EditPro.save') : t('EditPro.create')}
           </Button>
           {isEdit &&(
-            <Button variant='text' color="error" onClick={() => setConfirmDeleteOpen(true)}>删除</Button>
+            <Button variant='text' color="error" onClick={() => setConfirmDeleteOpen(true)}>{t('EditPro.delete')}</Button>
           )}
         </Stack>
 
@@ -447,10 +458,10 @@ export default function CreateOrEditTask({ _id: propId, task: propTask, embedded
       </Box>
 
       <Dialog open={confirmDeleteOpen} onClose={() => setConfirmDeleteOpen(false)}>
-        <DialogTitle>确定要删除该任务吗？</DialogTitle>
+        <DialogTitle>{t('EditPro.deleteCheck')}</DialogTitle>
         <DialogActions>
-          <Button onClick={() => setConfirmDeleteOpen(false)}>取消</Button>
-          <Button onClick={handleDelete} color="error" variant="contained">确认删除</Button>
+          <Button onClick={() => setConfirmDeleteOpen(false)}>{t('EditPro.cancel')}</Button>
+          <Button onClick={handleDelete} color="error" variant="contained">{t('EditPro.confirm')}</Button>
         </DialogActions>
       </Dialog>
     </TaskPane>

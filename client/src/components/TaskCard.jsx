@@ -60,7 +60,7 @@ export default function TaskCard({ task, onClose }) {
 
   return (
     <Box sx={{ position: 'relative', p: 0 }}>
-      <Paper sx={{ p: 4, maxWidth: '700px', margin: '0 auto', minWidth: 350, position: 'relative' }}>
+      <Paper sx={{ p: 4, maxWidth: '60vw', margin: '0 auto', minWidth: 350, position: 'relative' }}>
         {/* 关闭按钮和编辑按钮 */}
         {onClose && (
           <>

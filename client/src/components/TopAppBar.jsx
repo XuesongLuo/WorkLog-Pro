@@ -14,7 +14,7 @@ import {
 import MenuIcon from '@mui/icons-material/Menu';
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew'; 
 import { getCurrentUser, logout } from '../utils/authUtils';
-  
+import { useTranslation } from 'react-i18next';
 
   /**
    * Top level app bar
@@ -22,11 +22,12 @@ import { getCurrentUser, logout } from '../utils/authUtils';
    * @param {function} onHomeClick     点击回调
    */
 export default function TopAppBar({ showHomeButton = false, onHomeClick }) {
-  const [lang, setLang] = useState('en');
   /* ===== 菜单开关 ===== */
   const [anchorEl, setAnchorEl] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
   const navigate = useNavigate();
+  const { t, i18n, ready } = useTranslation();
+  if (!ready) return null;
   
   useEffect(() => {
     setCurrentUser(getCurrentUser());
@@ -37,9 +38,9 @@ export default function TopAppBar({ showHomeButton = false, onHomeClick }) {
   
   /* 切换语言并关闭菜单 */
   const chooseLang = (value) => {
-    setLang(value);
+    i18n.changeLanguage(value);
+    localStorage.setItem('appLang', value);
     handleMenuClose();
-    // 👉 这里如果有 i18n / Context，可同步更新全局语言
   };
 
   const handleLogout = () => {
@@ -51,7 +52,7 @@ export default function TopAppBar({ showHomeButton = false, onHomeClick }) {
   return (
     <AppBar position="static">
       <Toolbar>
-          {/* 可切换的抽屉或侧边栏按钮（保留原有） */}
+          {/* 可切换的抽屉或侧边栏按钮 */}
           <IconButton edge="start" color="inherit" onClick={handleMenuOpen} sx={{ mr: 1 }}>
           <MenuIcon />
         </IconButton>
@@ -61,13 +62,13 @@ export default function TopAppBar({ showHomeButton = false, onHomeClick }) {
           open={Boolean(anchorEl)}
           onClose={handleMenuClose}
         >
-          <MenuItem selected={lang === 'en'} onClick={() => chooseLang('en')}>
+          <MenuItem selected={i18n.language === 'en'} onClick={() => chooseLang('en')}>
             English
           </MenuItem>
-          <MenuItem selected={lang === 'es'} onClick={() => chooseLang('es')}>
+          <MenuItem selected={i18n.language === 'es'} onClick={() => chooseLang('es')}>
             Español
           </MenuItem>
-          <MenuItem selected={lang === 'zh'} onClick={() => chooseLang('zh')}>
+          <MenuItem selected={i18n.language === 'zh'} onClick={() => chooseLang('zh')}>
             中文
           </MenuItem>
         </Menu>
@@ -82,12 +83,12 @@ export default function TopAppBar({ showHomeButton = false, onHomeClick }) {
             onClick={onHomeClick}
             sx={{ ml: 2 }}
           >
-            返回
+            {t('TopAppBar.BackButton')}
           </Button>
         )}
 
         <Box sx={{ flexGrow: 1 }} />
-        {/* 新增：显示用户名和登出 */}
+        {/* 用户名和登出 */}
         {currentUser && (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <Typography variant="body1">
@@ -99,7 +100,7 @@ export default function TopAppBar({ showHomeButton = false, onHomeClick }) {
               onClick={handleLogout}
               sx={{ minWidth: 0, px: 1, fontSize: '0.75rem' }}
             >
-              登出
+              {t('TopAppBar.logOut')}
             </Button>
           </Box>
         )}

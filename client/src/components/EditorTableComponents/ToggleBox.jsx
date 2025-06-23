@@ -6,7 +6,6 @@ import EditableDate from './EditableDate';
 const GREEN = '#388e3c'; // 深绿色
 
 const ToggleBox = React.memo(function ToggleBox({value, onToggleActive, onDateChange, disabled}) {
-  //const { active, start_date } = data;
   const { active, start_date } = value || {};
 
   return (

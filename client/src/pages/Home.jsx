@@ -1,18 +1,17 @@
 // src/pages/Home.jsx
 import React, { useEffect, useState, useMemo, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Typography, Box, Button, Stack, Grid, Container, Slide} from '@mui/material';
 import ViewListIcon from '@mui/icons-material/ViewList';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
-
 import TopAppBar from '../components/TopAppBar';
 import TaskList from '../components/TaskList'; 
 import CalendarView from '../components/CalendarView';
 import TaskDetail from '../components/TaskDetail';
 import CreateOrEditTask from '../components/CreateOrEditTask';
-import { useDebounce }  from '../hooks/useDebounce';
 import useTaskDetailState from '../hooks/useTaskDetailState';
-import { useTasks } from '../contexts/TaskStore'; 
+import { useTasks } from '../contexts/TaskStore';
+import { useTranslation } from 'react-i18next';
 
 const SlideContent = React.memo(
   ({ selectedTask, handleTaskClose }) => (
@@ -52,14 +51,15 @@ const useNormalizedEvents = (tasks) => useMemo(() => {
 }, [tasks]);
 
 export default function Home() {
+  const { t } = useTranslation();
   const { tasks, api, loaded, page, setPage, hasMore, loading } = useTasks(); 
   const events = useNormalizedEvents(tasks);
-  const [lang, setLang] = useState('zh');
   const [viewMode, setViewMode] = useState('list'); // 'calendar' | 'list'
   const navigate = useNavigate();
   const [showPanelContent, setShowPanelContent] = useState(false);
   const containerOuterRef = useRef(null);
   const [lockedWidth, setLockedWidth] = useState(null);
+  const location = useLocation();
 
   const {
     selectedTask,
@@ -102,39 +102,36 @@ export default function Home() {
 
   //const debouncedTaskClose = useDebounce(handleTaskClose, 100);   // 包装防抖版本的 handleTaskClose
 
-
-  // 语言切换
-  const handleLangChange = (e) => setLang(e.target.value);
   // 视图切换
   const toggleView = () =>
     setViewMode(prev => (prev === 'calendar' ? 'list' : 'calendar'));
 
   // 新的关闭&刷新逻辑
   const handlePanelClose = (payload) => {
-    // 1. 如果是编辑payload，切换到编辑模式（而不是关闭面板）
+    // 1. 如果是编辑payload，切换到编辑模式
     if (payload && typeof payload === 'object' && payload.mode === 'edit') {
       openTaskEdit(payload._id, payload.task);
-      return;  // 不要关闭面板
+      return;
     }
     // 关闭面板
     handleTaskClose();
     // 如果是删除等传递过来的函数
     if (typeof payload === 'function') {
-      // 你可以选择直接调用（同步）或者动画结束后调用（异步）
       payload();
       return;
     }
-    // 如果 payload === 'reload-first'， 从第一页开始刷新， 如果 payload === 'reload-current'， 从当前页开始刷新
+    // 如果 payload === 'reload-first'， 从第一页开始刷新
     if (payload === 'reload-first') {
       api.loadPage(1);
       setPage(1);
     }
+    // 如果 payload === 'reload-current'， 从当前页开始刷新
     if (payload === 'reload-current') {
       api.loadPage(page);
     }
   };
 
-  // 3. Slide 动画事件，测量锁定宽度
+  // Slide 动画事件，测量锁定宽度
   const handlePanelAnimationEnd = () => {
     if (containerOuterRef.current) {
       const parentW = containerOuterRef.current.clientWidth;
@@ -165,8 +162,16 @@ export default function Home() {
     }
   }, [loaded]);
 
-  
-  /* --------------------- 组件渲染 --------------------- */
+  // 监听并 reload
+  useEffect(() => {
+    if (location.state?.reload) {
+      api.loadPage(1);
+      setPage(1);
+      // 清空 reload 标记（防止反复 reload）
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
+
   return (
     <Box sx={{ width: '100vw', minHeight: '100vh' }}>
       <TopAppBar /> 
@@ -178,11 +183,10 @@ export default function Home() {
           py: 3,
           height: 'calc(100vh - 64px)',
           overflowX: 'hidden',
-          width: '80vw',          // 固定 80% 视口宽度
+          width: '80vw',          
           minWidth: 0,
           maxWidth: 'none',
-          mx: 'auto',             // 居中
-          
+          mx: 'auto',             
         }}
       >
         <Grid
@@ -203,34 +207,32 @@ export default function Home() {
                   startIcon={viewMode === 'list' ? <CalendarMonthIcon /> : <ViewListIcon />}
                   onClick={toggleView}
                 >
-                  {viewMode === 'calendar' ? '列表视图' : '日历视图'}
+                  {viewMode === 'list' ? t('Home.calendarView') : t('Home.listView')}
               </Button>
               <Typography variant="h5">
-                {viewMode === 'calendar' ? '项目  日历' : '项目  列表'}
+                {viewMode === 'list' ? t('Home.listTitle') : t('Home.calendarTitle')}
               </Typography>
               <Stack direction="row" spacing={2}>
                 <Button variant="contained" color="secondary" onClick={openTaskCreate}>
-                  新增任务
+                  {t('Home.createProject')}
                 </Button>
                 <Button
                   variant="outlined"
                   color="primary"
                   onClick={() => navigate('/project-table')}
                 >
-                  打开项目编辑器
+                  {t('Home.progressTableEditor')}
                 </Button>
               </Stack>
             </Stack>
-            
-            
             {viewMode === 'list' ? (
               <TaskList
                 tasks={tasks}
                 onSelectTask={(task) => openTaskDetail(task._id)}
                 sx={{ height: '100%' }}
-                lockedWidth={lockedWidth}            // 传递锁定宽度
-                loading={loading}           // 新增
-                hasMore={hasMore}           // 新增
+                lockedWidth={lockedWidth}   
+                loading={loading}           
+                hasMore={hasMore}           
                 onLoadMore={() => {
                   if (!loading && hasMore) {
                     api.loadPage(page + 1);
@@ -255,11 +257,10 @@ export default function Home() {
               unmountOnExit
               onEntered={() => {
                 setShowPanelContent(true);     // 动画后加载内容
-                handlePanelAnimationEnd();     // 你的原有测宽/布局逻辑
+                handlePanelAnimationEnd();     // 原有测宽/布局逻辑
               }}
               onExit={() => setShowPanelContent(false)} // 动画开始卸载内容
-              onExited={() => {              // 动画完全收起 → 执行回调
-                // 可选：面板动画结束后也可以再做一次清理
+              onExited={() => {                         // 动画完全收起 → 执行回调
                 setSelectedTask(null);
                 handlePanelAnimationEnd();
               }}

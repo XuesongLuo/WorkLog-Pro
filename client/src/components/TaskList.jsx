@@ -1,7 +1,8 @@
 // src/components/TaskList.jsx
-import React, { useMemo, useRef, useEffect, useState } from 'react';
+import React, { useMemo, useRef, useEffect } from 'react';
 import { MaterialReactTable } from 'material-react-table';
 import { CircularProgress } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 
 // 日期格式化工具
 function formatDate(val) {
@@ -16,6 +17,7 @@ function formatDate(val) {
 
 
 const TaskList = React.forwardRef(function TaskList( { tasks, onSelectTask, sx = {}, lockedWidth, loading, hasMore, onLoadMore }, ref) {
+    const { t } = useTranslation();
     const containerWidth = lockedWidth ?? 1200;
     const containerRef = useRef();
     // 列定义
@@ -23,21 +25,13 @@ const TaskList = React.forwardRef(function TaskList( { tasks, onSelectTask, sx =
         () => [
         {
             accessorKey: 'start',
-            header: '开始日期',
+            header: t('ProList.startDate'),
             baseWidth: 50,
             Cell: ({ cell }) => formatDate(cell.getValue()),
-            /*
-            sortingFn: (rowA, rowB) => {
-            // 直接按时间戳倒序
-            const a = new Date(rowA.original.start).getTime() || 0;
-            const b = new Date(rowB.original.start).getTime() || 0;
-            return b - a; // 降序，最近在前
-            },
-            */
         },
         {
             accessorKey: 'fulladdress',
-            header: '地址',
+            header: t('ProList.address'),
             baseWidth: 150,
             Cell: ({ row }) =>
             (
@@ -53,17 +47,17 @@ const TaskList = React.forwardRef(function TaskList( { tasks, onSelectTask, sx =
         },
         {
             accessorKey: 'year',
-            header: '房屋年份',
+            header: t('ProList.year'),
             baseWidth: 50
         },
         {
             accessorKey: 'insurance',
-            header: '保险公司',
+            header: t('ProList.insurance'),
             baseWidth: 80
         },
         {
             accessorKey: 'type',
-            header: '类型',
+            header: t('ProList.type'),
             baseWidth: 50,
             align: 'right',
         },
@@ -131,6 +125,7 @@ const TaskList = React.forwardRef(function TaskList( { tasks, onSelectTask, sx =
                 enableColumnActions={false}
                 columns={dynamicColumns}
                 data={data}
+                renderTopToolbar={false}
                 enableRowVirtualization={true}
                 enablePagination={false}
                 enableColumnResizing={false}
@@ -160,7 +155,7 @@ const TaskList = React.forwardRef(function TaskList( { tasks, onSelectTask, sx =
                     sx: { width: '100%', maxWidth: '100%', ...sx, height: '100%', boxShadow: 'none', border: 'none', boxSizing: 'border-box', overflow: 'hidden' }
                   }}
                 muiTableContainerProps={{
-                sx: { width: '100%', maxWidth: '100%', height: '100%', maxHeight: '70vh', boxSizing: 'border-box',overflowX: 'hidden', overflowY: 'overlay', }
+                sx: { width: '100%', maxWidth: '100%', height: '100%', maxHeight: '80vh', boxSizing: 'border-box',overflowX: 'hidden', overflowY: 'overlay', }
                 }}
                 muiTableHeaderProps={{
                     sx: { maxHeight: '100%', width: '100%', maxWidth: '100%', boxSizing: 'border-box' },

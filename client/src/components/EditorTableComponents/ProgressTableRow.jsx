@@ -33,7 +33,7 @@ const ProgressTableRow = React.memo(function ProgressTableRow({
     <tr ref={trRef} onDoubleClick={onRowDoubleClick} className={isEditing ? 'editing-row' : ''} style={{ cursor: 'pointer' }}>
       {/* LOCATION */}
       <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
-        <LocationCell value={row.location} onShowDetail={onShowDetail} />
+        <LocationCell value={row.location} onShowDetail={() => onShowDetail(row._id)} />
       </td>
       {/* YEAR */}
       <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
@@ -98,7 +98,7 @@ const ProgressTableRow = React.memo(function ProgressTableRow({
           : <ReadonlyEstimateCell
               checked={row.pak?.estimate?.send?.checked}
               amount={row.pak?.estimate?.send?.amount}
-              //disabled={!row.pak?.active}
+              disabled={!row.pak?.active}
             />}
       </td>
       <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
@@ -114,7 +114,7 @@ const ProgressTableRow = React.memo(function ProgressTableRow({
           : <ReadonlyEstimateCell
               checked={row.pak?.estimate?.review?.checked}
               amount={row.pak?.estimate?.review?.amount}
-              //disabled={!row.pak?.active}
+              disabled={!row.pak?.active}
             />}
       </td>
       <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
@@ -130,7 +130,7 @@ const ProgressTableRow = React.memo(function ProgressTableRow({
           : <ReadonlyEstimateCell
               checked={row.pak?.estimate?.agree?.checked}
               amount={row.pak?.estimate?.agree?.amount}
-              //disabled={!row.pak?.active}
+              disabled={!row.pak?.active}
             />}
       </td>
 
@@ -187,7 +187,7 @@ const ProgressTableRow = React.memo(function ProgressTableRow({
           : <ReadonlyEstimateCell
               checked={row.wtr?.estimate?.send?.checked}
               amount={row.wtr?.estimate?.send?.amount}
-              //disabled={!row.wtr?.active}
+              disabled={!row.wtr?.active}
             />}
       </td>
       <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
@@ -203,7 +203,7 @@ const ProgressTableRow = React.memo(function ProgressTableRow({
           : <ReadonlyEstimateCell
               checked={row.wtr?.estimate?.review?.checked}
               amount={row.wtr?.estimate?.review?.amount}
-              //disabled={!row.wtr?.active}
+              disabled={!row.wtr?.active}
             />}
       </td>
       <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
@@ -219,7 +219,7 @@ const ProgressTableRow = React.memo(function ProgressTableRow({
           : <ReadonlyEstimateCell
               checked={row.wtr?.estimate?.agree?.checked}
               amount={row.wtr?.estimate?.agree?.amount}
-              //disabled={!row.wtr?.active}
+              disabled={!row.wtr?.active}
             />}
       </td>
 
@@ -256,7 +256,7 @@ const ProgressTableRow = React.memo(function ProgressTableRow({
           : <ReadonlyEstimateCell
               checked={row.str?.estimate?.send?.checked}
               amount={row.str?.estimate?.send?.amount}
-              //disabled={!row.str?.active}
+              disabled={!row.str?.active}
             />}
       </td>
       <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
@@ -272,7 +272,7 @@ const ProgressTableRow = React.memo(function ProgressTableRow({
           : <ReadonlyEstimateCell
               checked={row.str?.estimate?.review?.checked}
               amount={row.str?.estimate?.review?.amount}
-              //disabled={!row.str?.active}
+              disabled={!row.str?.active}
             />}
       </td>
       <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
@@ -288,14 +288,14 @@ const ProgressTableRow = React.memo(function ProgressTableRow({
           : <ReadonlyEstimateCell
               checked={row.str?.estimate?.agree?.checked}
               amount={row.str?.estimate?.agree?.amount}
-              //disabled={!row.str?.active}
+              disabled={!row.str?.active}
             />}
       </td>
       {/* PAYMENT */}
       <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
         {isEditing
           ? <PaymentCell value={getVal('payment', 0)} onChange={val => cellOnChange(['payment'], val)} />
-          : <span  style={{ fontSize:'12px'}}>${row.payment}</span>}
+          : <span style={{ fontSize:'12px'}}>${row.payment}</span>}
       </td>
       {/* COMMENTS */}
       <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>

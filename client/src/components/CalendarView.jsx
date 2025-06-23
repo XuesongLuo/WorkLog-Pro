@@ -20,9 +20,7 @@ const PALETTE = [
 ];
 
 export default function CalendarView({ events, onSelectEvent, style }) {
-
-  const { t } = useTranslation();  // 🌟 直接用t函数
-  const [lang, setLang] = useState('zh');
+  const { t } = useTranslation();
   const messages = {
     today: t('calendar.today'),
     previous: t('calendar.previous'),
@@ -81,7 +79,6 @@ export default function CalendarView({ events, onSelectEvent, style }) {
       used.add(idx);
       active.push(ev);
     });
-    //if (isDev) console.time('coloredEvents');
     return out;
   }, [events]);
 

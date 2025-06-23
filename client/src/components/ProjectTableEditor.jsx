@@ -1,9 +1,15 @@
 // src/components/ProjectTableEditor.jsx
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import _ from 'lodash';
+import { Box } from '@mui/material';
+import Dialog from '@mui/material/Dialog';
+import { useSnackbar } from 'notistack';
 import { useTasks } from '../contexts/TaskStore';
+import { useLoading } from '../contexts/LoadingContext';
 import ProgressTableRow from './EditorTableComponents/ProgressTableRow';
-import './EditorTableComponents/ProgressTable.css'
+import TaskCard from './TaskCard';
+import { useTranslation } from 'react-i18next';
+import './EditorTableComponents/ProgressTable.css';
 
 function updateIn(obj, path, val) {
     if (path.length === 1) return { ...obj, [path[0]]: val };
@@ -25,17 +31,31 @@ function diffObject(orig, edited) {
 }
 
 export default function ProjectTableEditor() {
+  const { t } = useTranslation();
   const { progress, api, progressHasMore, progressLoading, progressPage } = useTasks();
+  const { enqueueSnackbar } = useSnackbar();
+  const { start: startLoading, end: endLoading } = useLoading();
   const rows = progress;
+  const [taskDetail, setTaskDetail] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
   const [editingRowId, setEditingRowId] = useState(null);
   const [editRowData, setEditRowData] = useState(null);
   const apiRef = useRef(api);
-  const tableRef = useRef(null); // 新增
+  const tableRef = useRef(null); 
   const editingRowRef = useRef(null);
-
   const containerRef = useRef(null); // 滚动容器ref
 
-  useEffect(() => { apiRef.current = api; }, [api]);
+  const handleShowDetail = useCallback(async (_id) => {
+    setDialogOpen(true);
+    setLoading(true);
+    try {
+      const task = await apiRef.current.getTask(_id);
+      setTaskDetail(task); 
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   const tryEditRow = useCallback((rowId) => {
     const row = rows.find(r => r._id === rowId);
@@ -52,14 +72,26 @@ export default function ProjectTableEditor() {
     const orig = rows.find(r => r._id === editingRowId);
     const changedFields = diffObject(orig, editRowData);
     if (orig && Object.keys(changedFields).length > 0) {
+      startLoading();
       apiRef.current.mergeProgress(editRowData._id, changedFields);
-      apiRef.current.saveCell(editRowData._id, changedFields).catch(() => {
-        apiRef.current.mergeProgress(editRowData._id, orig);
-      });
+      apiRef.current.saveCell(editRowData._id, changedFields)
+        .then(() => {
+          enqueueSnackbar(t('ProProgress.saveSuccess'), { variant: 'success' });
+        })
+        .catch(() => {
+          enqueueSnackbar(t('ProProgress.saveFailed'), { variant: 'error' });
+          apiRef.current.mergeProgress(editRowData._id, orig);
+        })
+        .finally(() => {
+          endLoading();
+        });
     }
     setEditingRowId(null);
     setEditRowData(null);
-  }, [editingRowId, editRowData, rows]);
+  }, [editingRowId, editRowData, rows, enqueueSnackbar]);
+
+
+  useEffect(() => { apiRef.current = api; }, [api]);
 
   // 重点：修正为“只在表格外点击时才关闭”
   useEffect(() => {
@@ -98,7 +130,7 @@ export default function ProjectTableEditor() {
     <div
       ref={containerRef}
       style={{
-        height: 'calc(100vh - 120px)', // 高度可自定义
+        height: 'calc(100vh - 120px)', 
         overflow: 'auto',
         width: '100%',
         background: '#fff',
@@ -199,7 +231,7 @@ export default function ProjectTableEditor() {
             isEditing={editingRowId === row._id}
             editRowData={editingRowId === row._id ? editRowData : null}
             onCellChange={(path, val) => handleCellChange(path, val)}
-            onShowDetail={id => {/*...*/}}
+            onShowDetail={handleShowDetail}
             onRowDoubleClick={() => tryEditRow(row._id)}
             trRef={editingRowId === row._id ? editingRowRef : undefined}
           />
@@ -217,6 +249,14 @@ export default function ProjectTableEditor() {
           已经到底了
         </div>
     )}
+
+      <Dialog open={dialogOpen} maxWidth="md" fullWidth onClose={() => setDialogOpen(false)}>
+        {loading ? (
+          <Box sx={{ p: 6, textAlign: 'center' }}>加载中...</Box>
+        ) : (
+          <TaskCard task={taskDetail} onClose={() => setDialogOpen(false)} />
+        )}
+      </Dialog>
     </div>
   );
 }

@@ -17,7 +17,7 @@ function flattenForSet(obj, prefix = '') {
 }
 
 
-// GET /api/progress?page=1&pageSize=20
+// GET /api/progress?page=1&pageSize=50
 router.get('/', auth, adminOnly, async (req, res) => {
   try {
     const db = await getMongoDb();

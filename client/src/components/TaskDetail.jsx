@@ -18,12 +18,13 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import CancelIcon from '@mui/icons-material/Cancel';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import { useSnackbar } from 'notistack';
-
 import Editor from './Editor';
 import TaskPane from './TaskPane';
 import { useTasks } from '../contexts/TaskStore';
+import { useTranslation } from 'react-i18next';
 
 export default function TaskDetail({ _id: propId, embedded = false, onClose }) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [task, setTask] = useState(null);
@@ -46,7 +47,6 @@ export default function TaskDetail({ _id: propId, embedded = false, onClose }) {
       setTask({ ...cachedTask });
       setLoading(false);
       setTimeout(() => setEditorReady(true), 150);
-      // 可选：补充 description 字段，如果 description 单独存
       taskApi.getTaskDescription(_id).then(descData => {
         setTask(prev => ({ ...prev, description: descData.description }));
       });
@@ -87,17 +87,17 @@ export default function TaskDetail({ _id: propId, embedded = false, onClose }) {
   };
 
   const handleDelete = () => {
-    const doDelete = async () => {       // ★ 真正的删除逻辑
+    const doDelete = async () => {       // 删除函数
       try {
         await taskApi.remove(_id);
-        enqueueSnackbar('已删除', { variant: 'success' });
+        enqueueSnackbar(t('viewPro.alreadyDel'), { variant: 'success' });
       } catch (err) {
-        enqueueSnackbar('删除失败，已还原', { variant: 'error' });
+        enqueueSnackbar(t('viewPro.delFailed&Rec'), { variant: 'error' });
       }
     };
     
     if (embedded) {
-      onClose?.(doDelete);               // ★ 1) 先关闭；2) 把 doDelete 交给 Home
+      onClose?.(doDelete);               // 1 先关闭；2 把 doDelete 交给 Home
     } else {
       doDelete().then(() => navigate('/'));
     }
@@ -110,33 +110,32 @@ export default function TaskDetail({ _id: propId, embedded = false, onClose }) {
 
 
   if (loading) {
-    return embedded ? null : <Typography sx={{ mt: 4, textAlign: 'center' }}>加载中...</Typography>;
+    return embedded ? null : <Typography sx={{ mt: 4, textAlign: 'center' }}>{t('viewPro.loading')}</Typography>;
   }
   if (!task) {
-    return embedded ? null : <Typography sx={{ mt: 4, textAlign: 'center' }}>任务未找到</Typography>;
+    return embedded ? null : <Typography sx={{ mt: 4, textAlign: 'center' }}>{t('viewPro.unknown')}</Typography>;
   }
   return (
     <TaskPane embedded={embedded}>
       <Box sx={{ 
         display: 'flex', 
         flexDirection: 'column', 
-        height: 'auto',
-        //minHeight: embedded ? '100%' : '80vh', 
+        height: 'auto', 
         width: embedded ? '100%' : '80%',
         maxWidth: embedded ? 'none' : '100vw',
         minWidth: 0,
-        justifyContent: embedded ? 'flex-start' : 'flex-start',  // 靠上对齐
+        justifyContent: embedded ? 'flex-start' : 'flex-start', 
         overflow: 'hidden',
-        mx: embedded ? 0 : 'auto', // mx: auto 居中
-        mt: 0,       // 如果是独立页面，顶部留些空
-        mb: embedded ? 0 : 2,        // 底部留空
+        mx: embedded ? 0 : 'auto',
+        mt: 0,       
+        mb: embedded ? 0 : 2, 
         pt: 0,
        }}>
 
 
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
           <Typography variant="h5" textAlign="center" gutterBottom={false} sx={{ mb: 0 }}>
-            任务详细内容
+            {t('viewPro.proDetail')}
             {embedded && (
               <IconButton onClick={() => navigate(`/task/${task._id}`, { state: { task } } )}>
                 <OpenInNewIcon />
@@ -179,49 +178,45 @@ export default function TaskDetail({ _id: propId, embedded = false, onClose }) {
           },
         }}
       >
-        {/* 第一行：地址 城市 邮编 */}
-        <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 12', md: 'span 12', lg: 'span 12' } }}>
+        {/* 第一行：地址-城市-州-邮编  项目类型 */}
+        <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 12', md: 'span 12', lg: 'span 8' } }}>
           <Typography>
-            <strong>地址：</strong>
+            <strong> {t('viewPro.location')}</strong>
             {`${task.address ?? ''}, ${task.city ?? ''}, ${task.state ?? ''}, ${task.zipcode ?? ''}`}
           </Typography>
         </Grid>
-       
-
-        {/* 第二行：房屋年份 保险公司 项目类型 */}
-        <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 3', md: 'span 3', lg: 'span 4' } }}>
-          <Typography><strong>房屋年份：</strong>{task.year ?? '未填写'}</Typography>
-        </Grid>
-        <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 3', md: 'span 3', lg: 'span 4' }, textAlign: 'center' }}>
-          <Typography><strong>保险公司：</strong>{task.insurance ?? '未填写'}</Typography>
-        </Grid>
         <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 6', md: 'span 2', lg: 'span 4' }, textAlign: 'right' }}>
-          <Typography><strong>项目类型：</strong>{task.type}</Typography>
+          <Typography><strong>{t('viewPro.type')}</strong>{task.type}</Typography>
         </Grid>
-
+        {/* 第二行：房屋年份 保险公司 */}
+        <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 3', md: 'span 3', lg: 'span 6' } }}>
+          <Typography><strong>{t('viewPro.year')}</strong>{task.year ?? t('viewPro.notFilled')}</Typography>
+        </Grid>
+        <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 3', md: 'span 3', lg: 'span 6' }, textAlign: 'right' }}>
+          <Typography><strong>{t('viewPro.insurance')}</strong>{task.insurance ?? t('viewPro.notFilled')}</Typography>
+        </Grid>
         {/* 第三行：公司 项目推荐人 项目负责人 项目类型 */}
         <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 6', md: 'span 2', lg: 'span 4' } }}>
-          <Typography><strong>项目负责人：</strong>{task.manager}</Typography>
+          <Typography><strong>{t('viewPro.manager')}</strong>{task.manager}</Typography>
         </Grid>
         <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 3', md: 'span 2', lg: 'span 4' }, textAlign: 'center' }}>
-          <Typography><strong>项目推荐人：</strong>{task.referrer}</Typography>
+          <Typography><strong>{t('viewPro.referrer')}</strong>{task.referrer}</Typography>
         </Grid>
          <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 3', md: 'span 3', lg: 'span 4' }, textAlign: 'right' }}>
-          <Typography><strong>项目所属公司：</strong>{task.company ?? '未填写'}</Typography>
+          <Typography><strong>{t('viewPro.company')}</strong>{task.company ?? t('viewPro.notFilled')}</Typography>
         </Grid>
-        
         {/* 第四行：开始日期 结束日期 */}
         <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 6', md: 'span 6', lg: 'span 6' } }}>
-          <Typography><strong>开始日期：</strong>{task.start ? new Date(task.start).toLocaleDateString() : '未填写'}</Typography>
+          <Typography><strong>{t('viewPro.startDate')}</strong>{task.start ? new Date(task.start).toLocaleDateString() : t('viewPro.notFilled')}</Typography>
         </Grid>
         <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 6', md: 'span 6', lg: 'span 6' }, textAlign: 'right' }}>
-          <Typography><strong>结束日期：</strong>{task.end ? new Date(task.end).toLocaleDateString() : '未填写'}</Typography>
+          <Typography><strong>{t('viewPro.endDate')}</strong>{task.end ? new Date(task.end).toLocaleDateString() : t('viewPro.notFilled')}</Typography>
         </Grid>
       </Grid>
         
         <Divider sx={{ my: 2 }} />
         <Typography gutterBottom>
-        <strong>详细描述：</strong>
+        <strong>{t('viewPro.editorTitle')}</strong>
         </Typography>
         <Box sx={{ mt: 2 }}>
           {(task && typeof task.description === 'string' && editorReady) ? (
@@ -233,7 +228,7 @@ export default function TaskDetail({ _id: propId, embedded = false, onClose }) {
               maxHeightOffset={embedded ? 40 : 100}
             />
           ) : (
-            <Typography variant="body2" sx={{ color: '#aaa' }}>加载详细描述...</Typography>
+            <Typography variant="body2" sx={{ color: '#aaa' }}>{t('viewPro.editorLoading')}</Typography>
           )}
         </Box>
 
@@ -245,7 +240,7 @@ export default function TaskDetail({ _id: propId, embedded = false, onClose }) {
             size={embedded ? 'medium' : 'large'} 
             onClick={handleEditClick}
           >
-            编辑
+            {t('viewPro.edit')}
           </Button>
           <Button
             variant={embedded ? 'outlined' : 'text'}
@@ -253,18 +248,18 @@ export default function TaskDetail({ _id: propId, embedded = false, onClose }) {
             color="error"
             onClick={() => setConfirmDeleteOpen(true)}
           >
-            删除
+            {t('viewPro.delete')}
           </Button>
         </Stack>
       )}
       </Box>
 
       <Dialog open={confirmDeleteOpen} onClose={() => setConfirmDeleteOpen(false)}>
-        <DialogTitle>确定要删除该任务吗？</DialogTitle>
+        <DialogTitle> {t('viewPro.deleteCheck')}</DialogTitle>
         <DialogActions>
-          <Button onClick={() => setConfirmDeleteOpen(false)}>取消</Button>
+          <Button onClick={() => setConfirmDeleteOpen(false)}>{t('viewPro.cancel')}</Button>
           <Button onClick={handleDelete} color="error" variant="contained">
-            确认删除
+            {t('viewPro.confirm')}
           </Button>
         </DialogActions>
       </Dialog>

@@ -26,7 +26,7 @@ export default function CreateOrEditTaskPage() {
           p: 2, 
           boxSizing: 'border-box',  
         }}>
-        <CreateOrEditTask _id={_id} onSuccess={() => navigate('/')} />
+        <CreateOrEditTask _id={_id} onSuccess={() => navigate('/', { state: { reload: true } })} />
       </Box>
     </Box>
   );

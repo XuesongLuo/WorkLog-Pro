@@ -1,25 +1,30 @@
+// src/i18n.js
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
-
-// 导入你的zh、en、es语言包
-import zh from './i18n/zh.json';
 import en from './i18n/en.json';
-import es from './i18n/es.json';
+import zh from './i18n/zh.json';
+//import es from './i18n/es.json'; 
+
+
+const resources = {
+  en: { translation: en },
+  zh: { translation: zh },
+  // es: { translation: es },
+};
+
+// 检测浏览器语言
+const localLang = localStorage.getItem('appLang');
+const browserLang = navigator.language?.toLowerCase().startsWith('zh') ? 'zh' : 'en';
+const initialLang = localLang || browserLang;
 
 i18n
-  .use(initReactI18next) // 绑定 react-i18next
+  .use(initReactI18next)
   .init({
-    resources: {
-      zh: { translation: zh },
-      en: { translation: en },
-      es: { translation: es },
-    },
-    lng: 'zh', // 默认语言
-    fallbackLng: 'en', // 找不到翻译就用中文
-
-    interpolation: {
-      escapeValue: false, // react已经帮你防止XSS了，不需要再转义
-    },
+    resources,
+    lng: initialLang,      
+    fallbackLng: 'en',     
+    interpolation: { escapeValue: false },
+    debug: false,
   });
 
 export default i18n;
