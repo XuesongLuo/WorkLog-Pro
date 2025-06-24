@@ -9,7 +9,6 @@ export async function login(username, password) {
   });
 }
 
-// 也可以加登出、注册等方法
 export function logout() {
   localStorage.removeItem('token');
   localStorage.removeItem('user');

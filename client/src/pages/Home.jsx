@@ -100,7 +100,7 @@ export default function Home() {
     overflow: 'hidden',
   }), [showDetail]);
 
-  // 视图切换
+  // 日历和列表组件切换
   const toggleView = () =>
     setViewMode(prev => (prev === 'calendar' ? 'list' : 'calendar'));
 

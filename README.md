@@ -48,7 +48,7 @@ src/
 环境准备
 Node.js >= 22.x
 
-MongoDB 5.x
+MongoDB 8.x
 
 推荐使用 pnpm / npm / yarn
 

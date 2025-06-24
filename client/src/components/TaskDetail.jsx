@@ -131,8 +131,6 @@ export default function TaskDetail({ _id: propId, embedded = false, onClose }) {
         mb: embedded ? 0 : 2, 
         pt: 0,
        }}>
-
-
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
           <Typography variant="h5" textAlign="center" gutterBottom={false} sx={{ mb: 0 }}>
             {t('viewPro.proDetail')}
@@ -165,55 +163,55 @@ export default function TaskDetail({ _id: propId, embedded = false, onClose }) {
         </Box>
         <Divider sx={{ mb: 2 }} />
 
-      <Grid 
-        container
-        spacing={2}
-        sx={{
-          display: 'grid',
-          gridTemplateColumns: {
-            xs: 'repeat(1, 1fr)',
-            sm: 'repeat(6, 1fr)',
-            md: 'repeat(8, 1fr)',
-            lg: 'repeat(12, 1fr)',
-          },
-        }}
-      >
-        {/* 第一行：地址-城市-州-邮编  项目类型 */}
-        <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 12', md: 'span 12', lg: 'span 8' } }}>
-          <Typography>
-            <strong> {t('viewPro.location')}</strong>
-            {`${task.address ?? ''}, ${task.city ?? ''}, ${task.state ?? ''}, ${task.zipcode ?? ''}`}
-          </Typography>
+        <Grid 
+          container
+          spacing={2}
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: {
+              xs: 'repeat(1, 1fr)',
+              sm: 'repeat(6, 1fr)',
+              md: 'repeat(8, 1fr)',
+              lg: 'repeat(12, 1fr)',
+            },
+          }}
+        >
+          {/* 第一行：地址-城市-州-邮编  项目类型 */}
+          <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 12', md: 'span 12', lg: 'span 8' } }}>
+            <Typography>
+              <strong>{t('viewPro.location')}</strong>
+              {`${task.address ?? ''}, ${task.city ?? ''}, ${task.state ?? ''}, ${task.zipcode ?? ''}`}
+            </Typography>
+          </Grid>
+          <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 6', md: 'span 2', lg: 'span 4' }, textAlign: 'right' }}>
+            <Typography><strong>{t('viewPro.type')}</strong>{task.type}</Typography>
+          </Grid>
+          {/* 第二行：房屋年份 保险公司 */}
+          <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 3', md: 'span 3', lg: 'span 6' } }}>
+            <Typography><strong>{t('viewPro.year')}</strong>{task.year ?? t('viewPro.notFilled')}</Typography>
+          </Grid>
+          <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 3', md: 'span 3', lg: 'span 6' }, textAlign: 'right' }}>
+            <Typography><strong>{t('viewPro.insurance')}</strong>{task.insurance ?? t('viewPro.notFilled')}</Typography>
+          </Grid>
+          {/* 第三行：项目推荐人 项目负责人 公司 */}
+          <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 6', md: 'span 2', lg: 'span 4' } }}>
+            <Typography><strong>{t('viewPro.manager')}</strong>{task.manager}</Typography>
+          </Grid>
+          <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 3', md: 'span 2', lg: 'span 4' }, textAlign: 'center' }}>
+            <Typography><strong>{t('viewPro.referrer')}</strong>{task.referrer}</Typography>
+          </Grid>
+          <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 3', md: 'span 3', lg: 'span 4' }, textAlign: 'right' }}>
+            <Typography><strong>{t('viewPro.company')}</strong>{task.company ?? t('viewPro.notFilled')}</Typography>
+          </Grid>
+          {/* 第四行：开始日期 结束日期 */}
+          <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 6', md: 'span 6', lg: 'span 6' } }}>
+            <Typography><strong>{t('viewPro.startDate')}</strong>{task.start ? new Date(task.start).toLocaleDateString() : t('viewPro.notFilled')}</Typography>
+          </Grid>
+          <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 6', md: 'span 6', lg: 'span 6' }, textAlign: 'right' }}>
+            <Typography><strong>{t('viewPro.endDate')}</strong>{task.end ? new Date(task.end).toLocaleDateString() : t('viewPro.notFilled')}</Typography>
+          </Grid>
         </Grid>
-        <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 6', md: 'span 2', lg: 'span 4' }, textAlign: 'right' }}>
-          <Typography><strong>{t('viewPro.type')}</strong>{task.type}</Typography>
-        </Grid>
-        {/* 第二行：房屋年份 保险公司 */}
-        <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 3', md: 'span 3', lg: 'span 6' } }}>
-          <Typography><strong>{t('viewPro.year')}</strong>{task.year ?? t('viewPro.notFilled')}</Typography>
-        </Grid>
-        <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 3', md: 'span 3', lg: 'span 6' }, textAlign: 'right' }}>
-          <Typography><strong>{t('viewPro.insurance')}</strong>{task.insurance ?? t('viewPro.notFilled')}</Typography>
-        </Grid>
-        {/* 第三行：公司 项目推荐人 项目负责人 项目类型 */}
-        <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 6', md: 'span 2', lg: 'span 4' } }}>
-          <Typography><strong>{t('viewPro.manager')}</strong>{task.manager}</Typography>
-        </Grid>
-        <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 3', md: 'span 2', lg: 'span 4' }, textAlign: 'center' }}>
-          <Typography><strong>{t('viewPro.referrer')}</strong>{task.referrer}</Typography>
-        </Grid>
-         <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 3', md: 'span 3', lg: 'span 4' }, textAlign: 'right' }}>
-          <Typography><strong>{t('viewPro.company')}</strong>{task.company ?? t('viewPro.notFilled')}</Typography>
-        </Grid>
-        {/* 第四行：开始日期 结束日期 */}
-        <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 6', md: 'span 6', lg: 'span 6' } }}>
-          <Typography><strong>{t('viewPro.startDate')}</strong>{task.start ? new Date(task.start).toLocaleDateString() : t('viewPro.notFilled')}</Typography>
-        </Grid>
-        <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 6', md: 'span 6', lg: 'span 6' }, textAlign: 'right' }}>
-          <Typography><strong>{t('viewPro.endDate')}</strong>{task.end ? new Date(task.end).toLocaleDateString() : t('viewPro.notFilled')}</Typography>
-        </Grid>
-      </Grid>
-        
+          
         <Divider sx={{ my: 2 }} />
         <Typography gutterBottom>
         <strong>{t('viewPro.editorTitle')}</strong>
@@ -232,26 +230,25 @@ export default function TaskDetail({ _id: propId, embedded = false, onClose }) {
           )}
         </Box>
 
-
-      {!embedded && (
-        <Stack direction="row" spacing={2} mt="auto" pt={1} justifyContent="center">
-          <Button 
-            variant={embedded ? 'outlined' : 'text'}
-            size={embedded ? 'medium' : 'large'} 
-            onClick={handleEditClick}
-          >
-            {t('viewPro.edit')}
-          </Button>
-          <Button
-            variant={embedded ? 'outlined' : 'text'}
-            size={embedded ? 'medium' : 'large'} 
-            color="error"
-            onClick={() => setConfirmDeleteOpen(true)}
-          >
-            {t('viewPro.delete')}
-          </Button>
-        </Stack>
-      )}
+        {!embedded && (
+          <Stack direction="row" spacing={2} mt="auto" pt={1} justifyContent="center">
+            <Button 
+              variant={embedded ? 'outlined' : 'text'}
+              size={embedded ? 'medium' : 'large'} 
+              onClick={handleEditClick}
+            >
+              {t('viewPro.edit')}
+            </Button>
+            <Button
+              variant={embedded ? 'outlined' : 'text'}
+              size={embedded ? 'medium' : 'large'} 
+              color="error"
+              onClick={() => setConfirmDeleteOpen(true)}
+            >
+              {t('viewPro.delete')}
+            </Button>
+          </Stack>
+        )}
       </Box>
 
       <Dialog open={confirmDeleteOpen} onClose={() => setConfirmDeleteOpen(false)}>

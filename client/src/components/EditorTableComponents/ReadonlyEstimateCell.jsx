@@ -16,7 +16,7 @@ function ReadonlyEstimateCell({ checked, amount, disabled }) {
           color: disabled ? '#bbb' : '#222',
           width: '100%',
           textAlign: 'center',
-          minHeight: 18, // 保持行高稳定
+          minHeight: 18, 
           letterSpacing: 0.5,
           paddingTop: 12,      
           paddingBottom: 0,    

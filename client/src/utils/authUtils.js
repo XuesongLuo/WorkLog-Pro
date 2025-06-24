@@ -1,9 +1,8 @@
 // src/utils/authUtils.js
 
-// 是否已登录（检测token是否存在且有效）
+// 是否已登录（需要检测token是否存在且有效）
 export function isLoggedIn() {
   const token = localStorage.getItem('token');
-  // 可选：简单判断是否存在，复杂场景可解码/校验token是否过期
   return !!token;
 }
 

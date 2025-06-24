@@ -429,7 +429,6 @@ const Editor = forwardRef(({ value = '', readOnly = false, hideToolbar = false, 
                     <option value="blockquote">引用块</option>
                     <option value="codeBlock">代码块</option>
                     </select>
-
                     {/* 字体类型选择 */}
                     <select
                     onChange={(e) => {
@@ -449,7 +448,6 @@ const Editor = forwardRef(({ value = '', readOnly = false, hideToolbar = false, 
                         <option key={item.value} value={item.value}>{item.label}</option>
                     ))}
                     </select>
-
                     {/* 字体大小选择 */}
                     <select
                     onChange={(e) => {
@@ -463,13 +461,11 @@ const Editor = forwardRef(({ value = '', readOnly = false, hideToolbar = false, 
                         <option key={size} value={size}>{size}</option>
                     ))}
                     </select>
-
                     {/* 基本格式 */}
                     <button onClick={() => editor.chain().focus().toggleBold().run()} className={editor.isActive('bold') ? 'is-active' : ''}>B</button>
                     <button onClick={() => editor.chain().focus().toggleItalic().run()} className={editor.isActive('italic') ? 'is-active' : ''}><i>I</i></button>
                     <button onClick={() => editor.chain().focus().toggleUnderline().run()} className={editor.isActive('underline') ? 'is-active' : ''}><u>U</u></button>
                     <button onClick={() => editor.chain().focus().toggleStrike().run()} className={editor.isActive('strike') ? 'is-active' : ''}><s>S</s></button>
-
                     {/* 文字颜色选择 */}
                     <div className="dropdown">
                         <div className="split-button">
@@ -498,7 +494,6 @@ const Editor = forwardRef(({ value = '', readOnly = false, hideToolbar = false, 
                             ▼
                             </button>
                         </div>
-
                         {showTextColor && (
                             <div className="color-palette floating" style={{ top: floatingPosition.top, left: floatingPosition.left }}>
                             {colors.map((color) => (
@@ -516,7 +511,6 @@ const Editor = forwardRef(({ value = '', readOnly = false, hideToolbar = false, 
                             </div>
                         )}
                     </div>
-
                     {/* 背景颜色选择 */}
                     <div className="dropdown">
                         <div className="split-button">
@@ -545,7 +539,6 @@ const Editor = forwardRef(({ value = '', readOnly = false, hideToolbar = false, 
                             ▼
                             </button>
                         </div>
-
                         {showBgColor && (
                             <div className="color-palette floating" style={{ top: floatingPosition.top, left: floatingPosition.left }}>
                             {colors.map((color) => (
@@ -563,7 +556,6 @@ const Editor = forwardRef(({ value = '', readOnly = false, hideToolbar = false, 
                             </div>
                         )}
                     </div>
-
                     {/* 无序列表按钮 */}
                     <div className="dropdown">
                         <div className="split-button">
@@ -662,7 +654,7 @@ const Editor = forwardRef(({ value = '', readOnly = false, hideToolbar = false, 
                         }}
                         title="Increase indent"
                         >
-                        →{/* 或者用图标 */}
+                        →
                         </button>
                         {/* 取消缩进 */}
                         <button
@@ -675,20 +667,8 @@ const Editor = forwardRef(({ value = '', readOnly = false, hideToolbar = false, 
                         }}
                         title="Decrease indent"
                         >
-                        ←{/* 或者用图标 */}
+                        ←
                     </button>
-
-                    {/* 插入图片 */}
-                    {/* 
-                    <button onClick={() => fileInputRef.current.click()}>🖼️</button>
-                    <input
-                    type="file"
-                    accept="image/*"
-                    style={{ display: 'none' }}
-                    ref={fileInputRef}
-                    onChange={handleUploadImage}
-                    />
-                    */}
 
                     {/* 插入表格按钮 */}
                     <div className="dropdown">
@@ -717,7 +697,6 @@ const Editor = forwardRef(({ value = '', readOnly = false, hideToolbar = false, 
                     )}
                     </div>
 
-                    {/* 撤销重做 */}
                     <button onClick={() => editor.chain().focus().undo().run()}>↺</button>
                     <button onClick={() => editor.chain().focus().redo().run()}>↻</button>
                 </div>

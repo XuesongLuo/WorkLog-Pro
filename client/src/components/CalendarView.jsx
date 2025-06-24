@@ -40,19 +40,13 @@ export default function CalendarView({ events, onSelectEvent, style }) {
 
   const [viewDate, setViewDate] = useState(new Date());
 
-  // 把 events ➜ coloredEvents：全局扫描线
+  // 把 events -> coloredEvents：全局扫描线
   const coloredEvents = useMemo(() => {
-    const isDev = import.meta.env.DEV && events?.length;
-    
-    //if (isDev) console.time('coloredEvents');
     if (!events?.length) return [];
-
     // 克隆，避免直接改 props
     const out = events.map(e => ({ ...e }));
-
     // 按 start 时间排序
     out.sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());
-
     const active = [];          // 当前重叠集合：存 { end, _colorIdx }
     const used = new Set();     // 当前被占用的颜色 idx
 
@@ -82,7 +76,7 @@ export default function CalendarView({ events, onSelectEvent, style }) {
     return out;
   }, [events]);
 
-  /* ---------- ❷ 事件样式 ---------- */
+  /* ---------- 事件样式 ---------- */
   const eventPropGetter = ev => ({
     style: {
       backgroundColor: PALETTE[ev._colorIdx],
@@ -106,15 +100,15 @@ export default function CalendarView({ events, onSelectEvent, style }) {
         flex: '1 0 0',
       },
       '& .rbc-month-row': {
-        minHeight: '80px', // 增加行高
+        minHeight: '80px', 
       },
       '& .rbc-date-cell': {
         padding: '5px',
       },
       '& .rbc-toolbar button': {
-        padding: '2px 6px',  // 调小按钮内边距
-        fontSize: '0.75rem', // 调小文字大小
-        minHeight: '28px',    // 调小按钮高度
+        padding: '2px 6px',  
+        fontSize: '0.75rem', 
+        minHeight: '28px',    
       },
     }}>
     <Calendar
@@ -123,11 +117,11 @@ export default function CalendarView({ events, onSelectEvent, style }) {
       eventPropGetter={eventPropGetter}
       startAccessor="start"
       endAccessor="end"
-      style={{ height: '100%', width: '100%' }} // 如果未提供 style，则使用默认高度
+      style={{ height: '100%', width: '100%' }} 
 
-      /* ② 把 date 绑定到 state */
+      /* 把 date 绑定到 state */
       date={viewDate}
-      /* ③ 当用户点 next/prev，更新 state */
+      /* 当用户点 next/prev，更新 state */
       onNavigate={(newDate) => setViewDate(newDate)}
 
       onSelectEvent={onSelectEvent}

@@ -81,6 +81,7 @@
     "notFilled": "Not filled in",
     "editorTitle": "Project Details",
     "editorLoading": "Loading details...",
+    "editorLoadfailed": "Loading failed",
     "edit": "Edit",
     "delete": "Delete",
     "deleteCheck": "Are you sure you want to delete this task?",
@@ -105,8 +106,5 @@
     "pwVisToggle": "Toggle password visibility",
     "loading": "Logging in...",
     "login": "Login"
-  },
-  "fetcher": {
-    "loginOut": "Login expired, please log in again"
   }
 }

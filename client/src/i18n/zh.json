@@ -81,6 +81,7 @@
     "notFilled": "未填写",
     "editorTitle": "项目详细",
     "editorLoading": "加载详细内容中...",
+    "editorLoadfailed": "加载失败",
     "edit": "编辑",  
     "delete": "删除",
     "deleteCheck": "确定要删除该任务吗？",
@@ -105,8 +106,5 @@
     "pwVisToggle": "切换密码可见性",
     "loading": "登陆中...",
     "login": "登 录"
-  },
-  "fetcher": {
-    "loginOut": "登录已过期，请重新登录"
   }
 }

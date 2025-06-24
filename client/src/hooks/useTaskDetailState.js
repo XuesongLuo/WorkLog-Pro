@@ -26,36 +26,11 @@ export default function useTaskDetailState(onReload) {
     setShowDetail(true);
   };
 
-  
   // 只关闭，不处理任何副作用
   const handleTaskClose = () => {
     setShowDetail(false);
     setSelectedTask(null);
   };
-  // 从任务组件中回调关闭或切换编辑
-  /*
-  const handleTaskClose = (payload) => {
-    if (payload === 'reload') {
-      if (typeof onReload === 'function') onReload();
-      setShowDetail(false);
-      setSelectedTask(null); 
-      //setTimeout(() => setSelectedTask(null), 500);
-      return;
-    }
-    if (payload?.mode === 'edit') {
-      // 如果带有 task 数据就合并进来
-      if (payload.task) {
-        setSelectedTask({ ...payload.task, _id: payload._id, mode: 'edit' });
-      } else {
-        setSelectedTask(payload);
-      }
-      setShowDetail(true);
-    } else {
-      setShowDetail(false);
-      //setTimeout(() => setSelectedTask(null), 200); // 延迟卸载右侧面板
-    }
-  };
-  */
 
   return {
     selectedTask,

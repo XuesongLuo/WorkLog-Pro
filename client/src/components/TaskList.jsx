@@ -1,3 +1,4 @@
+// src/components/TaskList.jsx
 import React, { useMemo, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -19,7 +20,7 @@ const TaskList = React.forwardRef(function TaskList(
   const { t } = useTranslation();
   const containerRef = useRef();
 
-  // 列定义 + 宽度计算
+  // 列定义 宽度比例设置
   const columns = useMemo(
     () => [
       {

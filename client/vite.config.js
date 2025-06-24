@@ -10,6 +10,10 @@ export default defineConfig({
       src: path.resolve(__dirname, './src'),
     },
   },
+  build: {
+    outDir: 'dist', // 构建输出目录
+    sourcemap: false, // 生产环境一般不开 sourcemap，调试需求可改 true
+  },
   server: {
     host: '0.0.0.0', // 让外网可访问
     allowedHosts: [
@@ -17,7 +21,7 @@ export default defineConfig({
     ],
     proxy: {
       '/api': {
-        target: 'http://localhost:4399', // ✅ 后端地址
+        target: 'http://localhost:4399', // 后端地址
         changeOrigin: true,
       },
     },

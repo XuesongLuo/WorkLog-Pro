@@ -17,11 +17,11 @@ const EditableCheckbox = React.memo(function EditableCheckbox({
         onChange={onChange}
         size="small"
         sx={{
-          p: 0, // 更小的内边距
-          m: 0,   // 去除margin
+          p: 0, 
+          m: 0,   
           color: GREEN,
           '&.Mui-checked': {
-            color: GREEN, // 勾选时绿色
+            color: GREEN, 
           },
           '& .MuiSvgIcon-root': { fontSize: '1.2rem' }
         }}

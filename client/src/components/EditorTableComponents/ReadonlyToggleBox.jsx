@@ -13,10 +13,10 @@ function ReadonlyToggleBox({ section }) {
           width: '100%',
           minHeight:'100px',  
           height: '100%',
-          display: 'flex', // 使用 flex 布局
-          flexDirection: 'column', // 垂直排列
-          justifyContent: 'center', // 垂直居中
-          alignItems: 'center', // 水平居中
+          display: 'flex', 
+          flexDirection: 'column', 
+          justifyContent: 'center', 
+          alignItems: 'center', 
           boxSizing: 'border-box'
         }}
       >
@@ -37,7 +37,7 @@ function ReadonlyToggleBox({ section }) {
             justifyContent: 'center',
             alignItems: 'center',
             width: '100%',
-            pointerEvents: 'none',        // 不影响点击表格
+            pointerEvents: 'none',        
           }}
         >
           <span

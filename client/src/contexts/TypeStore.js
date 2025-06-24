@@ -3,7 +3,7 @@ import { fetcher } from '../utils/fetcher';
 
 export const typeApi = {
   async getTypes() {
-    // 返回 [{_id, name}]
+    // 返回 [{_id, name}] 项目类型
     return await fetcher('/api/types');
   },
   async addType(name) {

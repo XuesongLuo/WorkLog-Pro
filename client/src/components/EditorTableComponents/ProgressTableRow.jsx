@@ -23,7 +23,7 @@ const ProgressTableRow = React.memo(function ProgressTableRow({
     },
     [row, editRowData, isEditing]
   );
-  // onCellChange 代理，path 为 ['pak','estimate','send','amount'] 这种
+  // onCellChange 代理，path 为 ['pak','estimate','send','amount']
   const cellOnChange = useCallback((path, value) => {
     if (!isEditing) return;
     onCellChange(path, value);

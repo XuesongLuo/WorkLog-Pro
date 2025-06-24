@@ -3,8 +3,8 @@ import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import Login from './pages/Login';
 import AuthRoute from './components/AuthRoute';
 import Home from './pages/Home';
-import TaskDetailPage from './pages/TaskDetailPage'; // 预留页面
-import CreateOrEditTaskPage from './pages/CreateOrEditTaskPage'; // 预留页面
+import TaskDetailPage from './pages/TaskDetailPage'; 
+import CreateOrEditTaskPage from './pages/CreateOrEditTaskPage'; 
 import ProjectTableEditor from './pages/ProjectTableEditorPage';
 
 

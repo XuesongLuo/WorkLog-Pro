@@ -10,12 +10,12 @@
     top: 0;
     z-index: 3;
     background: #fff;
-    font-size: 12px;           /* 字体大小 */
+    font-size: 12px;           
     white-space: normal;       /* 允许自动换行 */
     word-break: break-all;     /* 长单词换行 */
-    text-align: center;        /* 居中显示（可选） */
-    line-height: 1.3;          /* 紧凑一点，行高可调整 */
-    padding: 4px 2px;          /* 减小内边距，让表头更紧凑 */
+    text-align: center;        
+    line-height: 1.3;          
+    padding: 4px 2px;          
     vertical-align: middle;
     border-right: 2px solid #272727;
     border-bottom: none !important;
@@ -36,9 +36,9 @@
     font-size: 12px;           
     white-space: normal;       /* 允许自动换行 */
     word-break: break-all;     /* 长单词换行 */
-    text-align: center;        /* 居中显示（可选） */
-    line-height: 1.3;          /* 紧凑一点，行高可调整 */
-    padding: 4px 2px;          /* 减小内边距，让表头更紧凑 */
+    text-align: center;        
+    line-height: 1.3;          
+    padding: 4px 2px;          
     vertical-align: middle;
     border-right: 2px solid #272727;
     border-bottom: 2px solid #272727 !important;

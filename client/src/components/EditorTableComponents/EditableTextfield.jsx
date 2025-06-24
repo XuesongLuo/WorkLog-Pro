@@ -21,8 +21,8 @@ function EditableCell({ value, onChange, disabled = false }) {
         p: 0,
         m: 0,
         display: 'flex',
-        alignItems: 'center',     // ★ 垂直居中
-        justifyContent: 'center', // ★ 水平居中（如果需要）
+        alignItems: 'center',     
+        justifyContent: 'center', 
         width: "100%", 
         height: "100%"
       }}  
@@ -31,7 +31,7 @@ function EditableCell({ value, onChange, disabled = false }) {
         inputRef={inputRef}
         variant="standard"
         fullWidth
-        multiline  // 支持多行文本
+        multiline  
         maxRows={10}
         value={draft}
         disabled={disabled}

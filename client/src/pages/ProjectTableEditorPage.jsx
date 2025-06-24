@@ -11,7 +11,7 @@ export default function EditPage() {
         showHomeButton         
         onHomeClick={() => navigate('/')}
       />
-      <Box sx={{ flex: 1, minHeight: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column', p: 0, m: 0 }}>  {/* 添加容器 */}
+      <Box sx={{ flex: 1, minHeight: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column', p: 0, m: 0 }}>
         <ProjectTableEditor />
       </Box>
     </Box>

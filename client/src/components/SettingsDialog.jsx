@@ -12,10 +12,8 @@ import { useTranslation } from 'react-i18next';
 
 export default function SettingsDialog({ open, onClose, typeApi }) {
   const { t, i18n } = useTranslation();
-
   // 语言
   const [lang, setLang] = useState(i18n.language);
-
   // 类型管理
   const [types, setTypes] = useState([]);
   const [editingId, setEditingId] = useState(null);
@@ -149,6 +147,3 @@ export default function SettingsDialog({ open, onClose, typeApi }) {
     </Dialog>
   );
 }
-
-// 你需要给SettingsDialog传递 typeApi：{ getTypes, addType, updateType, deleteType }
-// 这些API前端实现见下方第3部分

@@ -1,6 +1,5 @@
 // src/utils/fetcher.js
 import { enqueueSnackbar } from 'notistack';
-import { useTranslation } from 'react-i18next';
 
 let loadingApi; // 延迟注入，避免循环依赖
 
@@ -8,10 +7,10 @@ export function injectLoading(ctx) { loadingApi = ctx; }
 
 
 // 可选：登出并跳转到登录页
-function forceLogout(t) {
+function forceLogout() {
   localStorage.removeItem('token');
   localStorage.removeItem('user');
-  enqueueSnackbar(t('fetcher.loginOut'), { variant: 'warning' });
+  enqueueSnackbar('Login expired, please log in again', { variant: 'warning' });
   // window.location.href = '/login'; // 或用 react-router
   setTimeout(() => {
     window.location.replace('/login');
@@ -20,7 +19,6 @@ function forceLogout(t) {
 
 
 export async function fetcher(url, options = {}) {
-  const { t } = useTranslation();
   loadingApi?.start();
   try {
     // 1. 获取token
@@ -33,8 +31,8 @@ export async function fetcher(url, options = {}) {
     const res = await fetch(url, options);
     // === 判断 401，自动登出 ===
     if (res.status === 401) {
-      forceLogout(t);
-      throw new Error(t('fetcher.loginOut'));
+      forceLogout();
+      throw new Error('Login expired, please log in again');
     }
 
     if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);

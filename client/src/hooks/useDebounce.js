@@ -9,14 +9,14 @@ import { useCallback, useEffect, useRef } from 'react';
  */
 
 export const useDebounce = (callback, delay = 300, { leading = false } = {}) => {
-  // 1 始终用最新的 callback，避免闭包过时
+  // 始终用最新的 callback，避免闭包过时
   const cbRef = useRef(callback);
   useEffect(() => { cbRef.current = callback; }, [callback]);
 
   const timerRef = useRef(null);
   const lastArgs = useRef([]);
 
-  // 2 返回的 debounced 函数在整个组件生命周期内稳定
+  // 返回的 debounced 函数在整个组件生命周期内稳定
   const debounced = useCallback((...args) => {
     lastArgs.current = args;
 

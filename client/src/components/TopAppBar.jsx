@@ -25,7 +25,7 @@ import { typeApi } from '../contexts/TypeStore';
    * @param {function} onHomeClick     点击回调
    */
 export default function TopAppBar({ showHomeButton = false, onHomeClick }) {
-  /* ===== 菜单开关 ===== */
+  /* === 菜单开关 === */
   const [anchorEl, setAnchorEl] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
   const navigate = useNavigate();

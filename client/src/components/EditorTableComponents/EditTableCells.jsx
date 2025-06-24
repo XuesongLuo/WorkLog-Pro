@@ -6,7 +6,7 @@ import EditableCheckbox from './EditableCheckbox';
 import EditableNumberCell from './EditableNumberCell';
 import ToggleBox from './ToggleBox';
 
-// 1. PAK 相关单元格组件
+// PAK 相关单元格组件
 const PakToggleCell = React.memo(({ value, onToggleActive, onDateChange, disabled }) => (
   <ToggleBox 
     value={value}
@@ -51,7 +51,7 @@ const EstimateCell = React.memo(({ value, onChange, disabled, }) => {
         value={!!value?.checked}
         disabled={disabled}
         onChange={e => onChange('checked', e.target.checked)}
-        sx={{ marginBottom: '4px' }} // MUI风格
+        sx={{ marginBottom: '4px' }} 
       />
       <Divider sx={{width: '100%', my: 0.5  }} />
       <EditableNumberCell 
@@ -67,7 +67,7 @@ const EstimateCell = React.memo(({ value, onChange, disabled, }) => {
   prev.disabled === next.disabled
 );
 
-// 2. WTR 相关单元格组件
+// WTR 相关单元格组件
 const WtrToggleCell = React.memo(({ value, onToggleActive, onDateChange, disabled }) => (
   <ToggleBox 
     value={value}
@@ -102,7 +102,7 @@ const WtrDemoCell = React.memo(({ value, onChange, disabled }) => (
     prev.value === next.value && prev.disabled === next.disabled
 );
 
-// 继续其他 WTR 字段...
+// 继续其他 WTR 字段
 const WtrItelCell = React.memo(({ value, onChange, disabled }) => (
   <EditableCheckbox 
     value={!!value}
@@ -157,7 +157,7 @@ const StrCtrcCell = React.memo(({ value, onChange, disabled }) => (
     prev.value === next.value && prev.disabled === next.disabled
 );
 
-// 4. 基础单元格组件（不依赖 active 状态）
+// 基础单元格组件
 const LocationCell = React.memo(({ value, onShowDetail }) => (
   <span
     className="location-cell"

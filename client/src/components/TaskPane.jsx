@@ -3,8 +3,8 @@ import { forwardRef } from 'react';
 import { Paper } from '@mui/material';
 
 /**
- * 统一的右侧面板外壳。
- * 用 forwardRef，让父级动画组件 拿到 DOM。
+ * 统一的右侧面板外壳
+ * 用 forwardRef，让父级动画组件 拿到 DOM
  */
 const TaskPane = forwardRef(function TaskPane({ children, embedded = true }, ref) {
   return (

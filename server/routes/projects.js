@@ -1,10 +1,10 @@
 // server/routes/projects.js
 const express = require('express');
 const router = express.Router();
-const { mysqlPool, getMongoDb } = require('../db');
+const { getMongoDb } = require('../db');
 const auth = require('../middleware/auth');
 const adminOnly = require('../middleware/adminOnly');
-
+const logger = require('../logger');
 
 // 自动生成唯一 ID：yyyyMMdd-时间戳
 const generateIdFromStart = (start) => {
@@ -14,7 +14,6 @@ const generateIdFromStart = (start) => {
     const dd = String(d.getDate()).padStart(2, '0');
     return `${yyyy}${mm}${dd}-${Date.now()}`;
 };
-
 
 // GET /api/tasks?page=1&pageSize=100
 router.get('/', async (req, res) => {
@@ -26,40 +25,30 @@ router.get('/', async (req, res) => {
 
         const cursor = db.collection('projects')
                          .find({})
-                         .sort({ _id: -1 })   // 可选：默认按开始时间降序
+                         .sort({ _id: -1 })   // 默认按开始时间降序
                          .skip(skip)
                          .limit(pageSize);
-
         const total = await db.collection('projects').countDocuments();
         const data = await cursor.toArray();
-
         res.json({ data, total });
     } catch (e) {
+        logger.error(`【项目列表】异常: ${e.stack || e.message}`);
         res.status(500).json({ error: e.message });
     }
 });
-
-/*
-// GET /api/tasks - 获取所有项目
-router.get('/', async (req, res) => {
-    try {
-        const db = await getMongoDb();
-        const rows = await db.collection('projects').find().toArray();
-        res.json(rows);
-    } catch (e) {
-        res.status(500).json({ error: e.message });
-    }
-});
-*/
 
 // GET /api/tasks/:_id - 获取单个项目详情（p_id）
 router.get('/:_id', async (req, res) => {
     try {
         const db = await getMongoDb();
         const project = await db.collection('projects').findOne({ _id: req.params._id });
-        if (!project) return res.status(404).json({ error: '项目未找到' });
+        if (!project){
+            logger.warn(`【项目详情】获取失败（未找到）: _id=${req.params._id}`);
+            return res.status(404).json({ error: '项目未找到' });
+        } 
         res.json(project);
     } catch (e) {
+        logger.error(`【项目详情】异常: ${e.stack || e.message}`);
         res.status(500).json({ error: e.message });
     }
 });
@@ -68,7 +57,10 @@ router.get('/:_id', async (req, res) => {
 // POST /api/tasks - 创建项目（管理员权限）
 router.post('/', auth, adminOnly, async (req, res) => {
     const { start, ...rest } = req.body;
-    if (!start) return res.status(400).json({ error: '缺少 start 字段, 无法生成项目ID' });
+    if (!start) {
+        logger.warn(`【项目新增】缺少start字段, by=${req.user && req.user.username}`);
+        return res.status(400).json({ error: '缺少 start 字段, 无法生成项目ID' });
+    }
     const _id = generateIdFromStart(start);
     try {
         const db = await getMongoDb();
@@ -120,11 +112,11 @@ router.post('/', auth, adminOnly, async (req, res) => {
             payment: 0,
             comments: ""
         });
-        // 返回新建项目内容
+        //logger.info(`【项目新增】新建: _id=${_id}, by=${req.user && req.user.username}`);
         const project = await db.collection('projects').findOne({ _id: _id });
         res.status(201).json(project);
     } catch (e) {
-
+        logger.error(`【项目新增】异常: ${e.stack || e.message}`);
         res.status(500).json({ error: e.message });
     }
 });
@@ -140,10 +132,15 @@ router.put('/:_id', auth, adminOnly, async (req, res) => {
             { _id: req.params._id },
             { $set: { address, city, state, zipcode, year, insurance, type, company, referrer, manager, start, end } }
         );
-        if (!result.matchedCount) return res.status(404).json({ error: '项目未找到' });
+        if (!result.matchedCount) {
+            logger.warn(`【项目更新】失败（未找到）: _id=${req.params._id}, by=${req.user && req.user.username}`);
+            return res.status(404).json({ error: '项目未找到' });
+        }
+        //logger.info(`【项目更新】完全更新: _id=${req.params._id}, by=${req.user && req.user.username}`);
         const project = await db.collection('projects').findOne({ _id: req.params._id });
         res.json(project);
     } catch (e) {
+        logger.error(`【项目更新】异常: ${e.stack || e.message}`);
         res.status(500).json({ error: e.message });
     }
 });
@@ -155,15 +152,19 @@ router.patch('/:_id', auth, adminOnly, async (req, res) => {
         const db = await getMongoDb();
         // 只更新传入的字段
         const updateFields = { ...req.body };
-        //const fields = Object.keys(req.body);
         const result = await db.collection('projects').updateOne(
             { _id: req.params._id },
             { $set: updateFields }
         );
-        if (!result.matchedCount) return res.status(404).json({ error: '项目未找到' });
+        if (!result.matchedCount) {
+            logger.warn(`【项目字段更新】失败（未找到）: _id=${req.params._id}, by=${req.user && req.user.username}`);
+            return res.status(404).json({ error: '项目未找到' });
+        }
+        //logger.info(`【项目字段更新】_id=${req.params._id}, by=${req.user && req.user.username}, fields=${Object.keys(updateFields).join(',')}`);
         const project = await db.collection('projects').findOne({ _id: req.params._id });
         res.json(project);
     } catch (e) {
+        logger.error(`【项目字段更新】异常: ${e.stack || e.message}`);
         res.status(500).json({ error: e.message });
     }
 });
@@ -171,7 +172,7 @@ router.patch('/:_id', auth, adminOnly, async (req, res) => {
 
 // DELETE /api/tasks/:_id - 删除项目（管理员权限）
 router.delete('/:_id', auth, adminOnly, async (req, res) => {
-    console.log('delete')
+    logger.info(`【项目删除】尝试删除: _id=${req.params._id}, by=${req.user && req.user.username}`);
     try {
         const db = await getMongoDb();
         // 1. 删除项目主表
@@ -181,10 +182,13 @@ router.delete('/:_id', auth, adminOnly, async (req, res) => {
          // 3. 删除描述表相关行
         await db.collection('descriptions').deleteOne({ _id: req.params._id });
         if (!result.deletedCount) {
+            logger.warn(`【项目删除】失败（未找到）: _id=${req.params._id}, by=${req.user && req.user.username}`);
             return res.status(404).json({ error: '项目未找到' });
-        } 
+        }
+        logger.info(`【项目删除】成功: _id=${req.params._id}, by=${req.user && req.user.username}`);
         res.status(204).end();
     } catch (e) {
+        logger.error(`【项目删除】异常: ${e.stack || e.message}`);
         res.status(500).json({ error: e.message });
     }
 });

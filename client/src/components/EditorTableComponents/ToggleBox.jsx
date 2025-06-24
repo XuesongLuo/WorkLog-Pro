@@ -15,10 +15,10 @@ const ToggleBox = React.memo(function ToggleBox({value, onToggleActive, onDateCh
           width: '100%',
           height: '100%',
           minHeight:'100px',
-          display: 'flex', // 使用 flex 布局
-          flexDirection: 'column', // 垂直排列
-          justifyContent: 'center', // 垂直居中
-          alignItems: 'center', // 水平居中
+          display: 'flex', 
+          flexDirection: 'column', 
+          justifyContent: 'center', 
+          alignItems: 'center', 
           boxSizing: 'border-box'
         }}
       >
@@ -43,7 +43,7 @@ const ToggleBox = React.memo(function ToggleBox({value, onToggleActive, onDateCh
             justifyContent: 'center',
             alignItems: 'center',
             width: '100%',
-            pointerEvents: 'none',        // 不影响点击表格
+            pointerEvents: 'none',       
           }}
         >
           <Box sx={{ pointerEvents: 'auto' }}>

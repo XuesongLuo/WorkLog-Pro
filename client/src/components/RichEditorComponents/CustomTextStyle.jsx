@@ -1,3 +1,4 @@
+// src/components/RichEditorComponents/CustomTextStyle.jsx
 import { Mark } from '@tiptap/core'
 
 export const CustomTextStyle = Mark.create({
@@ -32,7 +33,6 @@ export const CustomTextStyle = Mark.create({
     }
   },
 
-  // 添加这个方法
   parseHTML() {
     return [
       {
@@ -57,7 +57,6 @@ export const CustomTextStyle = Mark.create({
   },
 
   renderHTML({ HTMLAttributes = {} }) {
-    // 合并样式
     const styleList = []
   
     if (HTMLAttributes.color) {

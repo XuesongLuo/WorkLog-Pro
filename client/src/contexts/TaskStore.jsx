@@ -169,7 +169,7 @@ export function TaskProvider({ children }) {
     const value = patch[section];
     // 基础字段
     if (["year", "insurance"].includes(section)) {
-      // 写回 tasks
+      // 写回 projects
       return patchTask(rowId, { [section]: value });
     } else {
       // 其他写入 progress

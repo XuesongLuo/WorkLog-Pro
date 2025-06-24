@@ -12,10 +12,12 @@ import {
 import CloseIcon from '@mui/icons-material/Close';
 import EditIcon from '@mui/icons-material/Edit';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useTasks } from '../contexts/TaskStore';
 
 export default function TaskCard({ task, onClose }) {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { api } = useTasks();
   const [desc, setDesc] = useState('');
   const [descLoading, setDescLoading] = useState(true);
@@ -43,11 +45,10 @@ export default function TaskCard({ task, onClose }) {
     return () => { unmounted = true; };
   }, [task, api]);
 
-
   if (!task) {
     return (
       <Box sx={{ minWidth: 350, p: 4, textAlign: 'center' }}>
-        <Typography color="text.secondary">未找到该项目</Typography>
+        <Typography color="text.secondary">{t('viewPro.unknown')}</Typography>
       </Box>
     );
   }
@@ -88,13 +89,13 @@ export default function TaskCard({ task, onClose }) {
         )}
 
         <Typography variant="h5" gutterBottom>
-          {task.title || '项目信息'}
+          {task.title || 'PROJECT INFO'}
         </Typography>
         <Divider sx={{ mb: 2 }} />
          {/* 第一行：地址 */}
          <Box sx={{ mb: 1 }}>
           <Typography>
-            <strong>地址：</strong>
+            <strong>{t('viewPro.location')}</strong>
             {address || '--'}
           </Typography>
         </Box>
@@ -103,17 +104,17 @@ export default function TaskCard({ task, onClose }) {
         <Grid container spacing={2} sx={{ mb: 1 }}>
           <Grid item xs={4}>
             <Typography>
-              <strong>房屋年份：</strong>{task.year || '--'}
+              <strong>{t('viewPro.year')}</strong>{task.year || '--'}
             </Typography>
           </Grid>
           <Grid item xs={4}>
             <Typography>
-              <strong>保险公司：</strong>{task.insurance || '--'}
+              <strong>{t('viewPro.insurance')}</strong>{task.insurance || '--'}
             </Typography>
           </Grid>
           <Grid item xs={4}>
             <Typography>
-              <strong>项目类型：</strong>{task.type || '--'}
+              <strong>{t('viewPro.type')}</strong>{task.type || '--'}
             </Typography>
           </Grid>
         </Grid>
@@ -122,17 +123,17 @@ export default function TaskCard({ task, onClose }) {
         <Grid container spacing={2} sx={{ mb: 1 }}>
           <Grid item xs={4}>
             <Typography>
-              <strong>项目管理人：</strong>{task.manager || '--'}
+              <strong>{t('viewPro.manager')}</strong>{task.manager || '--'}
             </Typography>
           </Grid>
           <Grid item xs={4}>
             <Typography>
-              <strong>项目推荐人：</strong>{task.referrer || task.applicant || '--'}
+              <strong>{t('viewPro.referrer')}</strong>{task.referrer || task.applicant || '--'}
             </Typography>
           </Grid>
           <Grid item xs={4}>
             <Typography>
-              <strong>公司：</strong>{task.company || '--'}
+              <strong>{t('viewPro.company')}</strong>{task.company || '--'}
             </Typography>
           </Grid>
         </Grid>
@@ -141,13 +142,13 @@ export default function TaskCard({ task, onClose }) {
         <Grid container spacing={2} sx={{ mb: 2 }}>
           <Grid item xs={6}>
             <Typography>
-              <strong>开始日期：</strong>
+              <strong>{t('viewPro.startDate')}</strong>
               {task.start ? new Date(task.start).toLocaleDateString() : '--'}
             </Typography>
           </Grid>
           <Grid item xs={6}>
             <Typography>
-              <strong>结束日期：</strong>
+              <strong>{t('viewPro.endDate')}</strong>
               {task.end ? new Date(task.end).toLocaleDateString() : '--'}
             </Typography>
           </Grid>
@@ -155,7 +156,7 @@ export default function TaskCard({ task, onClose }) {
 
          {/* 第五行：详细描述 */}
         <Typography sx={{ mb: 1 }}>
-          <strong>详细描述：</strong>
+          <strong>{t('viewPro.editorTitle')}</strong>
         </Typography>
         <Box
           sx={{
@@ -174,13 +175,13 @@ export default function TaskCard({ task, onClose }) {
         >
           {descLoading ? (
             <Box sx={{ color: '#aaa', textAlign: 'center', mt: 2 }}>
-              <CircularProgress size={22} /> 正在加载详细描述...
+              <CircularProgress size={22} />{t('viewPro.editorLoading')}
             </Box>
           ) : descError ? (
-            <span style={{ color: 'red' }}>加载失败</span>
+            <span style={{ color: 'red' }}>{t('viewPro.editorLoadingfailed')}</span>
           ) : (
             <span dangerouslySetInnerHTML={{
-              __html: desc || '<span style="color:#aaa;">无详细描述</span>'
+              __html: desc || '<span style="color:#aaa;">No description</span>'
             }} />
           )}
         </Box>

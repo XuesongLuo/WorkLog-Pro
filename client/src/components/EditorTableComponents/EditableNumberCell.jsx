@@ -17,8 +17,8 @@ function EditableNumberCell({ value, onChange, disabled = false }) {
         p: 0,
         m: 0,
         display: 'flex',
-        alignItems: 'center',     // ★ 垂直居中
-        justifyContent: 'center', // ★ 水平居中（如果需要）
+        alignItems: 'center',     
+        justifyContent: 'center', 
         width: "100%", 
         height: "100%"
       }}  
@@ -45,7 +45,7 @@ function EditableNumberCell({ value, onChange, disabled = false }) {
           setDraft(val);
           onChange(Number(val));
         }}
-        inputProps={{ style: { textAlign: 'center' } }}  // 数字居中显示
+        inputProps={{ style: { textAlign: 'center' } }}
         sx={{
           '& .MuiInputBase-input': {
             fontSize: '12px',

@@ -1,9 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const { mysqlPool, getMongoDb } = require('../db');
+const { getMongoDb } = require('../db');
 const auth = require('../middleware/auth');
 const adminOnly = require('../middleware/adminOnly');
-
+const logger = require('../logger');
 
 function flattenForSet(obj, prefix = '') {
   return Object.entries(obj).reduce((acc, [key, val]) => {
@@ -15,7 +15,6 @@ function flattenForSet(obj, prefix = '') {
     return acc;
   }, {});
 }
-
 
 // GET /api/progress?page=1&pageSize=50
 router.get('/', auth, adminOnly, async (req, res) => {
@@ -45,8 +44,10 @@ router.get('/', auth, adminOnly, async (req, res) => {
         insurance: project.insurance,
       };
     });
+    //logger.info(`【进度分页】查询: page=${page}, pageSize=${pageSize}, by=${req.user && req.user.username}`);
     res.json({ data: progressArray, total });
   } catch (e) {
+    logger.error(`【进度分页】异常: ${e.stack || e.message}`);
     res.status(500).json({ error: e.message });
   }
 });
@@ -71,56 +72,38 @@ router.get('/', auth, adminOnly, async (req, res) => {
         insurance: project.insurance,
       };
     });
+    //logger.info(`【进度全量】查询全部项目进度 by=${req.user && req.user.username}`);
     res.json(progressArray);
   } catch (e) {
+    logger.error(`【进度全量】异常: ${e.stack || e.message}`);
     res.status(500).json({ error: e.message });
   }
 });
 
-
+// patch /api/progress/:_id  → 表格字段更新（管理员可访问）
 router.patch('/:_id', auth, adminOnly, async (req, res) => {
   const _id = req.params._id;
   const updateFields = { ...req.body };
-  if (!Object.keys(updateFields).length)
+  if (!Object.keys(updateFields).length) {
+    logger.warn(`【进度更新】缺少更新字段: _id=${_id}, by=${req.user && req.user.username}`);
     return res.status(400).json({ error: '无可更新字段' });
+  }
   try {
     const db = await getMongoDb();
-    // --- 关键：扁平化传入字段 ---
+    // --- 扁平化传入字段 ---
     const setFields = flattenForSet(updateFields);
     // 只更新传入的字段（可嵌套）
     const result = await db.collection('progress').updateOne({ _id }, { $set: setFields });
-    if (!result.matchedCount)
+    if (!result.matchedCount) {
+      logger.warn(`【进度更新】未找到: _id=${_id}, by=${req.user && req.user.username}`);
       return res.status(404).json({ error: '进度行不存在，无法修改' });
+    }
     const row = await db.collection('progress').findOne({ _id });
     res.json(row);
   } catch (e) {
+    logger.error(`【进度更新】异常: ${e.stack || e.message}`);
     res.status(500).json({ error: e.message });
   }
 });
-
-
-/*
-// PUT /api/progress/:_id  → 行级保存（仅管理员可用，禁止自动插入新行）
-router.put('/:_id', auth, adminOnly, async (req, res) => {
-  const _id = req.params._id;
-  const updateFields = { ...req.body };
-  //const fields = Object.keys(req.body);
-  if (!Object.keys(updateFields).length) return res.status(400).json({ error: '无可更新字段' });
-  //if (!fields.length) return res.status(400).json({ error: '无可更新字段' });
-  try {
-    const db = await getMongoDb();
-    // 先查当前进度（判断是否存在）
-    const result = await db.collection('progress').updateOne({ _id }, { $set: updateFields });
-
-    if (!result.matchedCount) return res.status(404).json({ error: '进度行不存在，无法修改' });
-    // 存在则更新
-    const row = await db.collection('progress').findOne({ _id });
-    res.json(row);
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
-});
-*/
-
 
 module.exports = router;

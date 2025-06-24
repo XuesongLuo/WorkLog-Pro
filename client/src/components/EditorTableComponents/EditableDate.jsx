@@ -1,4 +1,4 @@
-// src/components/EditorTableComponents/EditableDate.jsx - 独立的日期组件
+// src/components/EditorTableComponents/EditableDate.jsx
 import React from 'react';
 import { TextField } from '@mui/material';
 

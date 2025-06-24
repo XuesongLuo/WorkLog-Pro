@@ -17,7 +17,7 @@ export default function TaskDetailPage() {
       <Box 
         sx={{ 
           width: '100%', 
-          margin: '0 auto', // 水平居中
+          margin: '0 auto',
           display: 'flex',
           flexDirection: 'column',
           flex: 1,

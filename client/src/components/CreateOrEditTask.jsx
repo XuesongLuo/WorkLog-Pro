@@ -350,7 +350,7 @@ export default function CreateOrEditTask({ _id: propId, task: propTask, embedded
           </Grid>
           <Grid item sx={{ gridColumn: { xs: 'span 1', sm: 'span 2', md: 'span 2', lg: 'span 8' } }}>
             <FormControl fullWidth size="small">
-              <InputLabel id="type-label">项目类型</InputLabel>
+              <InputLabel id="type-label">{t('EditPro.type')}</InputLabel>
               <Select
                 labelId="type-label"
                 name="type"
