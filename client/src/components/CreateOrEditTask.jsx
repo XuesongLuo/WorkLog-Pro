@@ -28,6 +28,7 @@ import { AdapterDateFns }      from '@mui/x-date-pickers/AdapterDateFns';
 import { useSnackbar } from 'notistack';
 import { useLoading } from '../contexts/LoadingContext';
 import { useTasks } from '../contexts/TaskStore';
+import { typeApi } from '../contexts/TypeStore';
 import TaskPane from './TaskPane';
 import { useTranslation } from 'react-i18next';
 
@@ -54,6 +55,7 @@ export default function CreateOrEditTask({ _id: propId, task: propTask, embedded
   const location = useLocation();
   const editorRef = useRef();
   const { start: startLoading, end: endLoading } = useLoading();
+  const [types, setTypes] = useState([]);
   const taskFromRoute = location.state?.task;
 
   const { _id: routeId } = useParams();
@@ -126,6 +128,10 @@ export default function CreateOrEditTask({ _id: propId, task: propTask, embedded
       requestIdleCallback(() => setEditorReady(true));
     }
   }, [isEdit]);
+
+  useEffect(() => {
+    typeApi.getTypes().then(setTypes);
+  }, []);
 
   // 使用 useCallback 优化 handleChange
   const handleChange = useCallback((e) => {
@@ -353,9 +359,14 @@ export default function CreateOrEditTask({ _id: propId, task: propTask, embedded
                 label={t('EditPro.type')}
                 sx={{ minWidth: 120 }}
               >
+                {(!types.length && form.type) ? (
+                  <MenuItem key={form.type} value={form.type}>
+                    {form.type}
+                  </MenuItem>
+                ) : null}
                 {types.map((option) => (
-                  <MenuItem key={option} value={option}>
-                    {option}
+                  <MenuItem key={option._id} value={option.name}>
+                    {option.name}
                   </MenuItem>
                 ))}
               </Select>

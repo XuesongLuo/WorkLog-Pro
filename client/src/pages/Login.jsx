@@ -13,7 +13,9 @@ import {
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
+import { useTranslation } from 'react-i18next';
 import { login } from '../api/authApi';
+
 
 export default function Login({ onLogin }) {
   const navigate = useNavigate();
@@ -22,6 +24,7 @@ export default function Login({ onLogin }) {
   const [showPwd, setShowPwd] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const { t } = useTranslation();
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -54,7 +57,7 @@ export default function Login({ onLogin }) {
         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 2 }}>
           <LockOutlinedIcon color="primary" sx={{ fontSize: 48, mb: 1 }} />
           <Typography component="h1" variant="h5" fontWeight={600}>
-            用户登录
+            {t('Login.userLogin')}
           </Typography>
         </Box>
         <Box component="form" onSubmit={handleLogin} noValidate>
@@ -62,7 +65,7 @@ export default function Login({ onLogin }) {
             margin="normal"
             required
             fullWidth
-            label="用户名"
+            label={t('Login.username')}
             autoFocus
             value={username}
             onChange={(e) => setUsername(e.target.value)}
@@ -72,7 +75,7 @@ export default function Login({ onLogin }) {
             margin="normal"
             required
             fullWidth
-            label="密码"
+            label={t('Login.password')}
             type={showPwd ? 'text' : 'password'}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -81,7 +84,7 @@ export default function Login({ onLogin }) {
               endAdornment: (
                 <InputAdornment position="end">
                   <IconButton
-                    aria-label="切换密码可见性"
+                    aria-label={t('Login.pwVisToggle')}
                     onClick={() => setShowPwd((v) => !v)}
                     edge="end"
                   >
@@ -104,7 +107,7 @@ export default function Login({ onLogin }) {
             sx={{ mt: 2, mb: 1.5, fontWeight: 600 }}
             disabled={loading}
           >
-            {loading ? '登录中...' : '登 录'}
+            {loading ? t('Login.loading') : t('Login.login')}
           </Button>
         </Box>
       </Paper>

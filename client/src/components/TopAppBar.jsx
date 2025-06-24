@@ -15,6 +15,9 @@ import MenuIcon from '@mui/icons-material/Menu';
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew'; 
 import { getCurrentUser, logout } from '../utils/authUtils';
 import { useTranslation } from 'react-i18next';
+import SettingsIcon from '@mui/icons-material/Settings';
+import SettingsDialog from './SettingsDialog';
+import { typeApi } from '../contexts/TypeStore';
 
   /**
    * Top level app bar
@@ -26,6 +29,7 @@ export default function TopAppBar({ showHomeButton = false, onHomeClick }) {
   const [anchorEl, setAnchorEl] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
   const navigate = useNavigate();
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const { t, i18n, ready } = useTranslation();
   if (!ready) return null;
   
@@ -36,13 +40,6 @@ export default function TopAppBar({ showHomeButton = false, onHomeClick }) {
   const handleMenuOpen  = (e) => setAnchorEl(e.currentTarget);
   const handleMenuClose = () => setAnchorEl(null);
   
-  /* 切换语言并关闭菜单 */
-  const chooseLang = (value) => {
-    i18n.changeLanguage(value);
-    localStorage.setItem('appLang', value);
-    handleMenuClose();
-  };
-
   const handleLogout = () => {
     logout();
     setCurrentUser(null);
@@ -52,30 +49,17 @@ export default function TopAppBar({ showHomeButton = false, onHomeClick }) {
   return (
     <AppBar position="static">
       <Toolbar>
-          {/* 可切换的抽屉或侧边栏按钮 */}
-          <IconButton edge="start" color="inherit" onClick={handleMenuOpen} sx={{ mr: 1 }}>
+        <IconButton edge="start" color="inherit" onClick={handleMenuOpen} sx={{ mr: 1 }}>
           <MenuIcon />
         </IconButton>
-
-        <Menu
-          anchorEl={anchorEl}
-          open={Boolean(anchorEl)}
-          onClose={handleMenuClose}
-        >
-          <MenuItem selected={i18n.language === 'en'} onClick={() => chooseLang('en')}>
-            English
-          </MenuItem>
-          <MenuItem selected={i18n.language === 'es'} onClick={() => chooseLang('es')}>
-            Español
-          </MenuItem>
-          <MenuItem selected={i18n.language === 'zh'} onClick={() => chooseLang('zh')}>
-            中文
+        <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
+          <MenuItem onClick={() => { setSettingsOpen(true); handleMenuClose(); }}>
+            <SettingsIcon fontSize="small" sx={{ mr: 1 }} />{t('TopAppBar.settings')}
           </MenuItem>
         </Menu>
         <Typography variant="h6" sx={{ mr: 2 }}>
           WorkLog
         </Typography>
-        {/* ↓↓↓  新增“返回首页”按钮  ↓↓↓ */}
         {showHomeButton && (
           <Button
             color="inherit"
@@ -106,7 +90,13 @@ export default function TopAppBar({ showHomeButton = false, onHomeClick }) {
         )}
         
       </Toolbar>
+
+      <SettingsDialog
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        typeApi={typeApi}
+      />
     </AppBar>
+    
   );
 }
-  

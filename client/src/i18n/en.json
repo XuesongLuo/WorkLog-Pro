@@ -8,6 +8,7 @@
     "progressTableEditor": "Progress Table Editor"
   },
   "TopAppBar": {
+    "settings": "Settings",
     "BackButton": "Back",
     "logOut": "Logout"
   },
@@ -89,5 +90,23 @@
   "ProProgress": {
     "saveSuccess": "Save successful",
     "saveFailed": "Save failed"
+  },
+  "Settings": {
+    "Title": "Settings",
+    "Language": "Language",
+    "Types": "Type Management",
+    "AddType": "Add Type",
+    "Close": "Close"
+  },
+  "Login": {
+    "userLogin": "User Login",
+    "username": "Username",
+    "password": "Password",
+    "pwVisToggle": "Toggle password visibility",
+    "loading": "Logging in...",
+    "login": "Login"
+  },
+  "fetcher": {
+    "loginOut": "Login expired, please log in again"
   }
 }

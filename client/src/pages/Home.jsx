@@ -58,7 +58,6 @@ export default function Home() {
   const navigate = useNavigate();
   const [showPanelContent, setShowPanelContent] = useState(false);
   const containerOuterRef = useRef(null);
-  const [lockedWidth, setLockedWidth] = useState(null);
   const location = useLocation();
 
   const {
@@ -84,6 +83,7 @@ export default function Home() {
     ml: showDetail ? 0 : 'auto',
     mr: showDetail ? 0 : 'auto',
     height: '100%',
+    transition: 'width 0.3s cubic-bezier(.4,1,.4,1), max-width 0.3s cubic-bezier(.4,1,.4,1), flex-basis 0.3s cubic-bezier(.4,1,.4,1)',
   }), [showDetail]);
 
   const rightPanelStyles = useMemo(() => ({
@@ -99,8 +99,6 @@ export default function Home() {
     height: '100%',
     overflow: 'hidden',
   }), [showDetail]);
-
-  //const debouncedTaskClose = useDebounce(handleTaskClose, 100);   // 包装防抖版本的 handleTaskClose
 
   // 视图切换
   const toggleView = () =>
@@ -130,29 +128,6 @@ export default function Home() {
       api.loadPage(page);
     }
   };
-
-  // Slide 动画事件，测量锁定宽度
-  const handlePanelAnimationEnd = () => {
-    if (containerOuterRef.current) {
-      const parentW = containerOuterRef.current.clientWidth;
-      const percent = showDetail ? 0.5 : 1;
-      if(showDetail) setLockedWidth(Math.round(parentW * percent)-16);
-      else setLockedWidth(Math.round(parentW * percent));
-    }
-  };
-  // 监听窗口
-  useEffect(() => {
-    function updateWidth() {
-      if (containerOuterRef.current) {
-        const parentW = containerOuterRef.current.clientWidth;
-        const percent = showDetail ? 0.5 : 1;
-        setLockedWidth(Math.round(parentW * percent) - (showDetail ? 16 : 0));
-      }
-    }
-    updateWidth();
-    window.addEventListener('resize', updateWidth);
-    return () => window.removeEventListener('resize', updateWidth);
-  }, [showDetail]);
 
   // 从后端加载任务列表
   useEffect(() => {
@@ -229,8 +204,7 @@ export default function Home() {
               <TaskList
                 tasks={tasks}
                 onSelectTask={(task) => openTaskDetail(task._id)}
-                sx={{ height: '100%' }}
-                lockedWidth={lockedWidth}   
+                sx={{ height: '100%' }} 
                 loading={loading}           
                 hasMore={hasMore}           
                 onLoadMore={() => {
@@ -257,12 +231,10 @@ export default function Home() {
               unmountOnExit
               onEntered={() => {
                 setShowPanelContent(true);     // 动画后加载内容
-                handlePanelAnimationEnd();     // 原有测宽/布局逻辑
               }}
               onExit={() => setShowPanelContent(false)} // 动画开始卸载内容
               onExited={() => {                         // 动画完全收起 → 执行回调
                 setSelectedTask(null);
-                handlePanelAnimationEnd();
               }}
             >
               <div style={{ height: '100%' }}>

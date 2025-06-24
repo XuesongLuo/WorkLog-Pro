@@ -8,6 +8,7 @@
     "progressTableEditor": "项目进度表"
   },
   "TopAppBar": {
+    "settings": "设置",
     "BackButton": "返回",
     "logOut": "登出"
   },
@@ -89,5 +90,23 @@
   "ProProgress": {
     "saveSuccess": "保存成功",
     "saveFailed": "保存失败"
+  },
+  "Settings": {
+    "Title": "设置",
+    "Language": "语言设置",
+    "Types": "类型管理",
+    "AddType": "新增类型",
+    "Close": "关闭"
+  },
+  "Login": {
+    "userLogin": "用户登录",
+    "username": "用户名",
+    "password":  "密码",
+    "pwVisToggle": "切换密码可见性",
+    "loading": "登陆中...",
+    "login": "登 录"
+  },
+  "fetcher": {
+    "loginOut": "登录已过期，请重新登录"
   }
 }

@@ -6,6 +6,7 @@ const userRoutes = require('./routes/users');
 const projectRoutes = require('./routes/projects');
 const descriptionRoutes = require('./routes/descriptions');
 const progressRoutes = require('./routes/progress');
+const typeRoutes = require('./routes/type');
 
 const ensureAdminAccount = require('./utils/initAdmin');
 
@@ -20,6 +21,7 @@ app.use('/api', userRoutes);
 app.use('/api/tasks', projectRoutes);
 app.use('/api/descriptions', descriptionRoutes);
 app.use('/api/progress', progressRoutes); 
+app.use('/api/types', typeRoutes); 
 
 app.get('/', (req, res) => {
   res.send('WorkLog Server start!');
